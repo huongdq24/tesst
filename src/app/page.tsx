@@ -6,20 +6,21 @@ import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, Github, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut } from 'lucide-react';
+import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
+import { useAuth, useUser } from '@/firebase';
+import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
-type Role = 'Admin' | 'User';
 
 export default function Home() {
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const [currentScreen, setCurrentScreen] = useState<Screen>('AUTH');
   const [lang, setLang] = useState<Language>('VI');
-  const [role, setRole] = useState<Role>('User');
   const [userEmail, setUserEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
@@ -27,21 +28,42 @@ export default function Home() {
 
   const t = translations[lang];
 
+  // Sync screen state with auth state
+  useEffect(() => {
+    if (!isUserLoading) {
+      if (user) {
+        // If logged in and was on AUTH, move to claim credits (mock flow)
+        if (currentScreen === 'AUTH') {
+          setCurrentScreen('CREDIT_CLAIM');
+        }
+      } else {
+        setCurrentScreen('AUTH');
+      }
+    }
+  }, [user, isUserLoading, currentScreen]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (userEmail === 'igen-architect@admin.com' && password === '123456') {
-      setRole('Admin');
-      setCurrentScreen('CREDIT_CLAIM');
-    } else if (userEmail && password) {
-      setRole('User');
-      setCurrentScreen('CREDIT_CLAIM');
+    if (userEmail && password) {
+      initiateEmailSignIn(auth, userEmail, password);
     } else {
       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: "Please enter valid credentials."
+        title: "Lỗi đăng nhập",
+        description: "Vui lòng nhập đầy đủ thông tin."
       });
     }
+  };
+
+  const handleGoogleLogin = () => {
+    initiateGoogleSignIn(auth);
+  };
+
+  const handlePhoneLogin = () => {
+    toast({
+      title: "Tính năng đang phát triển",
+      description: "Đăng nhập bằng số điện thoại sẽ sớm có mặt."
+    });
   };
 
   const claimCredits = () => {
@@ -52,6 +74,14 @@ export default function Home() {
     });
     setCurrentScreen('DASHBOARD');
   };
+
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen relative overflow-hidden">
@@ -71,7 +101,7 @@ export default function Home() {
           <div className="flex items-center gap-6">
             <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
               <UserIcon className="w-3 h-3" />
-              {role === 'Admin' ? t.roleAdmin : t.roleUser}
+              {user?.email?.includes('admin') ? t.roleAdmin : t.roleUser}
             </div>
             
             <Button 
@@ -85,7 +115,7 @@ export default function Home() {
             </Button>
 
             {currentScreen === 'DASHBOARD' && (
-              <Button variant="ghost" size="sm" onClick={() => setCurrentScreen('AUTH')} className="rounded-full text-slate-500">
+              <Button variant="ghost" size="sm" onClick={() => auth.signOut()} className="rounded-full text-slate-500">
                 <LogOut className="w-4 h-4" />
               </Button>
             )}
@@ -147,15 +177,21 @@ export default function Home() {
 
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">Or</span></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">Hoặc</span></div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold">
-                  <Github className="w-4 h-4" /> Google
+                <Button onClick={handleGoogleLogin} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold hover:bg-cyan-50 hover:border-cyan-200 transition-colors">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.25.81-.59z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  </svg>
+                  Gmail
                 </Button>
-                <Button variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold">
-                  <Smartphone className="w-4 h-4" /> Phone
+                <Button onClick={handlePhoneLogin} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold hover:bg-cyan-50 hover:border-cyan-200 transition-colors">
+                  <Smartphone className="w-4 h-4 text-cyan-600" /> Số điện thoại
                 </Button>
               </div>
             </div>
