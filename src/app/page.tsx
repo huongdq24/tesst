@@ -182,7 +182,7 @@ export default function Home() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input 
                       type="email" 
-                      placeholder="igen-architect@admin.com" 
+                      placeholder={t.emailPlaceholder} 
                       className="pl-10 h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500 transition-all"
                       value={userEmail}
                       onChange={(e) => setUserEmail(e.target.value)}
@@ -194,7 +194,7 @@ export default function Home() {
                   <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.password}</Label>
                   <Input 
                     type="password" 
-                    placeholder="123456" 
+                    placeholder={t.passwordPlaceholder} 
                     className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500 transition-all"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
