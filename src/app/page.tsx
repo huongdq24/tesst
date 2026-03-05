@@ -391,7 +391,7 @@ export default function Home() {
               <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Cloud_Logo.svg" alt="GCP" className="w-6 h-6" />
+                    <GoogleIcon className="w-6 h-6" />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900">Google Cloud Platform</p>
