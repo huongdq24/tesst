@@ -49,8 +49,8 @@ export default function Home() {
     } else {
       toast({
         variant: "destructive",
-        title: "Lỗi đăng nhập",
-        description: "Vui lòng nhập đầy đủ thông tin."
+        title: lang === 'VI' ? "Lỗi đăng nhập" : "Login Error",
+        description: lang === 'VI' ? "Vui lòng nhập đầy đủ thông tin." : "Please enter all required information."
       });
     }
   };
@@ -61,15 +61,15 @@ export default function Home() {
 
   const handlePhoneLogin = () => {
     toast({
-      title: "Tính năng đang phát triển",
-      description: "Đăng nhập bằng số điện thoại sẽ sớm có mặt."
+      title: lang === 'VI' ? "Tính năng đang phát triển" : "Coming Soon",
+      description: lang === 'VI' ? "Đăng nhập bằng số điện thoại sẽ sớm có mặt." : "Phone login will be available soon."
     });
   };
 
   const claimCredits = () => {
     toast({
       title: t.claimSuccess,
-      description: <div className="flex items-center gap-1">Available in your <IGenBranding className="text-white" /> Cloud wallet.</div>,
+      description: <div className="flex items-center gap-1">Available in your <IGenBranding /> Cloud wallet.</div>,
       className: "bg-cyan-500 text-white font-bold border-none"
     });
     setCurrentScreen('DASHBOARD');
@@ -188,10 +188,10 @@ export default function Home() {
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.25.81-.59z" />
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                   </svg>
-                  Gmail
+                  {t.gmail}
                 </Button>
                 <Button onClick={handlePhoneLogin} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold hover:bg-cyan-50 hover:border-cyan-200 transition-colors">
-                  <Smartphone className="w-4 h-4 text-cyan-600" /> Số điện thoại
+                  <Smartphone className="w-4 h-4 text-cyan-600" /> {t.phone}
                 </Button>
               </div>
             </div>
