@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
+import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
 import { useAuth, useUser } from '@/firebase';
-import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
+import { initiateEmailSignIn, initiateEmailSignUp, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +29,8 @@ export default function Home() {
   const [lang, setLang] = useState<Language>('VI');
   const [userEmail, setUserEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -47,16 +49,41 @@ export default function Home() {
     }
   }, [user, isUserLoading, currentScreen]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (userEmail && password) {
-      initiateEmailSignIn(auth, userEmail, password);
-    } else {
+    if (!userEmail || !password) {
       toast({
         variant: "destructive",
-        title: t.loginButton,
-        description: lang === 'VI' ? "Vui lòng nhập đầy đủ thông tin." : lang === 'EN' ? "Please enter all required information." : "请输入所有必填信息。"
+        title: t.authError,
+        description: lang === 'VI' ? "Vui lòng nhập đầy đủ thông tin." : "Please enter all required information."
       });
+      return;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      if (isSignUp) {
+        await initiateEmailSignUp(auth, userEmail, password);
+      } else {
+        await initiateEmailSignIn(auth, userEmail, password);
+      }
+    } catch (error: any) {
+      let description = t.authError;
+      if (error.code === 'auth/invalid-credential') {
+        description = t.invalidCredential;
+      } else if (error.code === 'auth/email-already-in-use') {
+        description = t.emailInUse;
+      } else if (error.code === 'auth/weak-password') {
+        description = t.weakPassword;
+      }
+      
+      toast({
+        variant: "destructive",
+        title: t.authError,
+        description: description
+      });
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
@@ -155,8 +182,12 @@ export default function Home() {
               </div>
               
               <div className="mt-8 text-center mb-10">
-                <h1 className="text-3xl font-bold tracking-tight mb-2">{t.loginTitle}</h1>
-                <p className="text-slate-500 text-sm">{t.loginSubtitle}</p>
+                <h1 className="text-3xl font-bold tracking-tight mb-2">
+                  {isSignUp ? t.signUpTitle : t.loginTitle}
+                </h1>
+                <p className="text-slate-500 text-sm">
+                  {isSignUp ? t.signUpSubtitle : t.loginSubtitle}
+                </p>
                 <div className="mt-4 inline-block">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -175,7 +206,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form onSubmit={handleAuth} className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.email}</Label>
                   <div className="relative">
@@ -201,10 +232,29 @@ export default function Home() {
                   />
                 </div>
 
-                <Button className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-md mt-4 shadow-lg group">
-                  {t.loginButton} <LogIn className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <Button 
+                  disabled={isAuthenticating}
+                  className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-md mt-4 shadow-lg group"
+                >
+                  {isAuthenticating ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {isSignUp ? t.signUpButton : t.loginButton} 
+                      {isSignUp ? <UserPlus className="ml-2 w-4 h-4" /> : <LogIn className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+                    </>
+                  )}
                 </Button>
               </form>
+
+              <div className="mt-6 text-center">
+                <button 
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-xs font-bold text-cyan-600 hover:underline"
+                >
+                  {isSignUp ? t.hasAccount : t.noAccount}
+                </button>
+              </div>
 
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
