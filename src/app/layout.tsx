@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'iGen - Architectural AI Assistant',
-  description: 'The future of architectural design powered by iGen AI',
+  title: 'iGen - Trợ lý AI cho Kiến trúc sư',
+  description: 'Tương lai của thiết kế kiến trúc được hỗ trợ bởi iGen AI',
 };
 
 export default function RootLayout({

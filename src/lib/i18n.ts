@@ -3,7 +3,7 @@ export type Language = 'VI' | 'EN' | 'ZH';
 export const translations = {
   VI: {
     loginTitle: 'Chào mừng trở lại',
-    loginSubtitle: 'Truy cập vào iGen Architectural AI Assistant',
+    loginSubtitle: 'Truy cập iGen - Trợ lý AI cho Kiến trúc sư',
     email: 'Email',
     password: 'Mật khẩu',
     loginButton: 'Đăng nhập',
@@ -40,7 +40,7 @@ export const translations = {
   },
   EN: {
     loginTitle: 'Welcome Back',
-    loginSubtitle: 'Access the iGen Architectural AI Assistant',
+    loginSubtitle: 'Access iGen - Architectural AI Assistant',
     email: 'Email',
     password: 'Password',
     loginButton: 'Login',
@@ -77,7 +77,7 @@ export const translations = {
   },
   ZH: {
     loginTitle: '欢迎回来',
-    loginSubtitle: '访问 iGen 建筑 AI 助手',
+    loginSubtitle: '访问 iGen - 建筑 AI 助手',
     email: '电子邮件',
     password: '密码',
     loginButton: '登录',
