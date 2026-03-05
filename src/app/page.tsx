@@ -47,7 +47,7 @@ export default function Home() {
   const claimCredits = () => {
     toast({
       title: t.claimSuccess,
-      description: "Available in your iGen Cloud wallet.",
+      description: <div className="flex items-center gap-1">Available in your <IGenBranding className="text-white" /> Cloud wallet.</div>,
       className: "bg-cyan-500 text-white font-bold border-none"
     });
     setCurrentScreen('DASHBOARD');

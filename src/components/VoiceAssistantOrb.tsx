@@ -5,6 +5,7 @@ import { Mic, X } from 'lucide-react';
 import { voiceArchitecturalAssistant } from '@/ai/flows/voice-architectural-assistant-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { IGenBranding } from './Branding';
 
 export const VoiceAssistantOrb = ({ lang }: { lang: 'VI' | 'EN' }) => {
   const [isListening, setIsListening] = useState(false);
@@ -29,7 +30,7 @@ export const VoiceAssistantOrb = ({ lang }: { lang: 'VI' | 'EN' }) => {
         }
         
         toast({
-          title: "iGen Assistant",
+          title: <div className="flex items-center gap-1"><IGenBranding /> Assistant</div>,
           description: result.responseText,
         });
       } catch (error) {
