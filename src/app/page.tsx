@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ShieldCheck, CreditCard as CardIcon, Wallet } from 'lucide-react';
+import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ShieldCheck, Wallet, ExternalLink } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
@@ -359,14 +359,25 @@ export default function Home() {
                 <CreditCard className="w-12 h-12" />
               </div>
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">{t.claimTitle}</h2>
-              <p className="text-slate-500 text-lg mb-12 max-w-md mx-auto">{t.claimDesc}</p>
+              <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
               
-              <Button 
-                onClick={startVerification}
-                className="h-16 px-12 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95"
-              >
-                {t.claimButton}
-              </Button>
+              <div className="flex flex-col gap-4 max-w-xs mx-auto">
+                <Button 
+                  onClick={startVerification}
+                  className="h-16 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95"
+                >
+                  {t.claimButton}
+                </Button>
+                <a 
+                  href="https://cloud.google.com/free/docs/free-cloud-features#free-trial" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-slate-400 hover:text-cyan-600 flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  {lang === 'VI' ? 'Tìm hiểu chương trình Google' : 'Learn about Google Program'}
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -382,26 +393,35 @@ export default function Home() {
                 <p className="text-slate-500 mt-2 text-sm px-4">{t.paymentSubtitle}</p>
               </div>
 
+              <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Cloud_Logo.svg" alt="GCP" className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">Google Cloud Platform</p>
+                    <p className="text-[10px] text-slate-500">Official Free Trial Program</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-full h-8 text-[10px] font-bold border-slate-200"
+                  onClick={() => window.open('https://console.cloud.google.com/freetrial', '_blank')}
+                >
+                  {t.officialLink}
+                  <ExternalLink className="ml-1.5 w-3 h-3" />
+                </Button>
+              </div>
+
               <form onSubmit={handlePaymentSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.cardName}</Label>
                   <Input 
                     required 
-                    placeholder="JOHN DOE" 
+                    placeholder="ACCOUNT NAME" 
                     className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500 uppercase"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.cardNumber}</Label>
-                  <div className="relative">
-                    <CardIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <Input 
-                      required 
-                      placeholder="0000 0000 0000 0000" 
-                      className="pl-10 h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
-                    />
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -409,7 +429,7 @@ export default function Home() {
                     <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.expiry}</Label>
                     <Input 
                       required 
-                      placeholder="MM/YY" 
+                      type="date"
                       className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
                     />
                   </div>
@@ -418,8 +438,8 @@ export default function Home() {
                     <Input 
                       required 
                       type="password" 
-                      maxLength={3} 
-                      placeholder="***" 
+                      maxLength={4} 
+                      placeholder="****" 
                       className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
                     />
                   </div>
@@ -430,10 +450,7 @@ export default function Home() {
                   className="w-full h-14 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white rounded-xl font-bold text-lg mt-6 shadow-xl active:scale-[0.98] transition-all"
                 >
                   {isVerifying ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Verifying...</span>
-                    </div>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
                       <ShieldCheck className="mr-2 w-5 h-5" />
@@ -442,12 +459,6 @@ export default function Home() {
                   )}
                 </Button>
               </form>
-              
-              <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 grayscale opacity-40">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-4" />
-              </div>
             </div>
           </div>
         )}
