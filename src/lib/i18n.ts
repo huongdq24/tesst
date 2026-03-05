@@ -1,4 +1,4 @@
-export type Language = 'VI' | 'EN';
+export type Language = 'VI' | 'EN' | 'ZH';
 
 export const translations = {
   VI: {
@@ -74,5 +74,42 @@ export const translations = {
     aiEngine: 'AI Engine',
     roleAdmin: 'Administrator',
     roleUser: 'User',
+  },
+  ZH: {
+    loginTitle: '欢迎回来',
+    loginSubtitle: '访问 iGen 建筑 AI 助手',
+    email: '电子邮件',
+    password: '密码',
+    loginButton: '登录',
+    gmail: 'Gmail',
+    phone: '手机号码',
+    orDivider: '或',
+    continueWithGoogle: '使用 Google 继续',
+    continueWithPhone: '使用手机号码继续',
+    claimTitle: '激活您的 $300 iGen 云信用额度',
+    claimDesc: '立即领取信用额度，开始您的第一个建筑项目。',
+    claimButton: '立即领取 $300',
+    claimSuccess: '成功！您已领取 $300 信用额度。',
+    dashboardTitle: 'iGen 生态系统',
+    dashboardSubtitle: '建筑师的专业 AI 工具',
+    rendering: '渲染',
+    videoCreator: '视频制作',
+    visualMoodboard: '视觉情绪板',
+    textureLab: '材质实验室',
+    humanEnhancer: '人物增强',
+    virtualStaging: '虚拟软装',
+    openTool: '打开工具',
+    speedMode: '快速模式',
+    proMode: '专业模式',
+    orbTooltip: '点击与 iGen 对话...',
+    backToDashboard: '返回仪表板',
+    generate: '生成',
+    promptPlaceholder: '描述您的愿景...',
+    consistentSync: '一致性角色同步',
+    cinematicPan: '电影级平移',
+    aiVideoExtend: 'AI 视频扩展 (+8s)',
+    aiEngine: 'AI 引擎',
+    roleAdmin: '管理员',
+    roleUser: '用户',
   }
 };

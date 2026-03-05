@@ -6,8 +6,9 @@ import { voiceArchitecturalAssistant } from '@/ai/flows/voice-architectural-assi
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { IGenBranding } from './Branding';
+import { Language } from '@/lib/i18n';
 
-export const VoiceAssistantOrb = ({ lang }: { lang: 'VI' | 'EN' }) => {
+export const VoiceAssistantOrb = ({ lang }: { lang: Language }) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
@@ -21,7 +22,7 @@ export const VoiceAssistantOrb = ({ lang }: { lang: 'VI' | 'EN' }) => {
       setIsListening(false);
       setIsProcessing(true);
       try {
-        const query = lang === 'VI' ? 'Thiết kế một biệt thự hiện đại' : 'Design a modern villa';
+        const query = lang === 'VI' ? 'Thiết kế một biệt thự hiện đại' : lang === 'EN' ? 'Design a modern villa' : '设计一座现代别墅';
         const result = await voiceArchitecturalAssistant({ query });
         
         if (result.responseAudio) {
@@ -66,7 +67,7 @@ export const VoiceAssistantOrb = ({ lang }: { lang: 'VI' | 'EN' }) => {
             </button>
           </TooltipTrigger>
           <TooltipContent side="left" className="bg-white text-slate-900 border-none shadow-xl font-medium">
-            {lang === 'VI' ? 'Chạm để nói chuyện với iGen...' : 'Tap to speak to iGen...'}
+            {lang === 'VI' ? 'Chạm để nói chuyện với iGen...' : lang === 'EN' ? 'Tap to speak to iGen...' : '点击与 iGen 对话...'}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

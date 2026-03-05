@@ -32,7 +32,6 @@ export default function Home() {
   useEffect(() => {
     if (!isUserLoading) {
       if (user) {
-        // If logged in and was on AUTH, move to claim credits (mock flow)
         if (currentScreen === 'AUTH') {
           setCurrentScreen('CREDIT_CLAIM');
         }
@@ -42,6 +41,11 @@ export default function Home() {
     }
   }, [user, isUserLoading, currentScreen]);
 
+  const toggleLanguage = () => {
+    const next: Record<Language, Language> = { VI: 'EN', EN: 'ZH', ZH: 'VI' };
+    setLang(next[lang]);
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (userEmail && password) {
@@ -49,8 +53,8 @@ export default function Home() {
     } else {
       toast({
         variant: "destructive",
-        title: lang === 'VI' ? "Lỗi đăng nhập" : "Login Error",
-        description: lang === 'VI' ? "Vui lòng nhập đầy đủ thông tin." : "Please enter all required information."
+        title: t.loginButton,
+        description: lang === 'VI' ? "Vui lòng nhập đầy đủ thông tin." : lang === 'EN' ? "Please enter all required information." : "请输入所有必填信息。"
       });
     }
   };
@@ -61,8 +65,8 @@ export default function Home() {
 
   const handlePhoneLogin = () => {
     toast({
-      title: lang === 'VI' ? "Tính năng đang phát triển" : "Coming Soon",
-      description: lang === 'VI' ? "Đăng nhập bằng số điện thoại sẽ sớm có mặt." : "Phone login will be available soon."
+      title: lang === 'VI' ? "Tính năng đang phát triển" : lang === 'EN' ? "Coming Soon" : "即将推出",
+      description: lang === 'VI' ? "Đăng nhập bằng số điện thoại sẽ sớm có mặt." : lang === 'EN' ? "Phone login will be available soon." : "手机登录即将推出。"
     });
   };
 
@@ -82,6 +86,18 @@ export default function Home() {
       </div>
     );
   }
+
+  const getLanguageLabel = (l: Language) => {
+    if (l === 'VI') return 'Tiếng Việt';
+    if (l === 'EN') return 'English';
+    return '中文';
+  };
+
+  const getSwitchLabel = (l: Language) => {
+    if (l === 'VI') return 'Switch to English';
+    if (l === 'EN') return '切换至中文';
+    return 'Chuyển sang Tiếng Việt';
+  };
 
   return (
     <main className="min-h-screen relative overflow-hidden">
@@ -108,10 +124,10 @@ export default function Home() {
               variant="outline" 
               size="sm" 
               className="rounded-full gap-2 border-slate-200"
-              onClick={() => setLang(lang === 'VI' ? 'EN' : 'VI')}
+              onClick={toggleLanguage}
             >
               <Globe className="w-4 h-4" />
-              {lang}
+              {getLanguageLabel(lang)}
             </Button>
 
             {currentScreen === 'DASHBOARD' && (
@@ -138,8 +154,8 @@ export default function Home() {
                 <h1 className="text-3xl font-bold tracking-tight mb-2">{t.loginTitle}</h1>
                 <p className="text-slate-500 text-sm">{t.loginSubtitle}</p>
                 <div className="mt-4 inline-block">
-                  <Button variant="outline" size="sm" className="rounded-full text-[10px] font-bold h-7 border-cyan-200 text-cyan-600 bg-cyan-50/50" onClick={() => setLang(lang === 'VI' ? 'EN' : 'VI')}>
-                    {lang === 'VI' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
+                  <Button variant="outline" size="sm" className="rounded-full text-[10px] font-bold h-7 border-cyan-200 text-cyan-600 bg-cyan-50/50" onClick={toggleLanguage}>
+                    {getSwitchLabel(lang)}
                   </Button>
                 </div>
               </div>
