@@ -8,23 +8,7 @@ service cloud.firestore {
      * Core Philosophy:
      * This ruleset implements a robust, path-based ownership model complemented by Database-Backed 
      * Access Control (DBAC) for administrative roles. Security is enforced primarily through 
-     * user-specific subcollections and document path wildcards, ensuring efficient and 
-     * scalable authorization checks without complex cross-document lookups.
-     * 
-     * Data Structure:
-     * - /users/{userId}: Private user profiles and settings.
-     * - /users/{userId}/projects/{projectId}: Private AI projects owned by the user.
-     * - /features/{featureId}: Global definitions of AI features, readable by all users.
-     * - /admins/{adminId}: A registry of administrative UIDs.
-     * 
-     * Key Security Decisions:
-     * - Ownership: Access to user profiles and projects is strictly restricted to the owner matching 
-     *    the {userId} wildcard in the path.
-     * - Global Roles: Admin status is determined by the existence of a document in the /admins collection.
-     * - Relational Integrity: On document creation, the rules enforce that internal ID and owner 
-     *   fields match the document path to maintain data consistency.
-     * - Prototyping Flexibility: While authorization is strictly enforced, the rules do not 
-     *   validate data types or the presence of non-relational fields to allow for rapid iteration.
+     * user-specific subcollections and document path wildcards.
      */
 
     // --- Helper Functions ---
@@ -44,47 +28,41 @@ service cloud.firestore {
       return resource != null && isOwner(userId);
     }
 
-    /** Checks if the current user has administrative privileges via the /admins collection. */
+    /** 
+     * Checks if the current user has administrative privileges.
+     * Logic: Existence in /admins OR matching the specific super-admin email.
+     */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == "igen-architect@admin.com"
+      );
     }
 
     // --- Collection Rules ---
 
     /**
-     * @description Rules for user profile documents. Access is restricted to the owner.
-     * @path /users/{userId}
-     * @allow (create) if the user is signed in and creating their own document.
-     * @deny (read) if the user is not the owner (userId mismatch).
-     * @principle Path-based ownership and self-creation validation.
+     * @description Rules for user profile documents.
      */
     match /users/{userId} {
       allow get, list: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
 
       /**
        * @description Rules for AI projects belonging to a specific user.
-       * @path /users/{userId}/projects/{projectId}
-       * @allow (list) if the user is the owner of the parent user path.
-       * @deny (create) if the internal userId field doesn't match the path's userId.
-       * @principle Denormalized ownership validation for relational integrity.
        */
       match /projects/{projectId} {
         allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) && request.resource.data.userId == userId && request.resource.data.id == projectId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId && request.resource.data.id == resource.data.id;
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId) || isAdmin();
         allow delete: if isExistingOwner(userId) || isAdmin();
       }
     }
 
     /**
      * @description Global AI features registry.
-     * @path /features/{featureId}
-     * @allow (get/list) if any user is authenticated.
-     * @deny (write) if the user is not an admin.
-     * @principle Public read for authenticated users with admin-only management.
      */
     match /features/{featureId} {
       allow get, list: if isSignedIn();
@@ -93,15 +71,11 @@ service cloud.firestore {
 
     /**
      * @description Registry for administrative users.
-     * @path /admins/{adminId}
-     * @allow (get) if the user is an admin.
-     * @deny (list/write) Access is strictly controlled to prevent privilege escalation.
-     * @principle DBAC (Database-Backed Access Control) using existence checks.
      */
     match /admins/{adminId} {
       allow get: if isAdmin();
       allow list: if isAdmin();
-      allow create, update, delete: if false; // Managed via secure administrative environment (e.g., Cloud Functions or Firebase Console)
+      allow create, update, delete: if false; 
     }
   }
 }

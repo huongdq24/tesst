@@ -11,8 +11,10 @@ import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon,
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import { initiateEmailSignIn, initiateEmailSignUp, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc } from 'firebase/firestore';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,7 @@ type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
 export default function Home() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const db = useFirestore();
   const [currentScreen, setCurrentScreen] = useState<Screen>('AUTH');
   const [lang, setLang] = useState<Language>('VI');
   const [userEmail, setUserEmail] = useState('');
@@ -63,7 +66,24 @@ export default function Home() {
     setIsAuthenticating(true);
     try {
       if (isSignUp) {
-        await initiateEmailSignUp(auth, userEmail, password);
+        const result = await initiateEmailSignUp(auth, userEmail, password);
+        const newUser = result.user;
+        
+        // Determine role: specific email is admin, others are user
+        const role = newUser.email === 'igen-architect@admin.com' ? 'admin' : 'user';
+        
+        // Create user profile in Firestore
+        const userRef = doc(db, 'users', newUser.uid);
+        setDocumentNonBlocking(userRef, {
+          id: newUser.uid,
+          email: newUser.email,
+          role: role,
+          hasClaimedCredits: false,
+          preferredLanguage: lang,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+
         toast({
           title: lang === 'VI' ? "Đăng ký thành công" : "Sign Up Success",
           description: lang === 'VI' ? "Tài khoản của bạn đã được tạo!" : "Your account has been created!"
@@ -127,6 +147,9 @@ export default function Home() {
     return '中文';
   };
 
+  // Helper to check admin role visually in UI
+  const isAdmin = user?.email === 'igen-architect@admin.com';
+
   return (
     <main className="min-h-screen relative overflow-hidden">
       {/* Background decoration */}
@@ -145,7 +168,7 @@ export default function Home() {
           <div className="flex items-center gap-6">
             <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
               <UserIcon className="w-3 h-3" />
-              {user?.email?.includes('admin') ? t.roleAdmin : t.roleUser}
+              {isAdmin ? t.roleAdmin : t.roleUser}
             </div>
             
             <DropdownMenu>
