@@ -372,15 +372,6 @@ export default function Home() {
                 >
                   {t.claimButton}
                 </Button>
-                <a 
-                  href="https://cloud.google.com/free/docs/free-cloud-features#free-trial" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-xs font-bold text-slate-400 hover:text-cyan-600 flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  {lang === 'VI' ? 'Tìm hiểu chương trình Google' : 'Learn about Google Program'}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
               </div>
             </div>
           </div>
