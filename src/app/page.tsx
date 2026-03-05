@@ -64,13 +64,19 @@ export default function Home() {
     try {
       if (isSignUp) {
         await initiateEmailSignUp(auth, userEmail, password);
+        toast({
+          title: lang === 'VI' ? "Đăng ký thành công" : "Sign Up Success",
+          description: lang === 'VI' ? "Tài khoản của bạn đã được tạo!" : "Your account has been created!"
+        });
       } else {
         await initiateEmailSignIn(auth, userEmail, password);
       }
     } catch (error: any) {
       let description = t.authError;
       if (error.code === 'auth/invalid-credential') {
-        description = t.invalidCredential;
+        description = isSignUp 
+          ? (lang === 'VI' ? "Email đã tồn tại hoặc không hợp lệ." : "Email already exists or invalid.")
+          : t.invalidCredential;
       } else if (error.code === 'auth/email-already-in-use') {
         description = t.emailInUse;
       } else if (error.code === 'auth/weak-password') {
