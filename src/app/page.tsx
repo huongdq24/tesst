@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ShieldCheck, CreditCard as CardIcon } from 'lucide-react';
+import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ShieldCheck, CreditCard as CardIcon, Wallet } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
@@ -42,29 +42,23 @@ export default function Home() {
 
   const t = translations[lang];
 
-  // Fetch user profile from Firestore to check hasClaimedCredits
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-  // Sync screen state with auth state and Firestore data
   useEffect(() => {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
-        // If we have Firestore data, check if they already claimed credits
         if (userData) {
           if (userData.hasClaimedCredits) {
-            // Already claimed, go to Dashboard if they are currently on a setup screen
             if (currentScreen === 'AUTH' || currentScreen === 'CREDIT_CLAIM' || currentScreen === 'PAYMENT') {
               setCurrentScreen('DASHBOARD');
             }
           } else {
-            // New user (hasn't claimed), show the claim screen
             if (currentScreen === 'AUTH') {
               setCurrentScreen('CREDIT_CLAIM');
             }
           }
         } else if (currentScreen === 'AUTH') {
-          // No user document yet (might be still creating), show claim screen for first-timers
           setCurrentScreen('CREDIT_CLAIM');
         }
       } else {
@@ -151,7 +145,6 @@ export default function Home() {
     e.preventDefault();
     setIsVerifying(true);
     
-    // Simulate verification delay
     setTimeout(() => {
       setIsVerifying(false);
       if (user) {
@@ -163,9 +156,17 @@ export default function Home() {
       }
       
       toast({
-        title: t.paymentSuccess,
-        description: <div className="flex items-center gap-1">Available in your <IGenBranding /> Cloud wallet.</div>,
-        className: "bg-cyan-500 text-white font-bold border-none"
+        title: lang === 'VI' ? "Kích hoạt thành công!" : "Activation Successful!",
+        description: (
+          <div className="flex flex-col gap-1">
+            <p>{lang === 'VI' ? "Gói dùng thử $300 iGen Cloud đã sẵn sàng." : "Your $300 iGen Cloud trial is now active."}</p>
+            <div className="flex items-center gap-1 text-[10px] font-bold uppercase opacity-80">
+              <Wallet className="w-3 h-3" />
+              Available in iGen Wallet
+            </div>
+          </div>
+        ),
+        className: "bg-slate-900 text-white border-none"
       });
       setCurrentScreen('DASHBOARD');
     }, 2000);
@@ -200,7 +201,14 @@ export default function Home() {
             <IGenBranding className="text-2xl" />
           </div>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 md:gap-6">
+            {userData?.hasClaimedCredits && (
+              <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-full shadow-lg animate-in slide-in-from-right-4">
+                <Wallet className="w-4 h-4 text-cyan-400" />
+                <span className="text-sm font-bold tracking-tight">$300.00</span>
+              </div>
+            )}
+
             <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
               <UserIcon className="w-3 h-3" />
               {isAdmin ? t.roleAdmin : t.roleUser}
@@ -214,7 +222,7 @@ export default function Home() {
                   className="rounded-full gap-2 border-slate-200"
                 >
                   <Globe className="w-4 h-4" />
-                  {getLanguageLabel(lang)}
+                  <span className="hidden sm:inline">{getLanguageLabel(lang)}</span>
                   <ChevronDown className="w-3 h-3 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
