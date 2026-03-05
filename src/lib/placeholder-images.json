@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "render-feature",
+      "description": "Professional architectural rendering example",
+      "imageUrl": "https://picsum.photos/seed/render/600/400",
+      "imageHint": "modern house rendering"
+    },
+    {
+      "id": "video-feature",
+      "description": "Architectural walkthrough thumbnail",
+      "imageUrl": "https://picsum.photos/seed/video/600/400",
+      "imageHint": "cinematic house tour"
+    },
+    {
+      "id": "mood-feature",
+      "description": "Visual design moodboard",
+      "imageUrl": "https://picsum.photos/seed/mood/600/400",
+      "imageHint": "architectural materials moodboard"
+    }
+  ]
 }
