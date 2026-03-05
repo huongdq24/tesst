@@ -177,7 +177,7 @@ export default function Home() {
 
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">Hoặc</span></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">{t.orDivider}</span></div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
