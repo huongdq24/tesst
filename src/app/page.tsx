@@ -7,12 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut } from 'lucide-react';
+import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
 import { useAuth, useUser } from '@/firebase';
 import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
@@ -40,11 +46,6 @@ export default function Home() {
       }
     }
   }, [user, isUserLoading, currentScreen]);
-
-  const toggleLanguage = () => {
-    const next: Record<Language, Language> = { VI: 'EN', EN: 'ZH', ZH: 'VI' };
-    setLang(next[lang]);
-  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,12 +94,6 @@ export default function Home() {
     return '中文';
   };
 
-  const getSwitchLabel = (l: Language) => {
-    if (l === 'VI') return 'Switch to English';
-    if (l === 'EN') return '切换至中文';
-    return 'Chuyển sang Tiếng Việt';
-  };
-
   return (
     <main className="min-h-screen relative overflow-hidden">
       {/* Background decoration */}
@@ -120,15 +115,24 @@ export default function Home() {
               {user?.email?.includes('admin') ? t.roleAdmin : t.roleUser}
             </div>
             
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="rounded-full gap-2 border-slate-200"
-              onClick={toggleLanguage}
-            >
-              <Globe className="w-4 h-4" />
-              {getLanguageLabel(lang)}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-full gap-2 border-slate-200"
+                >
+                  <Globe className="w-4 h-4" />
+                  {getLanguageLabel(lang)}
+                  <ChevronDown className="w-3 h-3 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="rounded-xl border-slate-100">
+                <DropdownMenuItem onClick={() => setLang('VI')} className="font-medium cursor-pointer">Tiếng Việt</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLang('EN')} className="font-medium cursor-pointer">English</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLang('ZH')} className="font-medium cursor-pointer">中文</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {currentScreen === 'DASHBOARD' && (
               <Button variant="ghost" size="sm" onClick={() => auth.signOut()} className="rounded-full text-slate-500">
@@ -154,9 +158,20 @@ export default function Home() {
                 <h1 className="text-3xl font-bold tracking-tight mb-2">{t.loginTitle}</h1>
                 <p className="text-slate-500 text-sm">{t.loginSubtitle}</p>
                 <div className="mt-4 inline-block">
-                  <Button variant="outline" size="sm" className="rounded-full text-[10px] font-bold h-7 border-cyan-200 text-cyan-600 bg-cyan-50/50" onClick={toggleLanguage}>
-                    {getSwitchLabel(lang)}
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="rounded-full text-[10px] font-bold h-7 border-cyan-200 text-cyan-600 bg-cyan-50/50 gap-1.5">
+                        <Globe className="w-3 h-3" />
+                        {getLanguageLabel(lang)}
+                        <ChevronDown className="w-2 h-2" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="rounded-xl border-cyan-100 shadow-xl">
+                      <DropdownMenuItem onClick={() => setLang('VI')} className="text-xs font-bold cursor-pointer">Tiếng Việt</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLang('EN')} className="text-xs font-bold cursor-pointer">English</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLang('ZH')} className="text-xs font-bold cursor-pointer">中文</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
