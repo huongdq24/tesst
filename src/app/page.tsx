@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus } from 'lucide-react';
+import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ShieldCheck, CreditCard as CardIcon } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
 import { useAuth, useUser, useFirestore } from '@/firebase';
 import { initiateEmailSignIn, initiateEmailSignUp, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc } from 'firebase/firestore';
 import {
   DropdownMenu,
@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
+type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'PAYMENT' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
 export default function Home() {
   const { user, isUserLoading } = useUser();
@@ -35,6 +35,7 @@ export default function Home() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
   const { toast } = useToast();
 
   const t = translations[lang];
@@ -69,10 +70,8 @@ export default function Home() {
         const result = await initiateEmailSignUp(auth, userEmail, password);
         const newUser = result.user;
         
-        // Determine role: specific email is admin, others are user
         const role = newUser.email === 'igen-architect@admin.com' ? 'admin' : 'user';
         
-        // Create user profile in Firestore
         const userRef = doc(db, 'users', newUser.uid);
         setDocumentNonBlocking(userRef, {
           id: newUser.uid,
@@ -124,13 +123,32 @@ export default function Home() {
     });
   };
 
-  const claimCredits = () => {
-    toast({
-      title: t.claimSuccess,
-      description: <div className="flex items-center gap-1">Available in your <IGenBranding /> Cloud wallet.</div>,
-      className: "bg-cyan-500 text-white font-bold border-none"
-    });
-    setCurrentScreen('DASHBOARD');
+  const startVerification = () => {
+    setCurrentScreen('PAYMENT');
+  };
+
+  const handlePaymentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsVerifying(true);
+    
+    // Simulate verification delay
+    setTimeout(() => {
+      setIsVerifying(false);
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(userRef, {
+          hasClaimedCredits: true,
+          updatedAt: new Date().toISOString()
+        });
+      }
+      
+      toast({
+        title: t.paymentSuccess,
+        description: <div className="flex items-center gap-1">Available in your <IGenBranding /> Cloud wallet.</div>,
+        className: "bg-cyan-500 text-white font-bold border-none"
+      });
+      setCurrentScreen('DASHBOARD');
+    }, 2000);
   };
 
   if (isUserLoading) {
@@ -147,18 +165,15 @@ export default function Home() {
     return '中文';
   };
 
-  // Helper to check admin role visually in UI
   const isAdmin = user?.email === 'igen-architect@admin.com';
 
   return (
     <main className="min-h-screen relative overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-100/30 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-100/30 blur-[120px] rounded-full" />
       </div>
 
-      {/* Navigation Header */}
       {currentScreen !== 'AUTH' && (
         <header className="fixed top-0 left-0 w-full z-50 glass h-20 px-8 flex items-center justify-between border-b border-slate-200/50">
           <div className="flex items-center gap-2">
@@ -190,7 +205,7 @@ export default function Home() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {currentScreen === 'DASHBOARD' && (
+            {(currentScreen === 'DASHBOARD' || currentScreen === 'FEATURE_DETAIL') && (
               <Button variant="ghost" size="sm" onClick={() => auth.signOut()} className="rounded-full text-slate-500">
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -199,10 +214,8 @@ export default function Home() {
         </header>
       )}
 
-      {/* Screen Routing */}
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         
-        {/* AUTH SCREEN */}
         {currentScreen === 'AUTH' && (
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative">
@@ -308,7 +321,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* CREDIT CLAIM SCREEN */}
         {currentScreen === 'CREDIT_CLAIM' && (
           <div className="flex items-center justify-center min-h-[80vh] animate-in zoom-in-95 duration-500">
             <div className="glass w-full max-w-2xl p-10 md:p-16 rounded-[3rem] text-center relative overflow-hidden">
@@ -322,7 +334,7 @@ export default function Home() {
               <p className="text-slate-500 text-lg mb-12 max-w-md mx-auto">{t.claimDesc}</p>
               
               <Button 
-                onClick={claimCredits}
+                onClick={startVerification}
                 className="h-16 px-12 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95"
               >
                 {t.claimButton}
@@ -331,7 +343,87 @@ export default function Home() {
           </div>
         )}
 
-        {/* DASHBOARD SCREEN */}
+        {currentScreen === 'PAYMENT' && (
+          <div className="flex items-center justify-center min-h-[80vh] animate-in fade-in slide-in-from-bottom-8 duration-500">
+            <div className="glass w-full max-w-xl p-8 md:p-12 rounded-[2.5rem] relative">
+              <div className="mb-8 text-center">
+                <div className="inline-flex p-3 bg-cyan-50 rounded-2xl text-cyan-600 mb-4">
+                  <ShieldCheck className="w-8 h-8" />
+                </div>
+                <h2 className="text-3xl font-bold text-slate-900">{t.paymentTitle}</h2>
+                <p className="text-slate-500 mt-2 text-sm px-4">{t.paymentSubtitle}</p>
+              </div>
+
+              <form onSubmit={handlePaymentSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.cardName}</Label>
+                  <Input 
+                    required 
+                    placeholder="JOHN DOE" 
+                    className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500 uppercase"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.cardNumber}</Label>
+                  <div className="relative">
+                    <CardIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Input 
+                      required 
+                      placeholder="0000 0000 0000 0000" 
+                      className="pl-10 h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.expiry}</Label>
+                    <Input 
+                      required 
+                      placeholder="MM/YY" 
+                      className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.cvv}</Label>
+                    <Input 
+                      required 
+                      type="password" 
+                      maxLength={3} 
+                      placeholder="***" 
+                      className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  disabled={isVerifying}
+                  className="w-full h-14 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white rounded-xl font-bold text-lg mt-6 shadow-xl active:scale-[0.98] transition-all"
+                >
+                  {isVerifying ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Verifying...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <ShieldCheck className="mr-2 w-5 h-5" />
+                      {t.verifyButton}
+                    </>
+                  )}
+                </Button>
+              </form>
+              
+              <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-4 grayscale opacity-40">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-4" />
+              </div>
+            </div>
+          </div>
+        )}
+
         {currentScreen === 'DASHBOARD' && (
           <div className="max-w-7xl mx-auto">
             <div className="mb-12">
@@ -349,7 +441,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* FEATURE DETAIL SCREEN */}
         {currentScreen === 'FEATURE_DETAIL' && (
           <FeatureWorkspace 
             featureId={selectedFeature!} 
@@ -360,8 +451,7 @@ export default function Home() {
 
       </div>
 
-      {/* Voice Assistant Orb */}
-      {currentScreen !== 'AUTH' && <VoiceAssistantOrb lang={lang} />}
+      {(currentScreen !== 'AUTH' && currentScreen !== 'PAYMENT') && <VoiceAssistantOrb lang={lang} />}
     </main>
   );
 }
