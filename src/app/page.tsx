@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -11,7 +12,7 @@ import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon,
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
-import { useAuth, useUser, useFirestore } from '@/firebase';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { initiateEmailSignIn, initiateEmailSignUp, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc } from 'firebase/firestore';
@@ -28,6 +29,8 @@ export default function Home() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const db = useFirestore();
+  const { toast } = useToast();
+
   const [currentScreen, setCurrentScreen] = useState<Screen>('AUTH');
   const [lang, setLang] = useState<Language>('VI');
   const [userEmail, setUserEmail] = useState('');
@@ -36,22 +39,39 @@ export default function Home() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  const { toast } = useToast();
 
   const t = translations[lang];
 
-  // Sync screen state with auth state
+  // Fetch user profile from Firestore to check hasClaimedCredits
+  const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
+  const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
+
+  // Sync screen state with auth state and Firestore data
   useEffect(() => {
-    if (!isUserLoading) {
+    if (!isUserLoading && !isUserDataLoading) {
       if (user) {
-        if (currentScreen === 'AUTH') {
+        // If we have Firestore data, check if they already claimed credits
+        if (userData) {
+          if (userData.hasClaimedCredits) {
+            // Already claimed, go to Dashboard if they are currently on a setup screen
+            if (currentScreen === 'AUTH' || currentScreen === 'CREDIT_CLAIM' || currentScreen === 'PAYMENT') {
+              setCurrentScreen('DASHBOARD');
+            }
+          } else {
+            // New user (hasn't claimed), show the claim screen
+            if (currentScreen === 'AUTH') {
+              setCurrentScreen('CREDIT_CLAIM');
+            }
+          }
+        } else if (currentScreen === 'AUTH') {
+          // No user document yet (might be still creating), show claim screen for first-timers
           setCurrentScreen('CREDIT_CLAIM');
         }
       } else {
         setCurrentScreen('AUTH');
       }
     }
-  }, [user, isUserLoading, currentScreen]);
+  }, [user, isUserLoading, userData, isUserDataLoading, currentScreen]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +171,7 @@ export default function Home() {
     }, 2000);
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || isUserDataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
