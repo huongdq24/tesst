@@ -254,9 +254,12 @@ export default function Home() {
               <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-3 cursor-pointer group">
                   <Avatar className="w-10 h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-colors">
-                    <AvatarImage src={user?.photoURL || ''} />
+                    <AvatarImage 
+                      src={user?.photoURL || undefined} 
+                      referrerPolicy="no-referrer"
+                    />
                     <AvatarFallback className="bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-bold">
-                      {user?.email?.[0].toUpperCase() || 'U'}
+                      {user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-cyan-500 transition-colors" />
@@ -266,7 +269,7 @@ export default function Home() {
                 <DropdownMenuLabel className="p-3">
                   <div className="flex flex-col gap-1">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.roleUser}</p>
-                    <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
+                    <p className="text-sm font-bold truncate text-slate-900">{user?.displayName || user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 
