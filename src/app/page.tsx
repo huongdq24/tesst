@@ -18,7 +18,6 @@ import {
   LogOut, 
   ChevronDown, 
   UserPlus, 
-  X,
   Key
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
@@ -68,7 +67,7 @@ export default function Home() {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
         if (userData) {
-          // Logic: Tài khoản Admin luôn được gán API Key mặc định của Tier 1
+          // Logic: Tài khoản Admin luôn được gán API Key mặc định
           if (user.email === ADMIN_EMAIL && (!userData.apiKey || userData.apiKey !== ADMIN_API_KEY)) {
             const uRef = doc(db, 'users', user.uid);
             updateDocumentNonBlocking(uRef, {
