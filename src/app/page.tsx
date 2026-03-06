@@ -446,25 +446,6 @@ export default function Home() {
                       <Sparkles className="w-4 h-4 text-cyan-500 opacity-50" />
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1.5 px-1 mt-2">
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-tight">
-                      {lang === 'VI' ? 'Dịch vụ được tích hợp:' : 'Integrated Services:'}
-                    </p>
-                    <div className="grid grid-cols-1 gap-1">
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                        <div className="w-1 h-1 rounded-full bg-cyan-400" />
-                        <span>iGen Logic Engine (Gemini 3.1 Pro)</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                        <div className="w-1 h-1 rounded-full bg-blue-400" />
-                        <span>iGen Vision (Nano Banana 2)</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                        <div className="w-1 h-1 rounded-full bg-purple-400" />
-                        <span>iGen Motion (Veo 3.1)</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 <Button 
