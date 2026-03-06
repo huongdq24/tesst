@@ -1,217 +1,54 @@
+
 {
   "entities": {
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents an application user, their profile information, role, and preferences.",
+      "description": "Thông tin hồ sơ người dùng, vai trò và trạng thái kích hoạt iGen credits.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address, used for authentication. (Relationship: User 1:1 Authentication System Account)",
-          "format": "email"
-        },
-        "role": {
-          "type": "string",
-          "description": "The assigned role of the user within the application, e.g., 'Admin' or 'User'.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "hasClaimedCredits": {
-          "type": "boolean",
-          "description": "Indicates whether the user has claimed their $300 iGen Cloud Credits."
-        },
-        "languagePreference": {
-          "type": "string",
-          "description": "The user's preferred application language, e.g., 'VI' for Vietnamese or 'EN' for English.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp when the user account was created.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when the user account was last updated.",
-          "format": "date-time"
-        },
-        "lastLogin": {
-          "type": "string",
-          "description": "Timestamp of the user's last successful login.",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "hasClaimedCredits": { "type": "boolean" },
+        "apiKey": { "type": "string", "description": "API Key Tier 1 đã liên kết" },
+        "preferredLanguage": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "email",
-        "role",
-        "hasClaimedCredits",
-        "languagePreference",
-        "createdAt",
-        "updatedAt",
-        "lastLogin"
-      ]
+      "required": ["id", "email", "role", "hasClaimedCredits", "createdAt", "updatedAt"]
     },
-    "Feature": {
+    "Project": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Feature",
+      "title": "Project",
       "type": "object",
-      "description": "Defines an architectural AI feature available in the iGen ecosystem dashboard.",
+      "description": "Lưu trữ lịch sử ảnh/video đã tạo. Hệ thống sẽ tự động xóa tài liệu này sau 30 ngày dựa trên trường createdAt (TTL Policy).",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Feature entity."
-        },
-        "titleVI": {
-          "type": "string",
-          "description": "The title of the feature in Vietnamese."
-        },
-        "titleEN": {
-          "type": "string",
-          "description": "The title of the feature in English."
-        },
-        "descriptionVI": {
-          "type": "string",
-          "description": "A brief description of the feature in Vietnamese."
-        },
-        "descriptionEN": {
-          "type": "string",
-          "description": "A brief description of the feature in English."
-        },
-        "thumbnailUrl": {
-          "type": "string",
-          "description": "URL to the thumbnail image representing the feature on the dashboard.",
-          "format": "uri"
-        },
-        "routePath": {
-          "type": "string",
-          "description": "The application's internal route path to navigate to the detailed workspace for this feature."
-        },
-        "order": {
-          "type": "number",
-          "description": "The display order of the feature card in the dashboard grid."
-        }
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "featureId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "outputUrl": { "type": "string" },
+        "mode": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Trường mốc thời gian để Firestore thực hiện xóa tự động (TTL)" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "titleVI",
-        "titleEN",
-        "descriptionVI",
-        "descriptionEN",
-        "thumbnailUrl",
-        "routePath",
-        "order"
-      ]
-    },
-    "UserFeatureSetting": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserFeatureSetting",
-      "type": "object",
-      "description": "Stores user-specific settings and preferences for a particular AI feature.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the UserFeatureSetting entity."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who owns this setting. (Relationship: User 1:N UserFeatureSetting)"
-        },
-        "featureId": {
-          "type": "string",
-          "description": "Reference to the Feature this setting applies to. (Relationship: Feature 1:N UserFeatureSetting)"
-        },
-        "mode": {
-          "type": "string",
-          "description": "The user's preferred operating mode for the feature, e.g., 'SPEED_MODE' or 'PRO_MODE'.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "videoConsistentCharacterSync": {
-          "type": "boolean",
-          "description": "Toggle for 'Consistent Character Sync' in the Video Creator feature."
-        },
-        "videoCinematicPan": {
-          "type": "boolean",
-          "description": "Toggle for 'Cinematic Pan' in the Video Creator feature."
-        },
-        "videoAiVideoExtend": {
-          "type": "boolean",
-          "description": "Toggle for 'AI Video Extend (+8s)' in the Video Creator feature."
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp when this feature setting was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "featureId",
-        "mode",
-        "updatedAt"
-      ]
+      "required": ["id", "userId", "featureId", "outputUrl", "createdAt"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "google.com"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores individual user profiles including authentication details, role, preferences, and credit claim status. Access is restricted to the user matching '{userId}' or to administrators. The 'userId' in the path dictates ownership for Authorization Independence."
-        }
-      },
-      {
-        "path": "/roles_admin/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Dedicated collection for explicit administrative role assignment. The existence of a document at this path signifies that the associated 'userId' has administrative privileges. This design leverages the 'Existence over Content' principle for DBAC and ensures Authorization Independence by not requiring a 'get()' call to the user's main profile to check roles."
-        }
-      },
-      {
-        "path": "/features/{featureId}",
-        "definition": {
-          "entityName": "Feature",
-          "schema": {
-            "$ref": "#/backend/entities/Feature"
-          },
-          "description": "Stores static definitions for all architectural AI features available in the iGen ecosystem dashboard. These documents are publicly readable by all authenticated users. Only administrators can create, update, or delete feature definitions. This path exemplifies Structural Segregation for a uniform security posture."
-        }
-      },
-      {
-        "path": "/users/{userId}/featureSettings/{featureId}",
-        "definition": {
-          "entityName": "UserFeatureSetting",
-          "schema": {
-            "$ref": "#/backend/entities/UserFeatureSetting"
-          },
-          "description": "Stores user-specific settings and preferences for a particular AI feature. This subcollection is privately owned by the 'userId' in the parent path. The 'userId' and 'featureId' fields are denormalized within the document to provide robust authorization context directly, ensuring Authorization Independence and simplifying security rules by allowing direct comparison with 'request.auth.uid'."
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to be secure, scalable, and highly debuggable, strictly adhering to the core design principles and strategy mandates. \n\n**Authorization Independence via Denormalization:**\n\n1.  **User Profiles (`/users/{userId}`):** User profiles are stored in a top-level collection where `userId` is the document ID. Access to a specific user's document is directly authorized by `request.auth.uid == userId`. This path-based ownership ensures authorization independence, as no `get()` call to a parent document is needed to verify access. Each user's data is self-contained and directly addressable.\n\n2.  **Admin Roles (`/roles_admin/{userId}`):** Admin roles are managed through a dedicated top-level collection. The *existence* of a document at `/roles_admin/$(request.auth.uid)` determines if the current user is an administrator. This 'existence over content' pattern is crucial for authorization independence, as it allows security rules to check for administrative privileges without querying the `/users/{userId}` document, making the check atomic and simple. The `userId` in the path directly provides the authorization context.\n\n3.  **User Feature Settings (`/users/{userId}/featureSettings/{featureId}`):** User-specific feature settings are structured as a subcollection under the respective user's profile. The `userId` in the parent path (`/users/{userId}`) directly establishes ownership. To reinforce Authorization Independence, the `UserFeatureSetting` document itself includes `userId` and `featureId` fields, which act as denormalized authorization context. This means security rules can directly compare `request.auth.uid` to the `{userId}` in the path and/or the `userId` field in the document, avoiding any `get()` operations on the parent `User` document.\n\n4.  **Features (`/features/{featureId}`):** Feature definitions are public and read-only for all authenticated users. Their access does not depend on any user-specific or hierarchical authorization context, naturally ensuring authorization independence. Only administrators are allowed to create or modify these documents, a privilege checked using the `/roles_admin/{userId}` collection.\n\n**QAPs (Secure List Operations):**\n\n1.  **User Profiles:** While direct `list` operations on `/users` are generally restricted to administrators, individual users can only `get()` their own profile. For admins, rules would enforce the `/roles_admin` check for full collection access.\n2.  **Admin Roles:** `list` operations are typically restricted to internal services or administrators, enforced by the `/roles_admin` rule.\n3.  **Features:** All authenticated users can securely `list` documents in the `/features` collection, as these are public read-only assets. Rules simply check for `request.auth != null` for read access.\n4.  **User Feature Settings:** Users can securely `list` all their own feature settings by querying `/users/{request.auth.uid}/featureSettings`. The path itself inherently filters results to the authenticated user's data, allowing for efficient and secure `list` queries without complex rule logic or filtering on the client-side.\n\nThis design prioritizes structural segregation, clear access modeling, and explicit denormalization to create a robust, secure, and easily debuggable Firestore schema. The use of distinct collections for roles and path-based ownership for private data ensures that security rules are simple, efficient, and free from problematic `get()` calls."
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/User" },
+      "description": "Hồ sơ người dùng riêng tư."
+    },
+    "/users/{userId}/projects/{projectId}": {
+      "schema": { "$ref": "#/backend/entities/Project" },
+      "description": "Lịch sử dự án cá nhân, tự động xóa sau 30 ngày thông qua chính sách TTL trên trường createdAt."
+    }
   }
 }
