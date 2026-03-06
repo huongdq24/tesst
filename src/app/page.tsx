@@ -8,7 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, LogIn, Globe, Wallet, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ExternalLink, X } from 'lucide-react';
+import { 
+  Mail, 
+  Smartphone, 
+  LogIn, 
+  Globe, 
+  Wallet, 
+  Sparkles, 
+  User as UserIcon, 
+  LogOut, 
+  ChevronDown, 
+  UserPlus, 
+  X,
+  Key
+} from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
@@ -20,8 +33,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'PAYMENT' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
@@ -201,6 +217,11 @@ export default function Home() {
     </svg>
   );
 
+  const maskApiKey = (key?: string) => {
+    if (!key) return '****';
+    return `****${key.slice(-4)}`;
+  };
+
   return (
     <main className="min-h-screen relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
@@ -216,14 +237,14 @@ export default function Home() {
           
           <div className="flex items-center gap-4 md:gap-6">
             {userData?.hasClaimedCredits && (
-              <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-full shadow-lg animate-in slide-in-from-right-4">
+              <div className="hidden sm:flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-full shadow-lg animate-in slide-in-from-right-4">
                 <Wallet className="w-4 h-4 text-cyan-400" />
                 <span className="text-sm font-bold tracking-tight">$300.00</span>
               </div>
             )}
 
             {isSuperAdmin && (
-              <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
+              <div className="hidden lg:flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
                 <UserIcon className="w-3 h-3" />
                 {t.roleAdmin}
               </div>
@@ -231,28 +252,66 @@ export default function Home() {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="rounded-full gap-2 border-slate-200"
-                >
-                  <Globe className="w-4 h-4" />
-                  <span className="hidden sm:inline">{getLanguageLabel(lang)}</span>
-                  <ChevronDown className="w-3 h-3 opacity-50" />
-                </Button>
+                <div className="flex items-center gap-3 cursor-pointer group">
+                  <Avatar className="w-10 h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-colors">
+                    <AvatarImage src={user?.photoURL || ''} />
+                    <AvatarFallback className="bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-bold">
+                      {user?.email?.[0].toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-cyan-500 transition-colors" />
+                </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-xl border-slate-100">
-                <DropdownMenuItem onClick={() => setLang('VI')} className="font-medium cursor-pointer">Tiếng Việt</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLang('EN')} className="font-medium cursor-pointer">English</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLang('ZH')} className="font-medium cursor-pointer">中文</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-64 rounded-2xl border-slate-100 shadow-2xl p-2">
+                <DropdownMenuLabel className="p-3">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.roleUser}</p>
+                    <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                
+                <DropdownMenuSeparator className="bg-slate-50" />
+                
+                <div className="p-2 space-y-1">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Wallet className="w-4 h-4" />
+                      <span className="text-xs font-medium">Credits</span>
+                    </div>
+                    <span className="text-xs font-bold text-slate-900">$300.00</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Key className="w-4 h-4" />
+                      <span className="text-xs font-medium">{t.apiKeyLabel}</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
+                  </div>
+                </div>
+
+                <DropdownMenuSeparator className="bg-slate-50" />
+
+                <DropdownMenuLabel className="px-3 pt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {lang === 'VI' ? 'Ngôn ngữ' : 'Language'}
+                </DropdownMenuLabel>
+                <div className="grid grid-cols-3 gap-1 p-1">
+                  <DropdownMenuItem onClick={() => setLang('VI')} className={`justify-center rounded-lg text-xs font-bold ${lang === 'VI' ? 'bg-cyan-50 text-cyan-600' : ''}`}>VI</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLang('EN')} className={`justify-center rounded-lg text-xs font-bold ${lang === 'EN' ? 'bg-cyan-50 text-cyan-600' : ''}`}>EN</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLang('ZH')} className={`justify-center rounded-lg text-xs font-bold ${lang === 'ZH' ? 'bg-cyan-50 text-cyan-600' : ''}`}>ZH</DropdownMenuItem>
+                </div>
+
+                <DropdownMenuSeparator className="bg-slate-50" />
+
+                <DropdownMenuItem 
+                  onClick={() => auth.signOut()} 
+                  className="p-3 rounded-xl text-red-500 focus:text-red-600 focus:bg-red-50 font-bold gap-3 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {lang === 'VI' ? 'Đăng xuất' : 'Logout'}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {(currentScreen === 'DASHBOARD' || currentScreen === 'FEATURE_DETAIL') && (
-              <Button variant="ghost" size="sm" onClick={() => auth.signOut()} className="rounded-full text-slate-500">
-                <LogOut className="w-4 h-4" />
-              </Button>
-            )}
           </div>
         </header>
       )}
