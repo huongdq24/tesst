@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -20,7 +21,10 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
 
 /** Initiate email/password sign-in (non-blocking). */
 export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  signInWithEmailAndPassword(authInstance, email, password);
+  signInWithEmailAndPassword(authInstance, email, password).catch((error) => {
+    // Error handling is centralized in FirebaseProvider/FirebaseErrorListener
+    console.error("Email Sign-In Error:", error);
+  });
 }
 
 /** Initiate Google sign-in (non-blocking). */
