@@ -218,8 +218,8 @@ export default function Home() {
   );
 
   const maskApiKey = (key?: string) => {
-    if (!key) return '****';
-    return `****${key.slice(-4)}`;
+    if (!key) return '••••••••';
+    return `••••${key.slice(-4)}`;
   };
 
   return (
@@ -289,7 +289,9 @@ export default function Home() {
                       <Key className="w-4 h-4" />
                       <span className="text-xs font-medium">{t.apiKeyLabel}</span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
+                    <span className={`text-[10px] font-mono font-bold ${userData?.apiKey ? 'text-cyan-600' : 'text-slate-300'}`}>
+                      {maskApiKey(userData?.apiKey)}
+                    </span>
                   </div>
                 </div>
 
