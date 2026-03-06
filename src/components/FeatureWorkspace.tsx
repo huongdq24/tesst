@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from 'react';
@@ -11,7 +12,7 @@ import { IGenBranding } from './Branding';
 import { aiVideoWalkthroughGenerator } from '@/ai/flows/ai-video-walkthrough-generator';
 import { useToast } from '@/hooks/use-toast';
 
-export const FeatureWorkspace = ({ featureId, lang, onBack }: { featureId: string, lang: Language, onBack: () => void }) => {
+export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { featureId: string, lang: Language, onBack: () => void, userApiKey?: string }) => {
   const [isProMode, setIsProMode] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -32,7 +33,8 @@ export const FeatureWorkspace = ({ featureId, lang, onBack }: { featureId: strin
       const result = await aiVideoWalkthroughGenerator({
         description: prompt,
         cinematicPan: cinematicPan,
-        aiVideoExtend: extendVideo
+        aiVideoExtend: extendVideo,
+        apiKey: userApiKey // Pass the user's fixed API key
       });
       setResultVideo(result.videoDataUri);
     } catch (error) {

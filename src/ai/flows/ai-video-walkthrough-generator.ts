@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for generating a video walkthrough of a building design.
@@ -43,6 +44,7 @@ const AIVideoWalkthroughGeneratorInputSchema = z
       .describe(
         'Whether to instruct AI for video extension (Veo 3.0 has fixed duration, this acts as a prompt hint).'
       ),
+    apiKey: z.string().optional().describe('User-specific API key for AI services.'),
   })
   .superRefine((data, ctx) => {
     if (!data.floorPlanDataUri && !data.description) {
@@ -73,14 +75,15 @@ export type AIVideoWalkthroughGeneratorOutput = z.infer<
 /**
  * Fetches a video from a given MediaPart URL and returns it as a base64 encoded data URI.
  * @param video The MediaPart object containing the video URL.
+ * @param userKey The optional user-provided API key.
  * @returns A promise that resolves to the base64 encoded video data URI.
  */
-async function fetchVideoAsBase64(video: MediaPart): Promise<string> {
+async function fetchVideoAsBase64(video: MediaPart, userKey?: string): Promise<string> {
   const fetch = (await import('node-fetch')).default;
-  const apiKey = process.env.VITE_IGEN_MOTION_API_KEY; // Using the specific ENV var name from the prompt
+  const apiKey = userKey || process.env.VITE_IGEN_MOTION_API_KEY; // Fallback to server key if user key not provided
 
   if (!apiKey) {
-    throw new Error('VITE_IGEN_MOTION_API_KEY environment variable is not set.');
+    throw new Error('API key is not available for video download.');
   }
 
   const videoDownloadResponse = await fetch(
@@ -141,9 +144,7 @@ const aiVideoWalkthroughGeneratorFlow = ai.defineFlow(
       prompt: promptParts,
       config: {
         aspectRatio: '16:9',
-        personGeneration: 'allow_all', // Only option for Veo 3
-        // durationSeconds is fixed at 8s for Veo 3 and not configurable via config
-        // numberOfVideos is fixed at 1 for Veo 3
+        personGeneration: 'allow_all',
       },
     });
 
@@ -151,10 +152,8 @@ const aiVideoWalkthroughGeneratorFlow = ai.defineFlow(
       throw new Error('Expected the model to return an operation for video generation');
     }
 
-    // Wait until the operation completes.
     while (!operation.done) {
-      // This polling interval can be adjusted
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Sleep for 5 seconds
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       operation = await ai.checkOperation(operation);
     }
 
@@ -169,7 +168,7 @@ const aiVideoWalkthroughGeneratorFlow = ai.defineFlow(
       throw new Error('Failed to find the generated video media in the operation output.');
     }
 
-    const videoDataUri = await fetchVideoAsBase64(video);
+    const videoDataUri = await fetchVideoAsBase64(video, input.apiKey);
 
     return { videoDataUri };
   }

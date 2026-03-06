@@ -1,12 +1,7 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for the iGen Architectural AI Assistant.
- * It takes a text query, generates a text response related to architectural design,
- * material choices, or conceptual ideas, and then converts that text response into audio.
- *
- * - voiceArchitecturalAssistant - A function that handles the voice-activated architectural assistant process.
- * - VoiceArchitecturalAssistantInput - The input type for the voiceArchitecturalAssistant function.
- * - VoiceArchitecturalAssistantOutput - The return type for the voiceArchitecturalAssistant function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -14,16 +9,16 @@ import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import wav from 'wav';
 import { Buffer } from 'buffer';
-import { Readable } from 'stream';
 
 const VoiceArchitecturalAssistantInputSchema = z.object({
   query: z.string().describe('The user\'s spoken query to the iGen Architectural Assistant.'),
+  apiKey: z.string().optional().describe('User-specific API key.'),
 });
 export type VoiceArchitecturalAssistantInput = z.infer<typeof VoiceArchitecturalAssistantInputSchema>;
 
 const VoiceArchitecturalAssistantOutputSchema = z.object({
   responseText: z.string().describe('The textual response from the iGen Architectural Assistant.'),
-  responseAudio: z.string().describe('The audio response from the iGen Architectural Assistant, as a data URI (data:audio/wav;base64,...).'),
+  responseAudio: z.string().describe('The audio response from the iGen Architectural Assistant, as a data URI.'),
 });
 export type VoiceArchitecturalAssistantOutput = z.infer<typeof VoiceArchitecturalAssistantOutputSchema>;
 
@@ -31,7 +26,7 @@ const ArchitecturalAssistantPrompt = ai.definePrompt({
   name: 'architecturalAssistantPrompt',
   input: { schema: VoiceArchitecturalAssistantInputSchema },
   output: { schema: z.object({ text: z.string() }) },
-  system: `You are iGen, an expert Architectural AI Assistant. Your purpose is to provide helpful, creative, and insightful advice on architectural design principles, material choices, conceptual ideas for projects, sustainability practices, building codes, and other relevant architectural topics. Your responses should be clear, concise, professional, and directly address the user's query.`,
+  system: `You are iGen, an expert Architectural AI Assistant. Your purpose is to provide helpful, creative, and insightful advice on architectural design principles, material choices, conceptual ideas for projects, sustainability practices, building codes, and other relevant architectural topics.`,
   prompt: `User query: {{{query}}}`,
 });
 
@@ -42,11 +37,11 @@ const voiceArchitecturalAssistantFlow = ai.defineFlow(
     outputSchema: VoiceArchitecturalAssistantOutputSchema,
   },
   async (input) => {
-    // 1. Get text response from the core LLM
+    // 1. Get text response
     const { output: llmResponse } = await ArchitecturalAssistantPrompt(input);
     const responseText = llmResponse?.text || "I'm sorry, I couldn't generate a text response.";
 
-    // 2. Convert text response to audio using TTS model
+    // 2. Convert text response to audio
     let responseAudioUri: string;
     try {
       const { media } = await ai.generate({
@@ -66,7 +61,6 @@ const voiceArchitecturalAssistantFlow = ai.defineFlow(
         throw new Error('No audio media returned from TTS model.');
       }
 
-      // The TTS model returns PCM audio, convert it to WAV
       const audioBuffer = Buffer.from(
         media.url.substring(media.url.indexOf(',') + 1),
         'base64'
@@ -74,7 +68,6 @@ const voiceArchitecturalAssistantFlow = ai.defineFlow(
       responseAudioUri = 'data:audio/wav;base64,' + (await toWav(audioBuffer));
 
     } catch (error) {
-      console.error('Error generating or converting audio:', error);
       responseAudioUri = 'data:audio/wav;base64,';
     }
 
@@ -85,7 +78,6 @@ const voiceArchitecturalAssistantFlow = ai.defineFlow(
   }
 );
 
-// Helper function to convert PCM audio buffer to WAV format
 async function toWav(
   pcmData: Buffer,
   channels = 1,

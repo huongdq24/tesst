@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from 'react';
@@ -8,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { IGenBranding } from './Branding';
 import { Language } from '@/lib/i18n';
 
-export const VoiceAssistantOrb = ({ lang }: { lang: Language }) => {
+export const VoiceAssistantOrb = ({ lang, userApiKey }: { lang: Language, userApiKey?: string }) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
@@ -23,7 +24,7 @@ export const VoiceAssistantOrb = ({ lang }: { lang: Language }) => {
       setIsProcessing(true);
       try {
         const query = lang === 'VI' ? 'Thiết kế một biệt thự hiện đại' : lang === 'EN' ? 'Design a modern villa' : '设计一座现代别墅';
-        const result = await voiceArchitecturalAssistant({ query });
+        const result = await voiceArchitecturalAssistant({ query, apiKey: userApiKey });
         
         if (result.responseAudio) {
           const audio = new Audio(result.responseAudio);

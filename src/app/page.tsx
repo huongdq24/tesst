@@ -487,13 +487,14 @@ export default function Home() {
           <FeatureWorkspace 
             featureId={selectedFeature!} 
             lang={lang} 
+            userApiKey={userData?.apiKey}
             onBack={() => setCurrentScreen('DASHBOARD')} 
           />
         )}
 
       </div>
 
-      {(currentScreen !== 'AUTH' && currentScreen !== 'PAYMENT') && <VoiceAssistantOrb lang={lang} />}
+      {(currentScreen !== 'AUTH' && currentScreen !== 'PAYMENT') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />}
     </main>
   );
 }
