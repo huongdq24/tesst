@@ -495,7 +495,15 @@ export default function Home() {
           <div className="flex items-center justify-center min-h-[80vh] animate-in fade-in slide-in-from-bottom-8 duration-500">
             <div className="glass w-full max-w-xl p-8 md:p-12 rounded-[2.5rem] relative">
               <div className="mb-8 text-center">
-                <h2 className="text-3xl font-bold text-slate-900">{t.paymentTitle}</h2>
+                <h2 className="text-3xl font-bold text-slate-900">
+                  {lang === 'VI' ? (
+                    <>Nhập mã đối tác của <span className="text-cyan-500">iGen</span></>
+                  ) : lang === 'EN' ? (
+                    <>Enter <span className="text-cyan-500">iGen</span> Partner Code</>
+                  ) : (
+                    <>输入 <span className="text-cyan-500">iGen</span> 合作伙伴代码</>
+                  )}
+                </h2>
               </div>
               <form onSubmit={handlePaymentSubmit} className="space-y-5">
                 <div className="space-y-2">
