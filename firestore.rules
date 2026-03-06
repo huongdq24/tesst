@@ -1,20 +1,110 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Chỉ cho phép người dùng đăng nhập truy cập dữ liệu của chính họ
-    match /users/{userId} {
-      allow get, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Cho phép quản lý các dự án con (ảnh/video)
-      match /projects/{projectId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+
+    /**
+     * iGen AI Assistant Security Rules
+     *
+     * Core Philosophy: 
+     * This ruleset implements a strict path-based ownership model combined with 
+     * a high-performance administrative role check using the "Existence over Content" 
+     * pattern. The system is designed for maximum authorization security while 
+     * maintaining high flexibility for data shapes during the prototyping phase.
+     *
+     * Data Structure:
+     * - /users/{userId}: Primary user profile and configuration.
+     * - /users/{userId}/projects/{projectId}: User-specific AI generation tasks and results.
+     * - /roles_admin/{adminId}: Markers for administrative privileges.
+     *
+     * Key Security Decisions:
+     * 1. Authorization Independence: Read/Write decisions for user data are made 
+     *    by comparing the auth UID directly to the path wildcards, avoiding costly get() calls.
+     * 2. Administrative Access: Global admins are identified by the presence of 
+     *    their UID in the /roles_admin collection.
+     * 3. Relational Integrity: On document creation, the rules enforce that internal 
+     *    ownership fields (like userId) match the path to ensure data consistency.
+     * 4. Structural Segregation: Administrative markers are separated from user profiles 
+     *    to prevent privilege escalation and simplify rule logic.
+     *
+     * Prototyping Mode:
+     * Data types and non-relational fields are not validated to allow for rapid 
+     * iteration of the iGen toolset.
+     */
+
+    // --- Helper Functions ---
+
+    /** @description Checks if the request is from a signed-in user. */
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    // Rule dự phòng cho quản trị viên (nếu cần)
-    match /roles_admin/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+
+    /** @description Checks if the user's UID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the authenticated user has a marker in the admin collection. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /** @description Combines ownership check with document existence for destructive operations. */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /** @description Validates that a field is not being changed during an update. */
+    function isUnchanged(fieldName) {
+      return request.resource.data[fieldName] == resource.data[fieldName];
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Administrative role markers. Only admins can view or modify the admin list.
+     * @path /roles_admin/{adminId}
+     * @allow (get) Admin user checking their own or others' admin status.
+     * @deny (create) Non-admin user attempting to grant themselves privileges.
+     * @principle Existence-based authorization for global roles.
+     */
+    match /roles_admin/{adminId} {
+      allow get, list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description User profile documents. Users manage their own profiles; admins have oversight.
+     * @path /users/{userId}
+     * @allow (create) New user creating their own profile where document ID matches their UID.
+     * @deny (list) Regular user attempting to browse the entire user directory.
+     * @principle Path-based ownership and self-creation.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if (isExistingOwner(userId) || isAdmin()) && isUnchanged('id');
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description AI Projects nested under users. Enforces strict ownership via path hierarchy.
+     * @path /users/{userId}/projects/{projectId}
+     * @allow (list) User retrieving all projects within their own project subcollection.
+     * @deny (update) User trying to change the 'userId' of a project to move it to another account.
+     * @principle Nested resource ownership and relational field immutability.
+     */
+    match /users/{userId}/projects/{projectId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if (isExistingOwner(userId) || isAdmin()) && isUnchanged('userId');
+      allow delete: if isExistingOwner(userId) || isAdmin();
+    }
+
+    // --- Global Deny ---
+    // Explicitly deny any access to paths not defined above.
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }

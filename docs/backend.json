@@ -1,54 +1,198 @@
-
 {
   "entities": {
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Thông tin hồ sơ người dùng, vai trò và trạng thái kích hoạt iGen credits.",
+      "description": "Represents a user of the iGen application, storing their profile information and application-specific settings. This entity does not store sensitive authentication credentials like passwords.",
       "properties": {
-        "id": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "role": { "type": "string", "enum": ["admin", "user"] },
-        "hasClaimedCredits": { "type": "boolean" },
-        "apiKey": { "type": "string", "description": "API Key Tier 1 đã liên kết" },
-        "preferredLanguage": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for identifying the user.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's preferred display name within the application."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's assigned role within the application (e.g., Admin or User).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "languagePreference": {
+          "type": "string",
+          "description": "The user's preferred language for the application UI (e.g., VI for Vietnamese, EN for English)."
+        },
+        "hasClaimedInitialCredits": {
+          "type": "boolean",
+          "description": "Indicates whether the user has claimed their initial $300 iGen Cloud Credits."
+        },
+        "cloudCreditsBalance": {
+          "type": "number",
+          "description": "The current balance of iGen Cloud Credits available to the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account information was last updated.",
+          "format": "date-time"
+        }
       },
-      "required": ["id", "email", "role", "hasClaimedCredits", "createdAt", "updatedAt"]
+      "required": [
+        "id",
+        "email",
+        "role",
+        "languagePreference",
+        "hasClaimedInitialCredits",
+        "cloudCreditsBalance",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "Project": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Project",
       "type": "object",
-      "description": "Lưu trữ lịch sử ảnh/video đã tạo. Hệ thống sẽ tự động xóa tài liệu này sau 30 ngày dựa trên trường createdAt (TTL Policy).",
+      "description": "Represents a user-created project or a unit of work generated using one of the iGen AI tools (e.g., a rendering, a video, a moodboard).",
       "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "featureId": { "type": "string" },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "outputUrl": { "type": "string" },
-        "mode": { "type": "string" },
-        "status": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time", "description": "Trường mốc thời gian để Firestore thực hiện xóa tự động (TTL)" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Project entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this project. (Relationship: User 1:N Project)"
+        },
+        "title": {
+          "type": "string",
+          "description": "A user-defined title for the project."
+        },
+        "description": {
+          "type": "string",
+          "description": "An optional, detailed description provided by the user for the project."
+        },
+        "type": {
+          "type": "string",
+          "description": "The category or type of AI tool used to create this project (e.g., Rendering, VideoCreator).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "The current processing status of the project (e.g., draft, processing, completed, failed).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outputUrl": {
+          "type": "string",
+          "description": "URL to the final generated output file of the project (e.g., a hosted image or video file).",
+          "format": "uri"
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "description": "URL to a thumbnail image representing the project's output, for quick preview.",
+          "format": "uri"
+        },
+        "featureSettings": {
+          "type": "string",
+          "description": "A stringified JSON object containing specific settings and parameters used for this project, varying based on its 'type'. For VideoCreator, this might include 'consistentCharacterSync', 'cinematicPan', etc."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the project was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the project information was last updated.",
+          "format": "date-time"
+        }
       },
-      "required": ["id", "userId", "featureId", "outputUrl", "createdAt"]
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "type",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "auth": {
-    "providers": ["password", "google.com"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": { "$ref": "#/backend/entities/User" },
-      "description": "Hồ sơ người dùng riêng tư."
-    },
-    "/users/{userId}/projects/{projectId}": {
-      "schema": { "$ref": "#/backend/entities/Project" },
-      "description": "Lịch sử dự án cá nhân, tự động xóa sau 30 ngày thông qua chính sách TTL trên trường createdAt."
-    }
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles, preferences, and cloud credit balances. Access is restricted to the authenticated user matching {userId} in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, corresponding to `request.auth.uid`."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/projects/{projectId}",
+        "definition": {
+          "entityName": "Project",
+          "schema": {
+            "$ref": "#/backend/entities/Project"
+          },
+          "description": "Stores projects created by a specific user. Each project is owned by the {userId} from the parent path. This entity includes the 'userId' field for direct ownership verification and efficient querying.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this project, derived from the parent collection path."
+            },
+            {
+              "name": "projectId",
+              "description": "The unique identifier for a specific project."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{adminId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "A dedicated collection for storing markers of administrative users. Each document's ID ({adminId}) corresponds to a user's UID that possesses global admin privileges. Documents here are minimal markers and do not necessarily contain full User entity data, but their presence signifies an admin role for efficient 'exists()' based authorization checks. This structure ensures Authorization Independence for global roles.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier of a user who has been granted administrative privileges."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure for 'iGen - Architectural AI Assistant' is designed with a strong emphasis on security, scalability, and debuggability, adhering strictly to the provided CORE DESIGN PRINCIPLES and DESIGN STRATEGY MANDATES.\n\n**Authorization Independence (CRITICAL):**\n1.  **User Profiles (`/users/{userId}`):** Access to a user's profile is entirely self-contained. Security rules will authorize reads/writes by checking if `request.auth.uid == userId` (from the path), eliminating any need for `get()` operations on other documents to determine ownership or permissions for a user's own data. This ensures atomic operations and simplifies debugging.\n2.  **User Projects (`/users/{userId}/projects/{projectId}`):** Similar to user profiles, project ownership is established by the hierarchical path. Authorization rules for projects will directly compare `request.auth.uid` with the `{userId}` wildcard in the path. The `userId` field within the `Project` document serves as a robust cross-reference for queries and additional validation, but is not primarily relied upon for *authorization* checks in rules, thus preserving authorization independence.\n3.  **Global Admin Roles (`/roles_admin/{adminId}`):** To enable efficient and independent authorization for global roles (e.g., 'Admin'), a dedicated collection `/roles_admin` is used. An admin's UID will be a document ID in this collection. Security rules can then use an `exists(/roles_admin/$(request.auth.uid))` check. This avoids `get()` calls on the `/users` collection to retrieve a user's role, fulfilling the 'Existence over Content' mandate and ensuring atomic, independent role checks.\n\n**QAPs (Rules are not Filters):**\n1.  **User Profiles (`/users/{userId}`):** Users can only `get` their own profile (`/users/$(request.auth.uid)`). A `list` operation on the `/users` collection is implicitly handled for non-admins by allowing only `get` for specific UIDs. For administrators, the `/roles_admin/{adminId}` collection allows for a direct `exists()` check, enabling admins to securely `list` all user profiles without Firestore needing to filter results based on complex rule logic.\n2.  **User Projects (`/users/{userId}/projects/{projectId}`):** A user can securely `list` their own projects by querying `/users/$(request.auth.uid)/projects`. The security rule `allow list: if request.auth.uid == userId;` is precise and efficient. It ensures that only projects owned by the authenticated user are retrieved, without relying on rule-based filtering, thus supporting QAPs.\n\n**Additional Design Principles Applied:**\n*   **DBAC (No Custom Claims):** User roles (like 'Admin') are stored in the database (via `/roles_admin/{adminId}` for global roles and `role` field in `/users/{userId}`). Authorization relies solely on `request.auth.uid` for path matching or `exists()` checks.\n*   **Structural Segregation:** Data with different security requirements is separated. User profiles are in `/users`, their projects in `/users/{userId}/projects`, and admin role markers in `/roles_admin`. This ensures a homogeneous security posture within each collection.\n*   **Access Modeling:** Path-based ownership (`/users/{userId}`, `/users/{userId}/projects/{projectId}`) is used for private and user-owned data. Global roles are managed via 'Existence over Content' (`/roles_admin/{adminId}`).\n*   **Data Clarity:** The `Project` entity includes a `status` field for explicit state management. Standardized field names (e.g., `userId`, `projectId`) and descriptive wildcards (`{userId}`, `{projectId}`, `{adminId}`) enhance predictability.\n\nFor project `project-5306ce34-5626-488a-913`, you can configure TTL policies for collections like `/users/{userId}/projects` (e.g., to automatically delete old 'draft' or 'failed' projects) directly within the Firebase Console or using the Firebase CLI. You can find detailed instructions and the configuration interface at: https://firebase.google.com/docs/firestore/ttl"
   }
 }
