@@ -6,13 +6,30 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, Zap, Settings, Play, Download, Sparkles } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  Zap, 
+  Settings, 
+  Play, 
+  Download, 
+  Sparkles, 
+  Clock, 
+  History as HistoryIcon,
+  Calendar
+} from 'lucide-react';
 import { translations, Language } from '@/lib/i18n';
 import { IGenBranding } from './Branding';
 import { aiVideoWalkthroughGenerator } from '@/ai/flows/ai-video-walkthrough-generator';
 import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { formatDistanceToNow } from 'date-fns';
+import { vi, enUS, zhCN } from 'date-fns/locale';
 
 export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { featureId: string, lang: Language, onBack: () => void, userApiKey?: string }) => {
+  const { user } = useUser();
+  const db = useFirestore();
   const [isProMode, setIsProMode] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -20,13 +37,30 @@ export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { feat
   const { toast } = useToast();
   const t = translations[lang];
 
-  // Mock settings
+  // Settings
   const [cinematicPan, setCinematicPan] = useState(true);
   const [consistentSync, setConsistentSync] = useState(false);
   const [extendVideo, setExtendVideo] = useState(false);
 
+  // Date for filtering (1 month ago)
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  // Memoized query for history: Only current user's projects for this feature in the last 30 days
+  const projectsQuery = useMemoFirebase(() => {
+    if (!user || !db) return null;
+    return query(
+      collection(db, 'users', user.uid, 'projects'),
+      where('featureId', '==', featureId),
+      where('createdAt', '>=', oneMonthAgo.toISOString()),
+      orderBy('createdAt', 'desc')
+    );
+  }, [db, user, featureId]);
+
+  const { data: history, isLoading: isHistoryLoading } = useCollection(projectsQuery);
+
   const handleGenerate = async () => {
-    if (!prompt) return;
+    if (!prompt || !user) return;
     setIsGenerating(true);
     setResultVideo(null);
     try {
@@ -34,9 +68,26 @@ export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { feat
         description: prompt,
         cinematicPan: cinematicPan,
         aiVideoExtend: extendVideo,
-        apiKey: userApiKey // Pass the user's fixed API key
+        apiKey: userApiKey
       });
+      
       setResultVideo(result.videoDataUri);
+
+      // Save to Firestore history
+      const projectRef = collection(db, 'users', user.uid, 'projects');
+      addDocumentNonBlocking(projectRef, {
+        userId: user.uid,
+        featureId: featureId,
+        name: prompt.substring(0, 30) + (prompt.length > 30 ? '...' : ''),
+        description: prompt,
+        mode: isProMode ? 'PRO_MODE' : 'SPEED_MODE',
+        settings: JSON.stringify({ cinematicPan, consistentSync, extendVideo }),
+        status: 'completed',
+        outputUrl: result.videoDataUri,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
     } catch (error) {
       toast({
         variant: "destructive",
@@ -46,6 +97,12 @@ export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { feat
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const getLocale = () => {
+    if (lang === 'VI') return vi;
+    if (lang === 'ZH') return zhCN;
+    return enUS;
   };
 
   return (
@@ -115,11 +172,53 @@ export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { feat
               )}
             </Button>
           </div>
+
+          {/* History Panel */}
+          <div className="glass-card p-6 rounded-2xl">
+            <div className="flex items-center gap-2 mb-4 text-slate-900">
+              <HistoryIcon className="w-4 h-4" />
+              <h3 className="text-sm font-bold uppercase tracking-wider">{lang === 'VI' ? 'Lịch sử (30 ngày)' : 'History (30 days)'}</h3>
+            </div>
+            
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              {isHistoryLoading ? (
+                <div className="flex justify-center p-4">
+                  <div className="w-4 h-4 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+                </div>
+              ) : history && history.length > 0 ? (
+                history.map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer group"
+                    onClick={() => setResultVideo(item.outputUrl)}
+                  >
+                    <p className="text-xs font-bold text-slate-900 truncate mb-1 group-hover:text-cyan-600 transition-colors">{item.name}</p>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: getLocale() })}</span>
+                      </div>
+                      <div className="bg-white px-1.5 py-0.5 rounded border border-slate-100 font-bold uppercase">
+                        {item.mode === 'PRO_MODE' ? 'PRO' : 'FAST'}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Calendar className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    {lang === 'VI' ? 'Chưa có lịch sử trong tháng này' : 'No history in the last 30 days'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Preview Panel */}
         <div className="lg:col-span-8">
-          <div className="glass h-[500px] rounded-2xl flex flex-col items-center justify-center relative overflow-hidden bg-slate-900 shadow-2xl">
+          <div className="glass h-[600px] rounded-2xl flex flex-col items-center justify-center relative overflow-hidden bg-slate-900 shadow-2xl">
             {isGenerating ? (
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mx-auto" />
