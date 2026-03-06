@@ -467,7 +467,7 @@ export default function Home() {
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
               
               <div className="bg-cyan-50/50 rounded-2xl p-6 mb-10 border border-cyan-100 max-w-sm mx-auto">
-                <p className="text-xs font-bold text-cyan-600 uppercase tracking-widest mb-1">Đối tác chiến lược</p>
+                <p className="text-xs font-bold text-cyan-600 uppercase tracking-widest mb-1">{lang === 'VI' ? 'Đối tác chiến lược của Google' : lang === 'EN' ? 'Strategic Partner of Google' : 'Google 战略合作伙伴'}</p>
                 <p className="text-sm text-slate-600">Hạ tầng iGen được bảo trợ bởi Google Cloud Vertex AI.</p>
               </div>
 
