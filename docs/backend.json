@@ -100,7 +100,7 @@
     },
     "/users/{userId}/projects/{projectId}": {
       "schema": "Project",
-      "description": "User project history. Automatically cleared after 30 days via Cloud Console TTL policy on 'createdAt' field."
+      "description": "User project history. Automatically cleared after 30 days via Cloud Console TTL policy on 'createdAt' field. Note: Requires project-5306ce34-5626-488a-913 to have a Firestore database in Native Mode."
     }
   }
 }
