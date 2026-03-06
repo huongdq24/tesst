@@ -91,19 +91,21 @@ export default function Home() {
             }
           }
         } else {
-          // If user exists but no data doc yet, create one for admin
-          if (user.email === ADMIN_EMAIL) {
-            const userRef = doc(db, 'users', user.uid);
-            setDocumentNonBlocking(userRef, {
-              id: user.uid,
-              email: user.email,
-              hasClaimedCredits: true,
-              apiKey: ADMIN_API_KEY,
-              role: 'admin',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }, { merge: true });
-          } else if (currentScreen === 'AUTH') {
+          // If user exists but no data doc yet, create one
+          const userRef = doc(db, 'users', user.uid);
+          const isUserAdmin = user.email === ADMIN_EMAIL;
+          
+          setDocumentNonBlocking(userRef, {
+            id: user.uid,
+            email: user.email,
+            hasClaimedCredits: isUserAdmin,
+            apiKey: isUserAdmin ? ADMIN_API_KEY : '',
+            role: isUserAdmin ? 'admin' : 'user',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+
+          if (!isUserAdmin && currentScreen === 'AUTH') {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
