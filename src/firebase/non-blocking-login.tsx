@@ -26,8 +26,11 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 /** Initiate Google sign-in (non-blocking). */
 export function initiateGoogleSignIn(authInstance: Auth): void {
   const provider = new GoogleAuthProvider();
-  // Ensure the Identity Toolkit API is enabled in the Google Cloud Console for this project.
+  // Đảm bảo Identity Toolkit API đã được bật trong Google Cloud Console.
   signInWithPopup(authInstance, provider).catch((error) => {
-    console.error("Google Sign-In Error:", error);
+    // Lỗi sẽ được xử lý tập trung qua FirebaseErrorListener nếu có lỗi quyền hạn
+    if (error.code !== 'auth/popup-closed-by-user') {
+      console.error("Google Sign-In Error:", error);
+    }
   });
 }

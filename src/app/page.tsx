@@ -68,10 +68,10 @@ export default function Home() {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
         if (userData) {
-          // Logic: Admin account always linked with the Tier 1 API Key
+          // Logic: Tài khoản Admin luôn được gán API Key mặc định của Tier 1
           if (user.email === ADMIN_EMAIL && (!userData.apiKey || userData.apiKey !== ADMIN_API_KEY)) {
-            const userRef = doc(db, 'users', user.uid);
-            updateDocumentNonBlocking(userRef, {
+            const uRef = doc(db, 'users', user.uid);
+            updateDocumentNonBlocking(uRef, {
               id: user.uid,
               email: user.email,
               hasClaimedCredits: true,
@@ -91,11 +91,11 @@ export default function Home() {
             }
           }
         } else {
-          // If user exists but no data doc yet, create one
-          const userRef = doc(db, 'users', user.uid);
+          // Khởi tạo document người dùng nếu chưa tồn tại
+          const uRef = doc(db, 'users', user.uid);
           const isUserAdmin = user.email === ADMIN_EMAIL;
           
-          setDocumentNonBlocking(userRef, {
+          setDocumentNonBlocking(uRef, {
             id: user.uid,
             email: user.email,
             hasClaimedCredits: isUserAdmin,
@@ -129,13 +129,9 @@ export default function Home() {
     setIsAuthenticating(true);
     try {
       if (isSignUp) {
-        await initiateEmailSignUp(auth, userEmail, password);
-        toast({
-          title: lang === 'VI' ? "Đăng ký thành công" : "Sign Up Success",
-          description: lang === 'VI' ? "Tài khoản của bạn đã được tạo!" : "Your account has been created!"
-        });
+        initiateEmailSignUp(auth, userEmail, password);
       } else {
-        await initiateEmailSignIn(auth, userEmail, password);
+        initiateEmailSignIn(auth, userEmail, password);
       }
     } catch (error: any) {
       toast({
@@ -154,8 +150,8 @@ export default function Home() {
 
   const startVerification = () => {
     if (user?.email === ADMIN_EMAIL) {
-        const userRef = doc(db, 'users', user.uid);
-        updateDocumentNonBlocking(userRef, {
+        const uRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(uRef, {
           hasClaimedCredits: true,
           apiKey: ADMIN_API_KEY,
           updatedAt: new Date().toISOString()
@@ -173,8 +169,8 @@ export default function Home() {
     setTimeout(() => {
       setIsVerifying(false);
       if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        updateDocumentNonBlocking(userRef, {
+        const uRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(uRef, {
           hasClaimedCredits: true,
           apiKey: apiKey,
           updatedAt: new Date().toISOString()
