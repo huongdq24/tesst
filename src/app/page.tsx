@@ -409,7 +409,6 @@ export default function Home() {
                   </div>
                 </div>
                 <h2 className="text-3xl font-bold text-slate-900">{t.paymentTitle}</h2>
-                <p className="text-slate-500 mt-2 text-sm px-4">{t.paymentSubtitle}</p>
               </div>
 
               <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
