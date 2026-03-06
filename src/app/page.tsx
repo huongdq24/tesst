@@ -83,51 +83,51 @@ export default function Home() {
   }, [userError, lang, toast, t.authError]);
 
   useEffect(() => {
-    if (!isUserLoading && !isUserDataLoading) {
-      if (user) {
-        if (userData) {
-          // Admin logic: Always ensure Admin has the Tier 1 key
-          if (user.email === ADMIN_EMAIL && userData.apiKey !== ADMIN_AI_KEY) {
-            const uRef = doc(db, 'users', user.uid);
-            updateDocumentNonBlocking(uRef, {
-              apiKey: ADMIN_AI_KEY,
-              role: 'admin',
-              updatedAt: new Date().toISOString()
-            });
-          }
+    if (isUserLoading || isUserDataLoading) return;
 
-          // Force redirection to CREDIT_CLAIM if no API key is present
-          if (userData.hasClaimedCredits && userData.apiKey) {
-            if (currentScreen === 'AUTH' || currentScreen === 'CREDIT_CLAIM' || currentScreen === 'PAYMENT') {
-              setCurrentScreen('DASHBOARD');
-            }
-          } else {
-            if (currentScreen === 'AUTH' || currentScreen === 'DASHBOARD') {
-              setCurrentScreen('CREDIT_CLAIM');
-            }
+    if (user) {
+      if (userData) {
+        // Admin logic: Always ensure Admin has the Tier 1 key
+        if (user.email === ADMIN_EMAIL && userData.apiKey !== ADMIN_AI_KEY) {
+          const uRef = doc(db, 'users', user.uid);
+          updateDocumentNonBlocking(uRef, {
+            apiKey: ADMIN_AI_KEY,
+            role: 'admin',
+            hasClaimedCredits: true,
+            updatedAt: new Date().toISOString()
+          });
+        }
+
+        // Logic for redirecting: If no API key or hasn't claimed, go to CREDIT_CLAIM
+        if (userData.hasClaimedCredits && userData.apiKey) {
+          if (['AUTH', 'CREDIT_CLAIM', 'PAYMENT'].includes(currentScreen)) {
+            setCurrentScreen('DASHBOARD');
           }
         } else {
-          // Initialize user doc if it doesn't exist
-          const uRef = doc(db, 'users', user.uid);
-          const isUserAdmin = user.email === ADMIN_EMAIL;
-          
-          setDocumentNonBlocking(uRef, {
-            id: user.uid,
-            email: user.email,
-            hasClaimedCredits: isUserAdmin,
-            apiKey: isUserAdmin ? ADMIN_AI_KEY : '',
-            role: isUserAdmin ? 'admin' : 'user',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-
-          if (!isUserAdmin && (currentScreen === 'AUTH' || currentScreen === 'DASHBOARD')) {
+          if (['AUTH', 'DASHBOARD'].includes(currentScreen)) {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
       } else {
-        if (currentScreen !== 'AUTH') setCurrentScreen('AUTH');
+        // First login: doc doesn't exist yet
+        const uRef = doc(db, 'users', user.uid);
+        const isUserAdmin = user.email === ADMIN_EMAIL;
+        
+        setDocumentNonBlocking(uRef, {
+          id: user.uid,
+          email: user.email,
+          hasClaimedCredits: isUserAdmin,
+          apiKey: isUserAdmin ? ADMIN_AI_KEY : '',
+          role: isUserAdmin ? 'admin' : 'user',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        // Funnel new user to Credit Claim
+        setCurrentScreen('CREDIT_CLAIM');
       }
+    } else {
+      if (currentScreen !== 'AUTH') setCurrentScreen('AUTH');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, currentScreen, db]);
 
@@ -465,7 +465,7 @@ export default function Home() {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.25.81-.59z" />
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
-                    <span className="font-bold text-slate-700 tracking-tight text-xl">Google</span>
+                    <span className="sr-only">Google</span>
                   </div>
                 </div>
               </div>
