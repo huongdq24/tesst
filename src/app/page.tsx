@@ -38,6 +38,7 @@ export default function Home() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [apiKey, setApiKey] = useState('');
 
   const t = translations[lang];
 
@@ -150,6 +151,7 @@ export default function Home() {
         const userRef = doc(db, 'users', user.uid);
         updateDocumentNonBlocking(userRef, {
           hasClaimedCredits: true,
+          apiKey: apiKey,
           updatedAt: new Date().toISOString()
         });
       }
@@ -158,10 +160,10 @@ export default function Home() {
         title: lang === 'VI' ? "Kích hoạt thành công!" : "Activation Successful!",
         description: (
           <div className="flex flex-col gap-1">
-            <p>{lang === 'VI' ? "Gói dùng thử $300 iGen Cloud đã sẵn sàng." : "Your $300 iGen Cloud trial is now active."}</p>
+            <p>{lang === 'VI' ? "Hạ tầng iGen AI đã sẵn sàng hoạt động." : "iGen AI infrastructure is now active."}</p>
             <div className="flex items-center gap-1 text-[10px] font-bold uppercase opacity-80">
               <Wallet className="w-3 h-3" />
-              Available in iGen Wallet
+              API Key Linked Successfully
             </div>
           </div>
         ),
@@ -419,14 +421,14 @@ export default function Home() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900">Google Cloud Platform</p>
-                    <p className="text-[10px] text-slate-500">Official Free Trial Program</p>
+                    <p className="text-[10px] text-slate-500">Official AI API Services</p>
                   </div>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   className="rounded-full h-8 text-[10px] font-bold border-slate-200"
-                  onClick={() => window.open('https://console.cloud.google.com/freetrial', '_blank')}
+                  onClick={() => window.open('https://aistudio.google.com/app/apikey', '_blank')}
                 >
                   {t.officialLink}
                   <ExternalLink className="ml-1.5 w-3 h-3" />
@@ -435,32 +437,37 @@ export default function Home() {
 
               <form onSubmit={handlePaymentSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.cardName}</Label>
-                  <Input 
-                    required 
-                    placeholder="ACCOUNT NAME" 
-                    className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500 uppercase"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.expiry}</Label>
+                  <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.apiKeyLabel}</Label>
+                  <div className="relative">
                     <Input 
                       required 
-                      type="date"
-                      className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
+                      placeholder={t.apiKeyPlaceholder} 
+                      className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500 pr-10"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
                     />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Sparkles className="w-4 h-4 text-cyan-500 opacity-50" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.cvv}</Label>
-                    <Input 
-                      required 
-                      type="password" 
-                      maxLength={4} 
-                      placeholder="****" 
-                      className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
-                    />
+                  <div className="flex flex-col gap-1.5 px-1 mt-2">
+                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-tight">
+                      {lang === 'VI' ? 'Dịch vụ được tích hợp:' : 'Integrated Services:'}
+                    </p>
+                    <div className="grid grid-cols-1 gap-1">
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                        <div className="w-1 h-1 rounded-full bg-cyan-400" />
+                        <span>iGen Logic Engine (Gemini 3.1 Pro)</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                        <div className="w-1 h-1 rounded-full bg-blue-400" />
+                        <span>iGen Vision (Nano Banana 2)</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                        <div className="w-1 h-1 rounded-full bg-purple-400" />
+                        <span>iGen Motion (Veo 3.1)</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
