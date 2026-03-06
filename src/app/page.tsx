@@ -43,7 +43,7 @@ const ADMIN_EMAIL = 'igen-architect@admin.com';
 const ADMIN_AI_KEY = 'AIzaSyBF1f7Q0ZoKy4wc8VhSylPK8HlJMO1k_B0'; // Tier 1 API Key for AI tasks
 
 export default function Home() {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, userError } = useUser();
   const auth = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
@@ -63,17 +63,30 @@ export default function Home() {
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
+  // Handle Auth Errors (like Invalid Credential)
+  useEffect(() => {
+    if (userError) {
+        let message = userError.message;
+        if (message.includes('auth/invalid-credential')) {
+            message = lang === 'VI' ? 'Thông tin đăng nhập không chính xác. Nếu bạn chưa có tài khoản, vui lòng chọn "Đăng ký".' : 'Invalid credentials. If you do not have an account, please choose "Sign Up".';
+        }
+        toast({
+            variant: "destructive",
+            title: t.authError,
+            description: message
+        });
+        setIsAuthenticating(false);
+    }
+  }, [userError, lang, toast, t.authError]);
+
   useEffect(() => {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
         if (userData) {
-          // Admin logic: Assign Tier 1 key to their profile for AI usage
-          if (user.email === ADMIN_EMAIL && (!userData.apiKey || userData.apiKey !== ADMIN_AI_KEY)) {
+          // Admin logic: Always ensure Admin has the Tier 1 key
+          if (user.email === ADMIN_EMAIL && userData.apiKey !== ADMIN_AI_KEY) {
             const uRef = doc(db, 'users', user.uid);
             updateDocumentNonBlocking(uRef, {
-              id: user.uid,
-              email: user.email,
-              hasClaimedCredits: true,
               apiKey: ADMIN_AI_KEY,
               role: 'admin',
               updatedAt: new Date().toISOString()
@@ -90,7 +103,7 @@ export default function Home() {
             }
           }
         } else {
-          // Initialize user doc
+          // Initialize user doc if it doesn't exist
           const uRef = doc(db, 'users', user.uid);
           const isUserAdmin = user.email === ADMIN_EMAIL;
           
@@ -133,13 +146,7 @@ export default function Home() {
         initiateEmailSignIn(auth, userEmail, password);
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: t.authError,
-        description: error.message || t.authError
-      });
-    } finally {
-      setIsAuthenticating(false);
+      // Errors are handled by the useEffect watching userError
     }
   };
 

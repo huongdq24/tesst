@@ -2,24 +2,22 @@
 
 Ứng dụng hỗ trợ thiết kế kiến trúc bằng trí tuệ nhân tạo.
 
-## Khắc phục lỗi Xác thực (FirebaseError)
+## Giải quyết lỗi Xác thực (FirebaseError)
 
-Nếu bạn gặp lỗi `signinwithpassword-are-blocked` hoặc `identity-toolkit-api-has-not-been-used`, hãy thực hiện các bước sau:
+Nếu bạn gặp lỗi xác thực hoặc bị chặn API, hãy thực hiện các bước sau:
 
 1. **Gỡ giới hạn API Key**: 
    - Truy cập [Google Cloud Console - Credentials](https://console.cloud.google.com/apis/credentials?project=project-5306ce34-5626-488a-913).
-   - Chọn API Key đang sử dụng.
-   - Tại mục **API restrictions**, chọn **Don't restrict key** (hoặc thêm **Identity Toolkit API** và **Token Service API**).
+   - Nhấp vào mã API bắt đầu bằng `AIzaSyCnv...` (mã gốc của dự án).
+   - Tại mục **API restrictions**, chọn **Don't restrict key** (hoặc tích thêm **Identity Toolkit API**).
    - Nhấn **Save**.
 
 2. **Kích hoạt Email/Password**:
    - Truy cập [Firebase Console - Auth Providers](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/authentication/providers).
-   - Bật phương thức **Email/Password**.
+   - Đảm bảo mục **Email/Password** đang ở trạng thái **Enabled**.
 
-3. **Tạo Firestore Database**:
-   - Truy cập [Firestore Console](https://console.cloud.google.com/firestore/databases?project=project-5306ce34-5626-488a-913).
-   - Nhấn **Create Database**, chọn **Native Mode**.
+3. **Lưu ý về Đăng nhập**:
+   - Nếu bạn nhận được lỗi `auth/invalid-credential`, hãy kiểm tra xem bạn đã "Đăng ký" tài khoản đó chưa. Sử dụng tab **Đăng ký (Sign Up)** nếu là lần đầu tiên sử dụng.
 
-4. **Bật TTL (Xóa tự động 30 ngày)**:
-   - Truy cập [Firestore TTL Settings](https://console.cloud.google.com/firestore/databases/-default-/ttl?project=project-5306ce34-5626-488a-913).
-   - Thêm chính sách cho collection `projects` với trường `createdAt`.
+4. **Kích hoạt AI Flow cho Admin**:
+   - Tài khoản `igen-architect@admin.com` sẽ tự động nhận mã đối tác Tier 1 (`AIzaSyBF...`) sau khi đăng nhập thành công.
