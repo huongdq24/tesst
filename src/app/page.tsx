@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'PAYMENT' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
 const ADMIN_EMAIL = 'igen-architect@admin.com';
-const ADMIN_API_KEY = 'AIzaSyBF1f7Q0ZoKy4wc8VhSylPK8HlJMO1k_B0';
+const ADMIN_AI_KEY = 'AIzaSyBF1f7Q0ZoKy4wc8VhSylPK8HlJMO1k_B0'; // Tier 1 API Key for AI tasks
 
 export default function Home() {
   const { user, isUserLoading } = useUser();
@@ -67,14 +67,14 @@ export default function Home() {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
         if (userData) {
-          // Logic: Tài khoản Admin luôn được gán API Key mặc định
-          if (user.email === ADMIN_EMAIL && (!userData.apiKey || userData.apiKey !== ADMIN_API_KEY)) {
+          // Admin logic: Assign Tier 1 key to their profile for AI usage
+          if (user.email === ADMIN_EMAIL && (!userData.apiKey || userData.apiKey !== ADMIN_AI_KEY)) {
             const uRef = doc(db, 'users', user.uid);
             updateDocumentNonBlocking(uRef, {
               id: user.uid,
               email: user.email,
               hasClaimedCredits: true,
-              apiKey: ADMIN_API_KEY,
+              apiKey: ADMIN_AI_KEY,
               role: 'admin',
               updatedAt: new Date().toISOString()
             });
@@ -90,7 +90,7 @@ export default function Home() {
             }
           }
         } else {
-          // Khởi tạo document người dùng nếu chưa tồn tại
+          // Initialize user doc
           const uRef = doc(db, 'users', user.uid);
           const isUserAdmin = user.email === ADMIN_EMAIL;
           
@@ -98,7 +98,7 @@ export default function Home() {
             id: user.uid,
             email: user.email,
             hasClaimedCredits: isUserAdmin,
-            apiKey: isUserAdmin ? ADMIN_API_KEY : '',
+            apiKey: isUserAdmin ? ADMIN_AI_KEY : '',
             role: isUserAdmin ? 'admin' : 'user',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -152,7 +152,7 @@ export default function Home() {
         const uRef = doc(db, 'users', user.uid);
         updateDocumentNonBlocking(uRef, {
           hasClaimedCredits: true,
-          apiKey: ADMIN_API_KEY,
+          apiKey: ADMIN_AI_KEY,
           updatedAt: new Date().toISOString()
         });
         setCurrentScreen('DASHBOARD');
