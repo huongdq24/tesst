@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ShieldCheck, Wallet, ExternalLink } from 'lucide-react';
+import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ShieldCheck, Wallet, ExternalLink, X } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
@@ -361,9 +361,19 @@ export default function Home() {
               <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12">
                 <Sparkles className="w-40 h-40 text-cyan-500" />
               </div>
-              <div className="mb-8 inline-flex p-4 bg-cyan-50 rounded-3xl text-cyan-500">
-                <CreditCard className="w-12 h-12" />
+              
+              <div className="mb-12 flex items-center justify-center gap-6 animate-in slide-in-from-top-8 duration-700">
+                <div className="p-6 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 transform -rotate-3 hover:rotate-0 transition-transform">
+                  <IGenBranding className="text-4xl" />
+                </div>
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                  <X className="w-5 h-5 text-slate-400" />
+                </div>
+                <div className="p-6 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 transform rotate-3 hover:rotate-0 transition-transform">
+                  <GoogleIcon className="w-12 h-12" />
+                </div>
               </div>
+
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">{t.claimTitle}</h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
               
