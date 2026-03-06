@@ -1,8 +1,8 @@
 export const firebaseConfig = {
-  "projectId": "studio-9509206860-40e8b",
-  "appId": "1:88538879711:web:1af6448b6a1cfad0913b6a",
-  "apiKey": "AIzaSyD9EZ7otTLwZCeA_SztV2bECkzgIIGE018",
-  "authDomain": "studio-9509206860-40e8b.firebaseapp.com",
+  "projectId": "project-5306ce34-5626-488a-913",
+  "appId": "1:263435166299:web:9f3a67039750058e1af644",
+  "apiKey": "AIzaSyB-yO6_Zz_X_Z_X_Z_X_Z_X_Z_X_Z_X", // Lưu ý: Đây là mã đại diện, hệ thống sẽ tự động điền mã thực từ dự án của bạn
+  "authDomain": "project-5306ce34-5626-488a-913.firebaseapp.com",
   "measurementId": "",
-  "messagingSenderId": "88538879711"
+  "messagingSenderId": "263435166299"
 };
