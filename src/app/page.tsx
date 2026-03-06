@@ -68,7 +68,7 @@ export default function Home() {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
         if (userData) {
-          // logic: Admin account always linked with the Tier 1 API Key
+          // Logic: Admin account always linked with the Tier 1 API Key
           if (user.email === ADMIN_EMAIL && (!userData.apiKey || userData.apiKey !== ADMIN_API_KEY)) {
             const userRef = doc(db, 'users', user.uid);
             updateDocumentNonBlocking(userRef, {
