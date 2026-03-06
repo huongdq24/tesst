@@ -26,5 +26,8 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 /** Initiate Google sign-in (non-blocking). */
 export function initiateGoogleSignIn(authInstance: Auth): void {
   const provider = new GoogleAuthProvider();
-  signInWithPopup(authInstance, provider);
+  // Ensure the Identity Toolkit API is enabled in the Google Cloud Console for this project.
+  signInWithPopup(authInstance, provider).catch((error) => {
+    console.error("Google Sign-In Error:", error);
+  });
 }

@@ -68,10 +68,12 @@ export default function Home() {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
         if (userData) {
-          // If it's the admin, ensure they have the correct key automatically
+          // logic: Admin account always linked with the Tier 1 API Key
           if (user.email === ADMIN_EMAIL && (!userData.apiKey || userData.apiKey !== ADMIN_API_KEY)) {
             const userRef = doc(db, 'users', user.uid);
             updateDocumentNonBlocking(userRef, {
+              id: user.uid,
+              email: user.email,
               hasClaimedCredits: true,
               apiKey: ADMIN_API_KEY,
               role: 'admin',
@@ -88,8 +90,22 @@ export default function Home() {
               setCurrentScreen('CREDIT_CLAIM');
             }
           }
-        } else if (currentScreen === 'AUTH') {
-          setCurrentScreen('CREDIT_CLAIM');
+        } else {
+          // If user exists but no data doc yet, create one for admin
+          if (user.email === ADMIN_EMAIL) {
+            const userRef = doc(db, 'users', user.uid);
+            setDocumentNonBlocking(userRef, {
+              id: user.uid,
+              email: user.email,
+              hasClaimedCredits: true,
+              apiKey: ADMIN_API_KEY,
+              role: 'admin',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+          } else if (currentScreen === 'AUTH') {
+            setCurrentScreen('CREDIT_CLAIM');
+          }
         }
       } else {
         setCurrentScreen('AUTH');
@@ -111,9 +127,7 @@ export default function Home() {
     setIsAuthenticating(true);
     try {
       if (isSignUp) {
-        const result = await initiateEmailSignUp(auth, userEmail, password);
-        // On Sign Up, we don't have the user object in result directly for some SDK versions with non-blocking logic, 
-        // but we can assume the next render will handle it via useUser
+        await initiateEmailSignUp(auth, userEmail, password);
         toast({
           title: lang === 'VI' ? "Đăng ký thành công" : "Sign Up Success",
           description: lang === 'VI' ? "Tài khoản của bạn đã được tạo!" : "Your account has been created!"
@@ -122,21 +136,10 @@ export default function Home() {
         await initiateEmailSignIn(auth, userEmail, password);
       }
     } catch (error: any) {
-      let description = t.authError;
-      if (error.code === 'auth/invalid-credential') {
-        description = isSignUp 
-          ? (lang === 'VI' ? "Email đã tồn tại hoặc không hợp lệ." : "Email already exists or invalid.")
-          : t.invalidCredential;
-      } else if (error.code === 'auth/email-already-in-use') {
-        description = t.emailInUse;
-      } else if (error.code === 'auth/weak-password') {
-        description = t.weakPassword;
-      }
-      
       toast({
         variant: "destructive",
         title: t.authError,
-        description: description
+        description: error.message || t.authError
       });
     } finally {
       setIsAuthenticating(false);
@@ -147,15 +150,7 @@ export default function Home() {
     initiateGoogleSignIn(auth);
   };
 
-  const handlePhoneLogin = () => {
-    toast({
-      title: lang === 'VI' ? "Tính năng đang phát triển" : lang === 'EN' ? "Coming Soon" : "即将推出",
-      description: lang === 'VI' ? "Đăng nhập bằng số điện thoại sẽ sớm có mặt." : lang === 'EN' ? "Phone login will be available soon." : "手机登录即将推出。"
-    });
-  };
-
   const startVerification = () => {
-    // If admin clicks claim, just give it to them
     if (user?.email === ADMIN_EMAIL) {
         const userRef = doc(db, 'users', user.uid);
         updateDocumentNonBlocking(userRef, {
@@ -172,9 +167,7 @@ export default function Home() {
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!apiKey) return;
-    
     setIsVerifying(true);
-    
     setTimeout(() => {
       setIsVerifying(false);
       if (user) {
@@ -185,20 +178,6 @@ export default function Home() {
           updatedAt: new Date().toISOString()
         });
       }
-      
-      toast({
-        title: lang === 'VI' ? "Kích hoạt thành công!" : "Activation Successful!",
-        description: (
-          <div className="flex flex-col gap-1">
-            <p>{lang === 'VI' ? "Hạ tầng iGen AI đã sẵn sàng hoạt động." : "iGen AI infrastructure is now active."}</p>
-            <div className="flex items-center gap-1 text-[10px] font-bold uppercase opacity-80">
-              <Wallet className="w-3 h-3" />
-              API Key Linked Permanently
-            </div>
-          </div>
-        ),
-        className: "bg-slate-900 text-white border-none"
-      });
       setCurrentScreen('DASHBOARD');
     }, 2000);
   };
@@ -426,7 +405,7 @@ export default function Home() {
                   <GoogleIcon className="w-4 h-4" />
                   {t.gmail}
                 </Button>
-                <Button onClick={handlePhoneLogin} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold hover:bg-cyan-50 hover:border-cyan-200 transition-colors">
+                <Button onClick={() => toast({ title: "Coming Soon" })} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold hover:bg-cyan-50 hover:border-cyan-200 transition-colors">
                   <Smartphone className="w-4 h-4 text-cyan-600" /> {t.phone}
                 </Button>
               </div>
@@ -440,24 +419,10 @@ export default function Home() {
               <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12">
                 <Sparkles className="w-40 h-40 text-cyan-500" />
               </div>
-              
-              <div className="mb-12 flex items-center justify-center gap-6 animate-in slide-in-from-top-8 duration-700">
-                <div className="p-6 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 transform -rotate-3 hover:rotate-0 transition-transform">
-                  <IGenBranding className="text-4xl" />
-                </div>
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                  <X className="w-5 h-5 text-slate-400" />
-                </div>
-                <div className="p-6 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 transform rotate-3 hover:rotate-0 transition-transform">
-                  <GoogleIcon className="w-12 h-12" />
-                </div>
-              </div>
-
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
                 Nhận $300 <span className="text-cyan-500">iGen</span> Credits
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
-              
               <div className="flex flex-col gap-4 max-w-xs mx-auto">
                 <Button 
                   onClick={startVerification}
@@ -474,67 +439,24 @@ export default function Home() {
           <div className="flex items-center justify-center min-h-[80vh] animate-in fade-in slide-in-from-bottom-8 duration-500">
             <div className="glass w-full max-w-xl p-8 md:p-12 rounded-[2.5rem] relative">
               <div className="mb-8 text-center">
-                <div className="flex items-center justify-center gap-4 mb-6">
-                  <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                    <IGenBranding className="text-xl" />
-                  </div>
-                  <X className="w-4 h-4 text-slate-300" />
-                  <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                    <GoogleIcon className="w-6 h-6" />
-                  </div>
-                </div>
                 <h2 className="text-3xl font-bold text-slate-900">{t.paymentTitle}</h2>
               </div>
-
-              <div className="mb-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-                    <GoogleIcon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">Google Cloud Platform</p>
-                    <p className="text-[10px] text-slate-500">Official AI API Services</p>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="rounded-full h-8 text-[10px] font-bold border-slate-200"
-                  onClick={() => window.open('https://aistudio.google.com/app/apikey', '_blank')}
-                >
-                  {t.officialLink}
-                </Button>
-              </div>
-
               <form onSubmit={handlePaymentSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">{t.apiKeyLabel}</Label>
-                  <div className="relative">
-                    <Input 
-                      required 
-                      placeholder={t.apiKeyPlaceholder} 
-                      className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500 pr-10"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Sparkles className="w-4 h-4 text-cyan-500 opacity-50" />
-                    </div>
-                  </div>
+                  <Input 
+                    required 
+                    placeholder={t.apiKeyPlaceholder} 
+                    className="h-12 bg-slate-50/50 border-slate-200 rounded-xl focus-visible:ring-cyan-500"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                  />
                 </div>
-
                 <Button 
                   disabled={isVerifying}
-                  className="w-full h-14 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white rounded-xl font-bold text-lg mt-6 shadow-xl active:scale-[0.98] transition-all"
+                  className="w-full h-14 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white rounded-xl font-bold text-lg mt-6 shadow-xl"
                 >
-                  {isVerifying ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <GoogleIcon className="mr-2 w-5 h-5" />
-                      {t.verifyButton}
-                    </>
-                  )}
+                  {isVerifying ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : t.verifyButton}
                 </Button>
               </form>
             </div>
@@ -547,7 +469,6 @@ export default function Home() {
               <h2 className="text-4xl font-bold tracking-tight text-slate-900">{t.dashboardTitle}</h2>
               <p className="text-slate-500 mt-2 text-lg">{t.dashboardSubtitle}</p>
             </div>
-            
             <DashboardGrid 
               lang={lang} 
               onOpenFeature={(id) => {
@@ -566,7 +487,6 @@ export default function Home() {
             onBack={() => setCurrentScreen('DASHBOARD')} 
           />
         )}
-
       </div>
 
       {(currentScreen !== 'AUTH' && currentScreen !== 'PAYMENT') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />}
