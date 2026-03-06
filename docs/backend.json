@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -25,6 +26,10 @@
         "hasClaimedCredits": {
           "type": "boolean",
           "description": "Indicates whether the user has claimed their initial $300 iGen Cloud Credits."
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "The Google Cloud API Key provided by the user to power AI services."
         },
         "preferredLanguage": {
           "type": "string",
@@ -166,7 +171,7 @@
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "google.com"
     ]
   },
   "firestore": {

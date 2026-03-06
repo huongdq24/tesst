@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Smartphone, LogIn, Globe, CreditCard, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ShieldCheck, Wallet, ExternalLink, X } from 'lucide-react';
+import { Mail, Smartphone, LogIn, Globe, Wallet, Sparkles, User as UserIcon, LogOut, ChevronDown, UserPlus, ExternalLink, X } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
@@ -49,7 +50,7 @@ export default function Home() {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
         if (userData) {
-          if (userData.hasClaimedCredits) {
+          if (userData.hasClaimedCredits && userData.apiKey) {
             if (currentScreen === 'AUTH' || currentScreen === 'CREDIT_CLAIM' || currentScreen === 'PAYMENT') {
               setCurrentScreen('DASHBOARD');
             }
@@ -143,6 +144,8 @@ export default function Home() {
 
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!apiKey) return;
+    
     setIsVerifying(true);
     
     setTimeout(() => {
@@ -163,7 +166,7 @@ export default function Home() {
             <p>{lang === 'VI' ? "Hạ tầng iGen AI đã sẵn sàng hoạt động." : "iGen AI infrastructure is now active."}</p>
             <div className="flex items-center gap-1 text-[10px] font-bold uppercase opacity-80">
               <Wallet className="w-3 h-3" />
-              API Key Linked Successfully
+              API Key Linked Permanently
             </div>
           </div>
         ),
@@ -376,12 +379,7 @@ export default function Home() {
               </div>
 
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                {t.claimTitle.split('iGen').map((part, i, arr) => (
-                  <React.Fragment key={i}>
-                    {part}
-                    {i < arr.length - 1 && <span className="text-cyan-500">iGen</span>}
-                  </React.Fragment>
-                ))}
+                Nhận $300 <span className="text-cyan-500">iGen</span> Credits
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
               
@@ -431,7 +429,6 @@ export default function Home() {
                   onClick={() => window.open('https://aistudio.google.com/app/apikey', '_blank')}
                 >
                   {t.officialLink}
-                  <ExternalLink className="ml-1.5 w-3 h-3" />
                 </Button>
               </div>
 
