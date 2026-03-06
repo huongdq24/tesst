@@ -148,9 +148,8 @@ export default function Home() {
           title: lang === 'VI' ? 'Đăng ký thành công!' : 'Registration Successful!',
           description: lang === 'VI' ? 'Tài khoản của bạn đã được lưu trữ bảo mật. Vui lòng đăng nhập.' : 'Your account has been secured. Please log in.',
         });
-        await signOut(auth);
+        await signOut(auth); // Sign out immediately so they have to log in manually to activate session
         setIsSignUp(false);
-        setUserEmail('');
         setPassword('');
       } else {
         initiateEmailSignIn(auth, userEmail, password);
