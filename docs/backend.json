@@ -144,7 +144,7 @@
         },
         "createdAt": {
           "type": "string",
-          "description": "The creation timestamp used for the 30-day TTL policy.",
+          "description": "The creation timestamp used for the 30-day TTL policy. Ensure TTL is enabled in Cloud Console for this field.",
           "format": "date-time"
         },
         "updatedAt": {
@@ -212,7 +212,7 @@
           "schema": {
             "$ref": "#/backend/entities/Project"
           },
-          "description": "Individual projects with 30-day TTL policy enforced on createdAt.",
+          "description": "Individual projects with 30-day TTL policy enforced on createdAt. Privacy is enforced via parent path.",
           "params": [
             {
               "name": "userId",
