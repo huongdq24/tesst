@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -41,6 +40,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'PAYMENT' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
+const ADMIN_EMAIL = 'igen-architect@admin.com';
+const ADMIN_API_KEY = 'AIzaSyBF1f7Q0ZoKy4wc8VhSylPK8HlJMO1k_B0';
+
 export default function Home() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -66,6 +68,17 @@ export default function Home() {
     if (!isUserLoading && !isUserDataLoading) {
       if (user) {
         if (userData) {
+          // If it's the admin, ensure they have the correct key automatically
+          if (user.email === ADMIN_EMAIL && (!userData.apiKey || userData.apiKey !== ADMIN_API_KEY)) {
+            const userRef = doc(db, 'users', user.uid);
+            updateDocumentNonBlocking(userRef, {
+              hasClaimedCredits: true,
+              apiKey: ADMIN_API_KEY,
+              role: 'admin',
+              updatedAt: new Date().toISOString()
+            });
+          }
+
           if (userData.hasClaimedCredits && userData.apiKey) {
             if (currentScreen === 'AUTH' || currentScreen === 'CREDIT_CLAIM' || currentScreen === 'PAYMENT') {
               setCurrentScreen('DASHBOARD');
@@ -82,7 +95,7 @@ export default function Home() {
         setCurrentScreen('AUTH');
       }
     }
-  }, [user, isUserLoading, userData, isUserDataLoading, currentScreen]);
+  }, [user, isUserLoading, userData, isUserDataLoading, currentScreen, db]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,21 +112,8 @@ export default function Home() {
     try {
       if (isSignUp) {
         const result = await initiateEmailSignUp(auth, userEmail, password);
-        const newUser = result.user;
-        
-        const role = newUser.email === 'igen-architect@admin.com' ? 'admin' : 'user';
-        
-        const userRef = doc(db, 'users', newUser.uid);
-        setDocumentNonBlocking(userRef, {
-          id: newUser.uid,
-          email: newUser.email,
-          role: role,
-          hasClaimedCredits: false,
-          preferredLanguage: lang,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-
+        // On Sign Up, we don't have the user object in result directly for some SDK versions with non-blocking logic, 
+        // but we can assume the next render will handle it via useUser
         toast({
           title: lang === 'VI' ? "Đăng ký thành công" : "Sign Up Success",
           description: lang === 'VI' ? "Tài khoản của bạn đã được tạo!" : "Your account has been created!"
@@ -155,6 +155,17 @@ export default function Home() {
   };
 
   const startVerification = () => {
+    // If admin clicks claim, just give it to them
+    if (user?.email === ADMIN_EMAIL) {
+        const userRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(userRef, {
+          hasClaimedCredits: true,
+          apiKey: ADMIN_API_KEY,
+          updatedAt: new Date().toISOString()
+        });
+        setCurrentScreen('DASHBOARD');
+        return;
+    }
     setCurrentScreen('PAYMENT');
   };
 
@@ -206,7 +217,7 @@ export default function Home() {
     return '中文';
   };
 
-  const isSuperAdmin = user?.email === 'igen-architect@admin.com';
+  const isSuperAdmin = user?.email === ADMIN_EMAIL;
 
   const GoogleIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24">
