@@ -3,15 +3,31 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * iGen Ecosystem Security Rules
-     * 
+     * FIREBASE SECURITY RULES DOCUMENTATION
+     *
      * Core Philosophy:
-     * This ruleset implements a robust, path-based ownership model complemented by Database-Backed 
-     * Access Control (DBAC) for administrative roles. Security is enforced primarily through 
-     * user-specific subcollections and document path wildcards.
+     * This ruleset implements a strict User-Ownership model supplemented by a "DBAC" (Database-Based Access Control) 
+     * pattern for administrative privileges. Security is prioritized via path-based authorization and structural 
+     * segregation, ensuring that users can only access their own data while administrators maintain oversight.
+     *
+     * Data Structure:
+     * - /users/{userId}: Primary profile information.
+     * - /roles_admin/{userId}: A marker collection where the existence of a UID indicates administrative status.
+     * - /features/{featureId}: Global, read-only definitions for application features.
+     * - /users/{userId}/featureSettings/{featureId}: Private, user-specific configurations for features.
+     *
+     * Key Security Decisions:
+     * 1. Authorization Independence: We use the document ID or parent path (userId) to determine ownership 
+     *    without requiring additional collection fetches (get() calls).
+     * 2. DBAC for Admins: Instead of checking a 'role' field inside a user document, we check for the existence 
+     *    of a document in the '/roles_admin' collection. This is more performant and secure for rule evaluation.
+     * 3. Denormalization: Critical fields like 'userId' and 'featureId' are enforced within documents to 
+     *    ensure data consistency with the access paths.
+     * 4. Prototyping Flexibility: While access is strictly controlled, the specific content (schema) of 
+     *    non-relational fields is not enforced to allow for rapid UI/UX iteration.
      */
 
-    // --- Helper Functions ---
+    // --- Global Helper Functions ---
 
     /** Checks if the request is from an authenticated user. */
     function isSignedIn() {
@@ -23,46 +39,59 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** Checks if the document exists and the current user is the owner. */
+    /** 
+     * Checks if the authenticated user is an administrator.
+     * Uses the "Existence over Content" principle for high-performance role checks.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /** Verifies the document exists and the requester is the owner. */
     function isExistingOwner(userId) {
       return resource != null && isOwner(userId);
     }
 
-    /** 
-     * Checks if the current user has administrative privileges.
-     * Logic: Existence in /admins OR matching the specific super-admin email.
-     */
-    function isAdmin() {
-      return isSignedIn() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        request.auth.token.email == "igen-architect@admin.com"
-      );
+    /** Verifies the document exists and the requester is an admin. */
+    function isExistingAdmin() {
+      return resource != null && isAdmin();
     }
 
     // --- Collection Rules ---
 
     /**
-     * @description Rules for user profile documents.
+     * @description Rules for the User Profile collection. Users manage their own profiles; Admins have full access.
+     * @path /users/{userId}
+     * @allow (get) request.auth.uid == userId
+     * @deny (list) request.auth.uid != admin_uid
+     * @principle Path-based ownership and DBAC for administrative oversight.
      */
     match /users/{userId} {
-      allow get, list: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
-
-      /**
-       * @description Rules for AI projects belonging to a specific user.
-       */
-      match /projects/{projectId} {
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId) || isAdmin();
-        allow delete: if isExistingOwner(userId) || isAdmin();
-      }
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if (isExistingOwner(userId) || isExistingAdmin()) && request.resource.data.id == userId;
+      allow delete: if isExistingAdmin();
     }
 
     /**
-     * @description Global AI features registry.
+     * @description Marker collection for admin roles. Only existing admins can modify this collection.
+     * @path /roles_admin/{userId}
+     * @allow (get) isAdmin()
+     * @deny (create) !isAdmin()
+     * @principle Structural segregation of roles to ensure atomic authorization checks.
+     */
+    match /roles_admin/{userId} {
+      allow get, list: if isAdmin();
+      allow create, update, delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Global feature definitions. Publicly readable by all users; manageable only by admins.
+     * @path /features/{featureId}
+     * @allow (list) isSignedIn()
+     * @deny (update) !isAdmin()
+     * @principle Public Read with Admin-Only Writes.
      */
     match /features/{featureId} {
       allow get, list: if isSignedIn();
@@ -70,12 +99,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Registry for administrative users.
+     * @description User-specific settings for features. Private subcollection owned by the parent user.
+     * @path /users/{userId}/featureSettings/{featureId}
+     * @allow (create) isOwner(userId) && request.resource.data.userId == userId
+     * @deny (get) request.auth.uid != userId
+     * @principle Relational integrity via denormalized userId and path consistency.
      */
-    match /admins/{adminId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create, update, delete: if false; 
+    match /users/{userId}/featureSettings/{featureId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.userId == userId && request.resource.data.featureId == featureId;
+      allow update: if (isExistingOwner(userId) || isExistingAdmin()) && request.resource.data.userId == userId;
+      allow delete: if isExistingOwner(userId) || isExistingAdmin();
     }
   }
 }

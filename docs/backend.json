@@ -1,11 +1,10 @@
-
 {
   "entities": {
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the iGen application, including their profile details, role, and application-specific settings.",
+      "description": "Represents an application user, their profile information, role, and preferences.",
       "properties": {
         "id": {
           "type": "string",
@@ -13,39 +12,40 @@
         },
         "email": {
           "type": "string",
-          "description": "The user's email address, used for login and communication.",
+          "description": "The user's email address, used for authentication. (Relationship: User 1:1 Authentication System Account)",
           "format": "email"
         },
         "role": {
           "type": "string",
-          "description": "The role of the user within the application, determining access privileges.",
+          "description": "The assigned role of the user within the application, e.g., 'Admin' or 'User'.",
           "items": {
             "type": "string"
           }
         },
         "hasClaimedCredits": {
           "type": "boolean",
-          "description": "Indicates whether the user has claimed their initial $300 iGen Cloud Credits."
+          "description": "Indicates whether the user has claimed their $300 iGen Cloud Credits."
         },
-        "apiKey": {
+        "languagePreference": {
           "type": "string",
-          "description": "The Google Cloud API Key provided by the user to power AI services."
-        },
-        "preferredLanguage": {
-          "type": "string",
-          "description": "The user's preferred language for the application UI (e.g., 'VI' for Vietnamese, 'EN' for English).",
+          "description": "The user's preferred application language, e.g., 'VI' for Vietnamese or 'EN' for English.",
           "items": {
             "type": "string"
           }
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the user account was created.",
+          "description": "Timestamp when the user account was created.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the user account was last updated.",
+          "description": "Timestamp when the user account was last updated.",
+          "format": "date-time"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp of the user's last successful login.",
           "format": "date-time"
         }
       },
@@ -54,102 +54,103 @@
         "email",
         "role",
         "hasClaimedCredits",
-        "preferredLanguage",
-        "createdAt"
+        "languagePreference",
+        "createdAt",
+        "updatedAt",
+        "lastLogin"
       ]
     },
     "Feature": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Feature",
       "type": "object",
-      "description": "Defines an AI feature available in the iGen ecosystem dashboard.",
+      "description": "Defines an architectural AI feature available in the iGen ecosystem dashboard.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the Feature entity."
         },
-        "name": {
+        "titleVI": {
           "type": "string",
-          "description": "The name of the feature (e.g., 'Rendering', 'Video Creator')."
+          "description": "The title of the feature in Vietnamese."
         },
-        "description": {
+        "titleEN": {
           "type": "string",
-          "description": "A brief description of what the feature offers."
+          "description": "The title of the feature in English."
+        },
+        "descriptionVI": {
+          "type": "string",
+          "description": "A brief description of the feature in Vietnamese."
+        },
+        "descriptionEN": {
+          "type": "string",
+          "description": "A brief description of the feature in English."
         },
         "thumbnailUrl": {
           "type": "string",
-          "description": "URL to a thumbnail image or icon representing the feature in the dashboard.",
+          "description": "URL to the thumbnail image representing the feature on the dashboard.",
           "format": "uri"
         },
-        "iconKey": {
+        "routePath": {
           "type": "string",
-          "description": "A key or name corresponding to an icon from the Lucide React library, used for UI representation."
+          "description": "The application's internal route path to navigate to the detailed workspace for this feature."
         },
-        "type": {
-          "type": "string",
-          "description": "Categorization of the feature (e.g., 'image-generation', 'video-editing', 'visual-aid')."
+        "order": {
+          "type": "number",
+          "description": "The display order of the feature card in the dashboard grid."
         }
       },
       "required": [
         "id",
-        "name",
-        "description",
+        "titleVI",
+        "titleEN",
+        "descriptionVI",
+        "descriptionEN",
         "thumbnailUrl",
-        "iconKey",
-        "type"
+        "routePath",
+        "order"
       ]
     },
-    "Project": {
+    "UserFeatureSetting": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Project",
+      "title": "UserFeatureSetting",
       "type": "object",
-      "description": "Represents a user-created project. Documents in this collection are automatically deleted by the system 30 days after creation using a TTL policy on the 'createdAt' field.",
+      "description": "Stores user-specific settings and preferences for a particular AI feature.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Project entity."
+          "description": "Unique identifier for the UserFeatureSetting entity."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who owns this project."
+          "description": "Reference to the User who owns this setting. (Relationship: User 1:N UserFeatureSetting)"
         },
         "featureId": {
           "type": "string",
-          "description": "Reference to the Feature used for this project."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name given to the project."
-        },
-        "description": {
-          "type": "string",
-          "description": "An optional description provided by the user."
+          "description": "Reference to the Feature this setting applies to. (Relationship: Feature 1:N UserFeatureSetting)"
         },
         "mode": {
           "type": "string",
-          "description": "The operational mode chosen (e.g., 'SPEED_MODE' or 'PRO_MODE')."
+          "description": "The user's preferred operating mode for the feature, e.g., 'SPEED_MODE' or 'PRO_MODE'.",
+          "items": {
+            "type": "string"
+          }
         },
-        "settings": {
-          "type": "string",
-          "description": "JSON string containing feature-specific settings."
+        "videoConsistentCharacterSync": {
+          "type": "boolean",
+          "description": "Toggle for 'Consistent Character Sync' in the Video Creator feature."
         },
-        "status": {
-          "type": "string",
-          "description": "The current status (e.g., 'draft', 'processing', 'completed')."
+        "videoCinematicPan": {
+          "type": "boolean",
+          "description": "Toggle for 'Cinematic Pan' in the Video Creator feature."
         },
-        "outputUrl": {
-          "type": "string",
-          "description": "URL to the generated output file.",
-          "format": "uri"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "The creation timestamp used for the 30-day TTL policy. Ensure TTL is enabled in Cloud Console for this field.",
-          "format": "date-time"
+        "videoAiVideoExtend": {
+          "type": "boolean",
+          "description": "Toggle for 'AI Video Extend (+8s)' in the Video Creator feature."
         },
         "updatedAt": {
           "type": "string",
-          "description": "Last update timestamp.",
+          "description": "Timestamp when this feature setting was last updated.",
           "format": "date-time"
         }
       },
@@ -157,18 +158,15 @@
         "id",
         "userId",
         "featureId",
-        "name",
         "mode",
-        "settings",
-        "status",
-        "createdAt"
+        "updatedAt"
       ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "google.com"
+      "anonymous"
     ]
   },
   "firestore": {
@@ -180,13 +178,17 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores individual user profiles. Only the user and admins can access.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Matches request.auth.uid."
-            }
-          ]
+          "description": "Stores individual user profiles including authentication details, role, preferences, and credit claim status. Access is restricted to the user matching '{userId}' or to administrators. The 'userId' in the path dictates ownership for Authorization Independence."
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Dedicated collection for explicit administrative role assignment. The existence of a document at this path signifies that the associated 'userId' has administrative privileges. This design leverages the 'Existence over Content' principle for DBAC and ensures Authorization Independence by not requiring a 'get()' call to the user's main profile to check roles."
         }
       },
       {
@@ -196,35 +198,20 @@
           "schema": {
             "$ref": "#/backend/entities/Feature"
           },
-          "description": "Global features registry.",
-          "params": [
-            {
-              "name": "featureId",
-              "description": "Feature UID."
-            }
-          ]
+          "description": "Stores static definitions for all architectural AI features available in the iGen ecosystem dashboard. These documents are publicly readable by all authenticated users. Only administrators can create, update, or delete feature definitions. This path exemplifies Structural Segregation for a uniform security posture."
         }
       },
       {
-        "path": "/users/{userId}/projects/{projectId}",
+        "path": "/users/{userId}/featureSettings/{featureId}",
         "definition": {
-          "entityName": "Project",
+          "entityName": "UserFeatureSetting",
           "schema": {
-            "$ref": "#/backend/entities/Project"
+            "$ref": "#/backend/entities/UserFeatureSetting"
           },
-          "description": "Individual projects with 30-day TTL policy enforced on createdAt. Privacy is enforced via parent path.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Owner's UID."
-            },
-            {
-              "name": "projectId",
-              "description": "Project UID."
-            }
-          ]
+          "description": "Stores user-specific settings and preferences for a particular AI feature. This subcollection is privately owned by the 'userId' in the parent path. The 'userId' and 'featureId' fields are denormalized within the document to provide robust authorization context directly, ensuring Authorization Independence and simplifying security rules by allowing direct comparison with 'request.auth.uid'."
         }
       }
-    ]
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and highly debuggable, strictly adhering to the core design principles and strategy mandates. \n\n**Authorization Independence via Denormalization:**\n\n1.  **User Profiles (`/users/{userId}`):** User profiles are stored in a top-level collection where `userId` is the document ID. Access to a specific user's document is directly authorized by `request.auth.uid == userId`. This path-based ownership ensures authorization independence, as no `get()` call to a parent document is needed to verify access. Each user's data is self-contained and directly addressable.\n\n2.  **Admin Roles (`/roles_admin/{userId}`):** Admin roles are managed through a dedicated top-level collection. The *existence* of a document at `/roles_admin/$(request.auth.uid)` determines if the current user is an administrator. This 'existence over content' pattern is crucial for authorization independence, as it allows security rules to check for administrative privileges without querying the `/users/{userId}` document, making the check atomic and simple. The `userId` in the path directly provides the authorization context.\n\n3.  **User Feature Settings (`/users/{userId}/featureSettings/{featureId}`):** User-specific feature settings are structured as a subcollection under the respective user's profile. The `userId` in the parent path (`/users/{userId}`) directly establishes ownership. To reinforce Authorization Independence, the `UserFeatureSetting` document itself includes `userId` and `featureId` fields, which act as denormalized authorization context. This means security rules can directly compare `request.auth.uid` to the `{userId}` in the path and/or the `userId` field in the document, avoiding any `get()` operations on the parent `User` document.\n\n4.  **Features (`/features/{featureId}`):** Feature definitions are public and read-only for all authenticated users. Their access does not depend on any user-specific or hierarchical authorization context, naturally ensuring authorization independence. Only administrators are allowed to create or modify these documents, a privilege checked using the `/roles_admin/{userId}` collection.\n\n**QAPs (Secure List Operations):**\n\n1.  **User Profiles:** While direct `list` operations on `/users` are generally restricted to administrators, individual users can only `get()` their own profile. For admins, rules would enforce the `/roles_admin` check for full collection access.\n2.  **Admin Roles:** `list` operations are typically restricted to internal services or administrators, enforced by the `/roles_admin` rule.\n3.  **Features:** All authenticated users can securely `list` documents in the `/features` collection, as these are public read-only assets. Rules simply check for `request.auth != null` for read access.\n4.  **User Feature Settings:** Users can securely `list` all their own feature settings by querying `/users/{request.auth.uid}/featureSettings`. The path itself inherently filters results to the authenticated user's data, allowing for efficient and secure `list` queries without complex rule logic or filtering on the client-side.\n\nThis design prioritizes structural segregation, clear access modeling, and explicit denormalization to create a robust, secure, and easily debuggable Firestore schema. The use of distinct collections for roles and path-based ownership for private data ensures that security rules are simple, efficient, and free from problematic `get()` calls."
   }
 }
