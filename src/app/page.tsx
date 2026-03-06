@@ -399,8 +399,14 @@ export default function Home() {
           <div className="flex items-center justify-center min-h-[80vh] animate-in fade-in slide-in-from-bottom-8 duration-500">
             <div className="glass w-full max-w-xl p-8 md:p-12 rounded-[2.5rem] relative">
               <div className="mb-8 text-center">
-                <div className="inline-flex p-3 bg-white rounded-2xl shadow-sm border border-slate-100 mb-4">
-                  <GoogleIcon className="w-8 h-8" />
+                <div className="flex items-center justify-center gap-4 mb-6">
+                  <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+                    <IGenBranding className="text-xl" />
+                  </div>
+                  <X className="w-4 h-4 text-slate-300" />
+                  <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+                    <GoogleIcon className="w-6 h-6" />
+                  </div>
                 </div>
                 <h2 className="text-3xl font-bold text-slate-900">{t.paymentTitle}</h2>
                 <p className="text-slate-500 mt-2 text-sm px-4">{t.paymentSubtitle}</p>
