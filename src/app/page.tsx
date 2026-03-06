@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -186,7 +185,7 @@ export default function Home() {
     return '中文';
   };
 
-  const isAdmin = user?.email === 'igen-architect@admin.com';
+  const isSuperAdmin = user?.email === 'igen-architect@admin.com';
 
   const GoogleIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24">
@@ -218,7 +217,7 @@ export default function Home() {
               </div>
             )}
 
-            {isAdmin && (
+            {isSuperAdmin && (
               <div className="hidden md:flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
                 <UserIcon className="w-3 h-3" />
                 {t.roleAdmin}
@@ -374,7 +373,14 @@ export default function Home() {
                 </div>
               </div>
 
-              <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">{t.claimTitle}</h2>
+              <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
+                {t.claimTitle.split('iGen').map((part, i, arr) => (
+                  <React.Fragment key={i}>
+                    {part}
+                    {i < arr.length - 1 && <span className="text-cyan-500">iGen</span>}
+                  </React.Fragment>
+                ))}
+              </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
               
               <div className="flex flex-col gap-4 max-w-xs mx-auto">
