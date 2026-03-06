@@ -103,7 +103,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Project",
       "type": "object",
-      "description": "Represents a user-created project leveraging a specific iGen AI feature, storing its settings and outputs.",
+      "description": "Represents a user-created project. Documents in this collection are automatically deleted by the system 30 days after creation using a TTL policy on the 'createdAt' field.",
       "properties": {
         "id": {
           "type": "string",
@@ -111,48 +111,45 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who owns this project. (Relationship: User 1:N Project)"
+          "description": "Reference to the User who owns this project."
         },
         "featureId": {
           "type": "string",
-          "description": "Reference to the Feature used for this project. (Relationship: Feature 1:N Project)"
+          "description": "Reference to the Feature used for this project."
         },
         "name": {
           "type": "string",
-          "description": "The name given to the project by the user."
+          "description": "The name given to the project."
         },
         "description": {
           "type": "string",
-          "description": "An optional description provided by the user for the project."
+          "description": "An optional description provided by the user."
         },
         "mode": {
           "type": "string",
-          "description": "The operational mode chosen for the project (e.g., 'SPEED_MODE' or 'PRO_MODE').",
-          "items": {
-            "type": "string"
-          }
+          "description": "The operational mode chosen (e.g., 'SPEED_MODE' or 'PRO_MODE')."
         },
         "settings": {
           "type": "string",
-          "description": "A JSON string containing feature-specific settings and parameters for this project (e.g., 'Consistent Character Sync', 'Cinematic Pan')."
+          "description": "JSON string containing feature-specific settings."
         },
         "status": {
           "type": "string",
-          "description": "The current processing status of the project (e.g., 'draft', 'processing', 'completed', 'failed')."
+          "description": "The current status (e.g., 'draft', 'processing', 'completed')."
         },
         "outputUrl": {
           "type": "string",
-          "description": "URL to the generated output file or result of the project, if applicable.",
+          "description": "URL to the generated output file.",
           "format": "uri"
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the project was created. Used for a 30-day TTL (Time-To-Live) automatic deletion policy.",
+          "description": "The creation timestamp used for the 30-day TTL policy.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the project was last updated.",
+          "description": "Last update timestamp.",
           "format": "date-time"
         }
       },
@@ -183,11 +180,11 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores individual user profiles. Access is restricted to the authenticated user whose UID matches 'userId' in the path. Includes a 'role' field for descriptive purposes, but admin authorization is managed via the separate '/admins' collection.",
+          "description": "Stores individual user profiles. Only the user and admins can access.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier (UID) of the user, matching 'request.auth.uid'."
+              "description": "Matches request.auth.uid."
             }
           ]
         }
@@ -199,11 +196,11 @@
           "schema": {
             "$ref": "#/backend/entities/Feature"
           },
-          "description": "Stores definitions of available AI features. This collection is publicly readable by all authenticated users to populate the ecosystem dashboard. No specific authorization context is denormalized.",
+          "description": "Global features registry.",
           "params": [
             {
               "name": "featureId",
-              "description": "The unique identifier of the AI feature."
+              "description": "Feature UID."
             }
           ]
         }
@@ -215,31 +212,15 @@
           "schema": {
             "$ref": "#/backend/entities/Project"
           },
-          "description": "Stores individual projects created by a specific user. Access is restricted to the owner (`userId`). These documents are automatically deleted by Firestore after 30 days based on a TTL policy on the 'createdAt' field.",
+          "description": "Individual projects with 30-day TTL policy enforced on createdAt.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier (UID) of the user who owns this project."
+              "description": "Owner's UID."
             },
             {
               "name": "projectId",
-              "description": "The unique identifier of the project."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/admins/{adminId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "A collection storing the UIDs of users who have 'Admin' privileges. The *existence* of a document at `/admins/$(request.auth.uid)` grants admin status, following the DBAC 'Existence over Content' principle. Documents can be empty or contain minimal user info.",
-          "params": [
-            {
-              "name": "adminId",
-              "description": "The unique identifier (UID) of a user with administrator privileges."
+              "description": "Project UID."
             }
           ]
         }

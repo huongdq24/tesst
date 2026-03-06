@@ -42,14 +42,14 @@ export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { feat
   const [consistentSync, setConsistentSync] = useState(false);
   const [extendVideo, setExtendVideo] = useState(false);
 
-  // Hydration-safe date for filtering (1 month ago)
+  // Hydration-safe date for filtering (Exactly 30 days ago)
   const [filterDate, setFilterDate] = useState<string | null>(null);
 
   useEffect(() => {
     // Set filter date only once on client-side to avoid hydration mismatches
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    setFilterDate(oneMonthAgo.toISOString());
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    setFilterDate(thirtyDaysAgo.toISOString());
   }, []);
 
   // Memoized query for history: Only current user's projects for this feature in the last 30 days
