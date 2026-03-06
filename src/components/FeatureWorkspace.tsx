@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ import { IGenBranding } from './Branding';
 import { aiVideoWalkthroughGenerator } from '@/ai/flows/ai-video-walkthrough-generator';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { formatDistanceToNow } from 'date-fns';
 import { vi, enUS, zhCN } from 'date-fns/locale';
@@ -42,20 +42,26 @@ export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { feat
   const [consistentSync, setConsistentSync] = useState(false);
   const [extendVideo, setExtendVideo] = useState(false);
 
-  // Date for filtering (1 month ago)
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  // Hydration-safe date for filtering (1 month ago)
+  const [filterDate, setFilterDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Set filter date only once on client-side to avoid hydration mismatches
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    setFilterDate(oneMonthAgo.toISOString());
+  }, []);
 
   // Memoized query for history: Only current user's projects for this feature in the last 30 days
   const projectsQuery = useMemoFirebase(() => {
-    if (!user || !db) return null;
+    if (!user || !db || !filterDate) return null;
     return query(
       collection(db, 'users', user.uid, 'projects'),
       where('featureId', '==', featureId),
-      where('createdAt', '>=', oneMonthAgo.toISOString()),
+      where('createdAt', '>=', filterDate),
       orderBy('createdAt', 'desc')
     );
-  }, [db, user, featureId]);
+  }, [db, user, featureId, filterDate]);
 
   const { data: history, isLoading: isHistoryLoading } = useCollection(projectsQuery);
 

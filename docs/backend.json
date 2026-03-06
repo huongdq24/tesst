@@ -147,7 +147,7 @@
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the project was created.",
+          "description": "Timestamp indicating when the project was created. Used for a 30-day TTL (Time-To-Live) automatic deletion policy.",
           "format": "date-time"
         },
         "updatedAt": {
@@ -215,7 +215,7 @@
           "schema": {
             "$ref": "#/backend/entities/Project"
           },
-          "description": "Stores individual projects created by a specific user. Access is restricted to the owner (`userId`). The `userId` field within the document serves as a denormalized authorization field, ensuring authorization independence and data integrity by matching `request.auth.uid` and the path's `userId` wildcard.",
+          "description": "Stores individual projects created by a specific user. Access is restricted to the owner (`userId`). These documents are automatically deleted by Firestore after 30 days based on a TTL policy on the 'createdAt' field.",
           "params": [
             {
               "name": "userId",
