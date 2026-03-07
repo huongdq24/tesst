@@ -8,7 +8,7 @@ interface IGenBrandingProps {
 
 export const IGenBranding = ({ className = "", withTagline = false }: IGenBrandingProps) => {
   return (
-    <span className={`flex items-center gap-2 ${className}`}>
+    <span className={`inline-flex items-center gap-2 ${className}`}>
       <span className="text-cyan-500 font-toyota font-bold">iGen</span>
       {withTagline && (
         <span className="text-slate-900 font-toyota font-bold whitespace-nowrap">
