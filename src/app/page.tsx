@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -63,6 +64,17 @@ const GoogleLogo = () => (
       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
     />
   </svg>
+);
+
+const ColoredGoogleText = () => (
+  <>
+    <span style={{ color: '#4285F4' }}>G</span>
+    <span style={{ color: '#EA4335' }}>o</span>
+    <span style={{ color: '#FBBC05' }}>o</span>
+    <span style={{ color: '#4285F4' }}>g</span>
+    <span style={{ color: '#34A853' }}>l</span>
+    <span style={{ color: '#EA4335' }}>e</span>
+  </>
 );
 
 export default function Home(props: { params: Promise<any>; searchParams: Promise<any> }) {
@@ -326,20 +338,19 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
 
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                Đối tác chiến lược của{" "}
-                <span style={{ color: '#4285F4' }}>G</span>
-                <span style={{ color: '#EA4335' }}>o</span>
-                <span style={{ color: '#FBBC05' }}>o</span>
-                <span style={{ color: '#4285F4' }}>g</span>
-                <span style={{ color: '#34A853' }}>l</span>
-                <span style={{ color: '#EA4335' }}>e</span>
-                {" "} - Nhận $300 <span className="text-cyan-500">iGen</span> Credits
+                Đối tác chiến lược của <ColoredGoogleText /> - Nhận $300 <span className="text-cyan-500">iGen</span> Credits
               </h2>
-              <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
+              <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
+                {lang === 'VI' ? (
+                  <>Chương trình hợp tác cùng <ColoredGoogleText /> để hỗ trợ các dự án kiến trúc mới.</>
+                ) : (
+                  <>In partnership with <ColoredGoogleText /> to support new architectural projects.</>
+                )}
+              </p>
               
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
-                  <Label className="text-xs font-bold px-1 uppercase tracking-wider">
+                  <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
                     Nhập mã Đối tác chiến lược của <span className="text-cyan-500">iGen</span>
                   </Label>
                   <div className="relative">
