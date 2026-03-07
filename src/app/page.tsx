@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -66,7 +65,11 @@ const GoogleLogo = () => (
   </svg>
 );
 
-export default function Home() {
+export default function Home(props: { params: Promise<any>; searchParams: Promise<any> }) {
+  // Unwrap dynamic APIs in Next.js 15 client components
+  React.use(props.params);
+  React.use(props.searchParams);
+
   const { user, isUserLoading, userError } = useUser();
   const auth = useAuth();
   const db = useFirestore();
@@ -87,13 +90,11 @@ export default function Home() {
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-  // Persistence and Redirection Logic
   useEffect(() => {
     if (isUserLoading || isUserDataLoading) return;
 
     if (user) {
       if (userData) {
-        // Admin auto-provisioning
         if (user.email === ADMIN_EMAIL && userData.apiKey !== ADMIN_AI_KEY) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -104,7 +105,6 @@ export default function Home() {
           });
         }
 
-        // KEY PERSISTENCE CHECK: If user has key, skip Credit Claim forever
         const hasStoredKey = !!userData.apiKey && userData.hasClaimedCredits;
 
         if (hasStoredKey) {
@@ -117,7 +117,6 @@ export default function Home() {
           }
         }
       } else {
-        // First time login - document creation
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
@@ -138,7 +137,6 @@ export default function Home() {
     }
   }, [user, isUserLoading, userData, isUserDataLoading, currentScreen, db]);
 
-  // Auth Error Handling
   useEffect(() => {
     if (userError) {
         toast({
@@ -205,7 +203,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen relative overflow-hidden bg-slate-50">
-      {/* Background Orbs */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-100/30 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-100/30 blur-[120px] rounded-full" />

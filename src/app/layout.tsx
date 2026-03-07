@@ -1,3 +1,4 @@
+import * as React from 'react';
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -8,11 +9,14 @@ export const metadata: Metadata = {
   description: 'Tương lai của thiết kế kiến trúc được hỗ trợ bởi iGen AI',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+export default async function RootLayout(props: {
   children: React.ReactNode;
-}>) {
+  params: Promise<any>;
+}) {
+  const { children } = props;
+  // Unwrap params even if not used to satisfy Next.js 15 requirement
+  await props.params;
+
   return (
     <html lang="en">
       <head>
