@@ -20,7 +20,8 @@ import {
   ChevronDown, 
   UserPlus, 
   Key,
-  X as CloseIcon
+  X as CloseIcon,
+  CheckCircle2
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -123,7 +124,7 @@ export default function Home() {
           updatedAt: new Date().toISOString()
         }, { merge: true });
 
-        // Funnel new user to Credit Claim
+        // Funnel new user or user without API key to Credit Claim
         setCurrentScreen('CREDIT_CLAIM');
       }
     } else {
@@ -455,7 +456,7 @@ export default function Home() {
               </div>
 
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                Nhận $300 <span className="text-cyan-500">iGen</span> Credits
+                {lang === 'VI' ? 'Nhận $300' : 'Claim $300'} <span className="text-cyan-500">iGen</span> {lang === 'VI' ? 'Credits' : 'Credits'}
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
               
@@ -464,13 +465,16 @@ export default function Home() {
                   <Label className="text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
                     {lang === 'VI' ? 'Nhập mã Đối tác chiến lược của iGen' : lang === 'EN' ? 'Enter iGen Strategic Partner Code' : '输入 iGen 战略合作伙伴代码'}
                   </Label>
-                  <Input 
-                    required 
-                    placeholder={t.apiKeyPlaceholder} 
-                    className="h-12 bg-white/60 border-slate-200 rounded-xl focus-visible:ring-cyan-500 shadow-sm"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                  />
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500" />
+                    <Input 
+                      required 
+                      placeholder={t.apiKeyPlaceholder} 
+                      className="h-14 pl-10 bg-white/60 border-slate-200 rounded-xl focus-visible:ring-cyan-500 shadow-sm text-lg font-mono"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -478,14 +482,21 @@ export default function Home() {
                 <Button 
                   onClick={handleClaimAndVerify}
                   disabled={isVerifying || !apiKey}
-                  className="h-16 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95"
+                  className="h-16 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95 disabled:opacity-50"
                 >
                   {isVerifying ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    t.claimButton
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-6 h-6" />
+                      {t.claimButton}
+                    </div>
                   )}
                 </Button>
+                
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+                  {lang === 'VI' ? 'Đối tác chiến lược của Google' : 'Google Strategic Partner'}
+                </p>
               </div>
             </div>
           </div>
