@@ -375,7 +375,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 >
                   {isVerifying ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : "Xác nhận mã và nhận $300 Credits"}
                 </Button>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Đối tác chiến lược của Google</p>
+                
+                <div className="flex items-center justify-center gap-3 mt-6 px-6 py-3 rounded-2xl bg-white/40 border border-white/60 shadow-lg backdrop-blur-sm group hover:border-cyan-200 transition-all duration-500">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
+                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">
+                    Đối tác chiến lược của <ColoredGoogleText />
+                  </p>
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
+                </div>
               </div>
             </div>
           </div>
