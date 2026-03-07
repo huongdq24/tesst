@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -173,7 +172,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         setIsSignUp(false);
         setPassword('');
       } else {
-        initiateEmailSignIn(auth, userEmail, password);
+        await initiateEmailSignIn(auth, userEmail, password);
       }
     } catch (error: any) {
         toast({ variant: "destructive", title: t.authError, description: error.message });
@@ -182,7 +181,20 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     }
   };
 
-  const handleGoogleLogin = () => initiateGoogleSignIn(auth);
+  const handleGoogleLogin = async () => {
+    setIsAuthenticating(true);
+    try {
+      await initiateGoogleSignIn(auth);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Google Sign-In Failed",
+        description: error.message || "Please check your browser's popup blocker."
+      });
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
 
   const handleClaimAndVerify = (e: React.FormEvent) => {
     e.preventDefault();
@@ -349,7 +361,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">{t.orDivider}</span></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Button onClick={handleGoogleLogin} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold">
+                <Button disabled={isAuthenticating} onClick={handleGoogleLogin} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold">
                   <div className="w-5 h-5 flex items-center justify-center">
                     <GoogleLogo />
                   </div>
@@ -377,12 +389,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
                 {lang === 'VI' ? (
                   <>
-                    <div>Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
+                    <div className="font-google">Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
                     <div className="mt-2 text-slate-900">- Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
                   </>
                 ) : (
                   <>
-                    <div>In partnership with <ColoredGoogleText className="font-bold" /></div>
+                    <div className="font-google">In partnership with <ColoredGoogleText className="font-bold" /></div>
                     <div className="mt-2 text-slate-900">- Claim $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
                   </>
                 )}

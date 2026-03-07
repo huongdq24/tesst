@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Auth,
@@ -20,21 +19,20 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  signInWithEmailAndPassword(authInstance, email, password).catch((error) => {
-    // Error handling is centralized in FirebaseProvider/FirebaseErrorListener
-    console.error("Email Sign-In Error:", error);
-  });
+export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): Promise<void> {
+  return signInWithEmailAndPassword(authInstance, email, password).then(() => {});
 }
 
-/** Initiate Google sign-in (non-blocking). */
-export function initiateGoogleSignIn(authInstance: Auth): void {
+/** Initiate Google sign-in. Returns a promise to allow error handling in UI. */
+export function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
   const provider = new GoogleAuthProvider();
   // Ensure "Identity Toolkit API" and "Google People API" are enabled in Google Cloud Console
-  signInWithPopup(authInstance, provider).catch((error) => {
-    // Error will be handled by the FirebaseErrorListener if it's a permission issue
-    if (error.code !== 'auth/popup-closed-by-user') {
-      console.error("Google Sign-In Error:", error);
-    }
-  });
+  return signInWithPopup(authInstance, provider)
+    .then(() => {})
+    .catch((error) => {
+      // Re-throw if it's not a user-cancelled action so UI can show it
+      if (error.code !== 'auth/popup-closed-by-user') {
+        throw error;
+      }
+    });
 }
