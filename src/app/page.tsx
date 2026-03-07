@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -460,9 +461,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
-                  <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
-                    {t.apiKeyLabel.split('iGen')[0]}<span className="text-cyan-500">iGen</span>{t.apiKeyLabel.split('iGen')[1]}
-                  </Label>
                   <div className="relative">
                     <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
                     <Input 
