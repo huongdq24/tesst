@@ -79,8 +79,8 @@ const ColoredGoogleText = () => (
 
 export default function Home(props: { params: Promise<any>; searchParams: Promise<any> }) {
   // Unwrap dynamic APIs in Next.js 15 client components
-  React.use(props.params);
-  React.use(props.searchParams);
+  const unwrappedParams = React.use(props.params);
+  const unwrappedSearchParams = React.use(props.searchParams);
 
   const { user, isUserLoading, userError } = useUser();
   const auth = useAuth();
@@ -338,7 +338,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
 
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                Đối tác chiến lược của <ColoredGoogleText /> - Nhận $300 <span className="text-cyan-500">iGen</span> Credits
+                Đối tác chiến lược của <ColoredGoogleText /> - Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
                 {lang === 'VI' ? (
