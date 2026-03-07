@@ -252,7 +252,7 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-4 md:gap-6">
-            {userData?.hasClaimedCredits && (
+            {(userData?.hasClaimedCredits && userData?.apiKey) && (
               <div className="hidden sm:flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-full shadow-lg animate-in slide-in-from-right-4">
                 <Wallet className="w-4 h-4 text-cyan-400" />
                 <span className="text-sm font-bold tracking-tight">$300.00</span>
@@ -479,18 +479,18 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 max-w-xs mx-auto">
+              <div className="flex flex-col gap-4 max-w-md mx-auto">
                 <Button 
                   onClick={handleClaimAndVerify}
                   disabled={isVerifying || !apiKey}
-                  className="h-16 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95 disabled:opacity-50"
+                  className="h-16 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-lg sm:text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95 disabled:opacity-50 whitespace-normal leading-tight"
                 >
                   {isVerifying ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-6 h-6" />
-                      {t.claimButton}
+                    <div className="flex items-center justify-center gap-2">
+                      <Sparkles className="w-5 h-5 flex-shrink-0" />
+                      <span>{t.claimButton}</span>
                     </div>
                   )}
                 </Button>
