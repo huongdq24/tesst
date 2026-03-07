@@ -448,7 +448,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center leading-tight">
                 <div className="font-google whitespace-nowrap">{t.claimDesc} <ColoredGoogleText className="font-bold" /></div>
-                <div className="mt-2 text-slate-900">
+                <div className="mt-4 text-slate-500 text-base md:text-lg font-normal leading-relaxed max-w-lg mx-auto">
                   {lang === 'VI' ? (
                     <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
                   ) : lang === 'EN' ? (
