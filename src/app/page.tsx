@@ -169,7 +169,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         toast({
             variant: "destructive",
             title: t.authError,
-            description: userError.message
+            description: `${userError.name}: ${userError.message}`
         });
         setIsAuthenticating(false);
     }
@@ -187,7 +187,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         await initiateEmailSignIn(auth, userEmail, password);
       }
     } catch (error: any) {
-        toast({ variant: "destructive", title: t.authError, description: error.message });
+        toast({ variant: "destructive", title: t.authError, description: `${error.code} - ${error.message}` });
     } finally {
         setIsAuthenticating(false);
     }
@@ -470,11 +470,20 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <Button 
                   onClick={handleClaimAndVerify}
                   className={cn(
-                    "h-16 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl transition-all hover:scale-105 active:scale-95 orb-glow",
+                    "h-16 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl transition-all hover:scale-105 active:scale-95 orb-glow flex items-center gap-3",
                     isVerifying ? "opacity-60 cursor-not-allowed" : ""
                   )}
                 >
-                  {isVerifying ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : "Xác nhận mã và nhận $300 Credits"}
+                  {isVerifying ? (
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
+                  ) : (
+                    <>
+                      <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center p-1.5 shadow-sm">
+                        <GoogleLogo />
+                      </div>
+                      <span>Xác nhận mã và nhận $300 Credits</span>
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
