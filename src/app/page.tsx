@@ -307,7 +307,15 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                       </span>
                     </div>
                     <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
-                      <span className="text-xs font-medium text-slate-600">{t.apiKeyLabel}</span>
+                      <span className="text-xs font-medium text-slate-600">
+                        {lang === 'VI' ? (
+                          <>Mã <span className="text-cyan-500 font-bold">iGen</span></>
+                        ) : lang === 'EN' ? (
+                          <><span className="text-cyan-500 font-bold">iGen</span> Code</>
+                        ) : (
+                          <><span className="text-cyan-500 font-bold">iGen</span> 代码</>
+                        )}
+                      </span>
                       <span className="text-[10px] font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
                     </div>
                   </div>
