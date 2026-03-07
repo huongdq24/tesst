@@ -449,10 +449,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <div className="mt-2 text-slate-900 whitespace-nowrap">Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
               </h2>
               
-              <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
-                Chương trình hợp tác cùng **Google** để hỗ trợ các dự án kiến trúc mới.
-              </p>
-              
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
                   <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
