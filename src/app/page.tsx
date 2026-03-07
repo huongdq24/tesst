@@ -451,14 +451,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center leading-tight">
                 <div className="font-google whitespace-nowrap">
                   {lang === 'VI' ? (
-                    <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span></>
+                    <>Chương trình hợp tác với <ColoredGoogleText className="font-bold" /></>
                   ) : lang === 'EN' ? (
-                    <>Enter partner code provided by <ColoredGoogleText className="font-bold" /> to <span className="text-cyan-500 font-bold">iGen</span></>
+                    <>Collaboration program with <ColoredGoogleText className="font-bold" /></>
                   ) : (
-                    <>输入 <ColoredGoogleText className="font-bold" /> 为 <span className="text-cyan-500 font-bold">iGen</span> 提供的合作伙伴代码</>
+                    <>与 <ColoredGoogleText className="font-bold" /> 的合作项目</>
                   )}
                 </div>
-                <div className="mt-4 text-slate-500 text-sm md:text-base font-normal leading-relaxed max-w-lg mx-auto">
+                <div className="mt-4 text-slate-500 text-xs md:text-sm font-normal leading-relaxed max-w-lg mx-auto">
                   {lang === 'VI' ? (
                     <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
                   ) : lang === 'EN' ? (

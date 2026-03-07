@@ -1,3 +1,4 @@
+
 export type Language = 'VI' | 'EN' | 'ZH';
 
 export const translations = {
@@ -19,7 +20,7 @@ export const translations = {
     orDivider: 'Hoặc',
     continueWithGoogle: 'Tiếp tục với Google',
     continueWithPhone: 'Tiếp tục với Số điện thoại',
-    claimTitle: 'Nhập mã đối tác được Google cung cấp cho iGen để nhận $300 Credits',
+    claimTitle: 'Chương trình hợp tác với Google',
     claimDesc: 'Chương trình hợp tác cùng ',
     claimButton: 'Xác nhận mã và nhận $300 Credits',
     claimSuccess: 'Chúc mừng! Bạn đã kích hoạt thành công $300 credits.',
@@ -75,7 +76,7 @@ export const translations = {
     orDivider: 'Or',
     continueWithGoogle: 'Continue with Google',
     continueWithPhone: 'Continue with Phone',
-    claimTitle: 'Enter the partner code provided by Google to iGen to receive $300 Credits',
+    claimTitle: 'Collaboration program with Google',
     claimDesc: 'Collaboration program with ',
     claimButton: 'Verify code & Claim $300 Credits',
     claimSuccess: 'Success! You have activated $300 credits.',
@@ -131,7 +132,7 @@ export const translations = {
     orDivider: '或',
     continueWithGoogle: '使用 Google 继续',
     continueWithPhone: '使用手机号码继续',
-    claimTitle: '输入 Google 为 iGen 提供的合作伙伴代码以领取 $300 Credits',
+    claimTitle: '与 Google 的合作项目',
     claimDesc: '合作伙伴计划与 ',
     claimButton: '验证代码并领取 $300 Credits',
     claimSuccess: '成功！您已激活 $300 Credits。',
