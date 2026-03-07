@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -239,18 +238,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
   const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
 
-  const renderStyledPlaceholder = () => {
-    const placeholderText = t.apiKeyPlaceholder;
-    const parts = placeholderText.split('iGen');
-    return (
-      <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-lg flex items-center gap-1">
-        <span>{parts[0]}</span>
-        <span className="text-cyan-500 font-bold">iGen</span>
-        <span>{parts[1]}</span>
-      </div>
-    );
-  };
-
   return (
     <main className="min-h-screen relative overflow-hidden bg-slate-50">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
@@ -466,9 +453,9 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     <Input 
                       className="h-14 pl-10 bg-white/60 border-slate-200 rounded-xl focus-visible:ring-cyan-500 shadow-sm text-lg font-mono relative z-0"
                       value={apiKey}
+                      placeholder={t.apiKeyPlaceholder}
                       onChange={(e) => setApiKey(e.target.value)}
                     />
-                    {!apiKey && renderStyledPlaceholder()}
                   </div>
                 </div>
               </div>
