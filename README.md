@@ -17,17 +17,20 @@
 
 ## Giải quyết lỗi Xác thực (FirebaseError)
 
-Nếu bạn gặp lỗi xác thực hoặc bị chặn API, hãy thực hiện các bước sau:
+### 1. Lỗi Google Sign-In trên Link Preview
+Nếu bạn không thể đăng nhập bằng Gmail trên link `*.cloudworkstations.dev`, đó là do domain này chưa được ủy quyền trong Firebase.
+- Truy cập [Firebase Console - Authorized Domains](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/authentication/settings).
+- Tại mục **Authorized domains**, nhấn **Add domain**.
+- Dán tên miền của link preview hiện tại (ví dụ: `9000-firebase-studio...cloudworkstations.dev`).
+- Nhấn **Save**.
 
-1. **Gỡ giới hạn API Key**: 
-   - Truy cập [Google Cloud Console - Credentials](https://console.cloud.google.com/apis/credentials?project=project-5306ce34-5626-488a-913).
-   - Nhấp vào mã API gốc của dự án (`AIzaSyCnv...`).
-   - Tại mục **API restrictions**, chọn **Don't restrict key** (hoặc tích thêm **Identity Toolkit API**).
-   - Nhấn **Save**.
+### 2. Gỡ giới hạn API Key
+Nếu bạn bị chặn API:
+- Truy cập [Google Cloud Console - Credentials](https://console.cloud.google.com/apis/credentials?project=project-5306ce34-5626-488a-913).
+- Nhấp vào mã API gốc của dự án (`AIzaSyCnv...`).
+- Tại mục **API restrictions**, chọn **Don't restrict key**.
+- Nhấn **Save**.
 
-2. **Kích hoạt Email/Password**:
-   - Truy cập [Firebase Console - Auth Providers](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/authentication/providers).
-   - Đảm bảo mục **Email/Password** đang ở trạng thái **Enabled**.
-
-3. **Lưu ý về Đăng nhập**:
-   - Nếu bạn nhận được lỗi `auth/invalid-credential`, hãy kiểm tra xem bạn đã "Đăng ký" tài khoản đó chưa. Sử dụng tab **Đăng ký (Sign Up)** nếu là lần đầu tiên sử dụng.
+### 3. Kích hoạt Email/Password
+- Truy cập [Firebase Console - Auth Providers](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/authentication/providers).
+- Đảm bảo mục **Email/Password** đang ở trạng thái **Enabled**.
