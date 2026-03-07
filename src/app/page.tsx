@@ -326,7 +326,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
 
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                Đối tác chiến lược của Google - Nhận $300 <span className="text-cyan-500">iGen</span> Credits
+                Đối tác chiến lược của{" "}
+                <span style={{ color: '#4285F4' }}>G</span>
+                <span style={{ color: '#EA4335' }}>o</span>
+                <span style={{ color: '#FBBC05' }}>o</span>
+                <span style={{ color: '#4285F4' }}>g</span>
+                <span style={{ color: '#34A853' }}>l</span>
+                <span style={{ color: '#EA4335' }}>e</span>
+                {" "} - Nhận $300 <span className="text-cyan-500">iGen</span> Credits
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
               
