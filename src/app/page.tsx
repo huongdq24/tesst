@@ -20,6 +20,7 @@ import {
   ChevronDown, 
   UserPlus, 
   Key,
+  Languages
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -66,8 +67,8 @@ const GoogleLogo = () => (
   </svg>
 );
 
-const ColoredGoogleText = () => (
-  <span className="font-google font-bold">
+const ColoredGoogleText = ({ className = "" }: { className?: string }) => (
+  <span className={cn("font-google font-bold", className)}>
     <span style={{ color: '#4285F4' }}>G</span>
     <span style={{ color: '#EA4335' }}>o</span>
     <span style={{ color: '#FBBC05' }}>o</span>
@@ -213,6 +214,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
   const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
 
+  const getLangName = (l: Language) => {
+    if (l === 'VI') return 'Tiếng Việt';
+    if (l === 'EN') return 'English';
+    return '中文';
+  };
+
   return (
     <main className="min-h-screen relative overflow-hidden bg-slate-50">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
@@ -232,42 +239,67 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
             )}
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-3 cursor-pointer group">
-                  <Avatar className="w-10 h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-colors">
-                    <AvatarImage src={user?.photoURL || undefined} referrerPolicy="no-referrer" />
-                    <AvatarFallback className="bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-bold">
-                      {user?.email?.[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-cyan-500" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 shadow-2xl border-slate-100">
-                <DropdownMenuLabel className="p-3">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.roleUser}</p>
-                  <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="p-2 space-y-1">
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
-                    <span className="text-xs font-medium text-slate-600">Credits</span>
-                    <span className="text-xs font-bold text-slate-900">
-                      {userData?.hasClaimedCredits && userData?.apiKey ? '$300.00' : '$0.00'}
-                    </span>
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full hover:bg-slate-100 transition-colors">
+                    <Globe className="w-5 h-5 text-slate-500" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40 rounded-2xl p-2 shadow-2xl border-slate-100">
+                  <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    {lang === 'VI' ? 'Ngôn ngữ' : lang === 'EN' ? 'Language' : '语言'}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setLang('VI')} className={cn("rounded-xl cursor-pointer p-3", lang === 'VI' && "bg-slate-50 font-bold text-cyan-600")}>
+                    Tiếng Việt
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLang('EN')} className={cn("rounded-xl cursor-pointer p-3", lang === 'EN' && "bg-slate-50 font-bold text-cyan-600")}>
+                    English
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLang('ZH')} className={cn("rounded-xl cursor-pointer p-3", lang === 'ZH' && "bg-slate-50 font-bold text-cyan-600")}>
+                    中文
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="flex items-center gap-3 cursor-pointer group">
+                    <Avatar className="w-10 h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-colors">
+                      <AvatarImage src={user?.photoURL || undefined} referrerPolicy="no-referrer" />
+                      <AvatarFallback className="bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-bold">
+                        {user?.email?.[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-cyan-500" />
                   </div>
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
-                    <span className="text-xs font-medium text-slate-600">{t.apiKeyLabel}</span>
-                    <span className="text-[10px] font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 shadow-2xl border-slate-100">
+                  <DropdownMenuLabel className="p-3">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.roleUser}</p>
+                    <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="p-2 space-y-1">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                      <span className="text-xs font-medium text-slate-600">Credits</span>
+                      <span className="text-xs font-bold text-slate-900">
+                        {userData?.hasClaimedCredits && userData?.apiKey ? '$300.00' : '$0.00'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                      <span className="text-xs font-medium text-slate-600">{t.apiKeyLabel}</span>
+                      <span className="text-[10px] font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
+                    </div>
                   </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => auth.signOut()} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
-                  <LogOut className="w-4 h-4" /> {lang === 'VI' ? 'Đăng xuất' : 'Logout'}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => auth.signOut()} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
+                    <LogOut className="w-4 h-4" /> {lang === 'VI' ? 'Đăng xuất' : lang === 'EN' ? 'Logout' : '登出'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
       )}
