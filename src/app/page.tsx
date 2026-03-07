@@ -351,7 +351,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
                   <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
-                    Nhập mã Đối tác chiến lược của <span className="text-cyan-500">iGen</span>
+                    Nhập mã đối tác chiến lược được <ColoredGoogleText /> cung cấp cho <span className="text-cyan-500 font-toyota font-bold">iGen</span>
                   </Label>
                   <div className="relative">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500" />
