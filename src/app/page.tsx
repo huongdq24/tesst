@@ -67,7 +67,7 @@ const GoogleLogo = () => (
 );
 
 const ColoredGoogleText = () => (
-  <span className="font-google">
+  <span className="font-google font-bold">
     <span style={{ color: '#4285F4' }}>G</span>
     <span style={{ color: '#EA4335' }}>o</span>
     <span style={{ color: '#FBBC05' }}>o</span>
@@ -185,7 +185,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
   const handleClaimAndVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!apiKey || isVerifying) return;
+    if (isVerifying) return;
 
     setIsVerifying(true);
     setTimeout(() => {
