@@ -427,21 +427,23 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         {currentScreen === 'CREDIT_CLAIM' && (
           <div className="flex items-center justify-center min-h-[80vh] animate-in zoom-in-95 duration-500">
             <div className="glass w-full max-w-2xl p-10 md:p-16 rounded-[3rem] text-center relative">
-              <div className="flex items-center justify-center gap-8 mb-12 p-8 bg-white/80 backdrop-blur-2xl rounded-[3rem] border-2 border-white shadow-2xl shadow-cyan-500/10 max-w-xl mx-auto transition-all duration-700 hover:scale-[1.02] hover:shadow-cyan-500/20">
-                <IGenBranding className="text-5xl" />
-                <div className="h-12 w-[1.5px] bg-slate-200" />
-                <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-100 flex items-center justify-center">
-                  <GoogleLogo />
+              <div className="flex flex-col items-center gap-6 mb-12 p-8 bg-white/80 backdrop-blur-2xl rounded-[3rem] border-2 border-white shadow-2xl shadow-cyan-500/10 max-w-xl mx-auto transition-all duration-700 hover:scale-[1.02] hover:shadow-cyan-500/20">
+                <div className="flex items-center justify-center gap-8">
+                  <IGenBranding className="text-5xl" />
+                  <div className="h-12 w-[1.5px] bg-slate-200" />
+                  <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-100 flex items-center justify-center">
+                    <GoogleLogo />
+                  </div>
                 </div>
-              </div>
-
-              {/* Strategic Partner Badge moved here */}
-              <div className="flex items-center justify-center gap-4 -mt-10 mb-12 px-8 py-3 rounded-full bg-white border-2 border-cyan-100 shadow-xl shadow-cyan-500/10 backdrop-blur-xl group hover:border-cyan-400 hover:scale-105 transition-all duration-500 max-w-fit mx-auto">
-                <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
-                <p className="text-xs font-black text-slate-800 uppercase tracking-[0.3em] flex items-center gap-2">
-                  Đối tác chiến lược của <ColoredGoogleText className="font-bold" />
-                </p>
-                <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
+                
+                {/* Integrated Strategic Partner Badge */}
+                <div className="flex items-center justify-center gap-4 px-8 py-3 rounded-full bg-white border-2 border-cyan-100 shadow-xl shadow-cyan-500/10 backdrop-blur-xl group hover:border-cyan-400 hover:scale-105 transition-all duration-500 max-w-fit">
+                  <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
+                  <p className="text-xs font-black text-slate-800 uppercase tracking-[0.3em] flex items-center gap-2">
+                    Đối tác chiến lược của <ColoredGoogleText className="font-bold" />
+                  </p>
+                  <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
+                </div>
               </div>
 
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center">
