@@ -444,9 +444,9 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
               </div>
 
-              <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center">
-                <div className="font-google">Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
-                <div className="mt-2 text-slate-900">- Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center">
+                <div className="font-google whitespace-nowrap">Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
+                <div className="mt-2 text-slate-900 whitespace-nowrap">- Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
               </h2>
               
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
