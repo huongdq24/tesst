@@ -9,7 +9,7 @@ export const IGenBranding = ({ className = "", withTagline = false }: IGenBrandi
   return (
     <span className={`font-toyota tracking-tight flex items-baseline gap-2 ${className}`}>
       <div className="flex items-baseline">
-        <span className="text-primary font-semibold">i</span>
+        <span className="text-cyan-500 font-semibold">i</span>
         <span className="text-cyan-500 font-extrabold">Gen</span>
       </div>
       {withTagline && (

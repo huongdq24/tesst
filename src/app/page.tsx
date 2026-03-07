@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -457,7 +456,13 @@ export default function Home() {
               </div>
 
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                {lang === 'VI' ? 'Nhận $300' : 'Claim $300'} <span className="text-cyan-500">iGen</span> {lang === 'VI' ? 'Credits' : 'Credits'}
+                {lang === 'VI' ? (
+                  <>Nhận $300 <span className="text-cyan-500">iGen</span> Credits</>
+                ) : lang === 'EN' ? (
+                  <>Claim $300 <span className="text-cyan-500">iGen</span> Credits</>
+                ) : (
+                  <>领取 $300 <span className="text-cyan-500">iGen</span> 信用额度</>
+                )}
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">{t.claimDesc}</p>
               
