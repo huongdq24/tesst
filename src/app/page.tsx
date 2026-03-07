@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -299,7 +298,7 @@ export default function Home() {
                       <span className="text-xs font-medium">Credits</span>
                     </div>
                     <span className="text-xs font-bold text-slate-900">
-                      {userData?.apiKey ? '$300.00' : '$0.00'}
+                      {userData?.hasClaimedCredits && userData?.apiKey ? '$300.00' : '$0.00'}
                     </span>
                   </div>
 
