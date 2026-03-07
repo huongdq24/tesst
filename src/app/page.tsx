@@ -249,7 +249,7 @@ export default function Home() {
       {currentScreen !== 'AUTH' && (
         <header className="fixed top-0 left-0 w-full z-50 glass h-20 px-8 flex items-center justify-between border-b border-slate-200/50">
           <div className="flex items-center gap-2">
-            <IGenBranding className="text-2xl" />
+            <IGenBranding className="text-2xl" withTagline={true} />
           </div>
           
           <div className="flex items-center gap-4 md:gap-6">
@@ -346,10 +346,10 @@ export default function Home() {
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative">
               <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white p-4 rounded-3xl shadow-xl border border-slate-100">
-                <IGenBranding className="text-3xl" />
+                <IGenBranding className="text-3xl" withTagline={true} />
               </div>
               
-              <div className="mt-8 text-center mb-10">
+              <div className="mt-12 text-center mb-10">
                 <h1 className="text-3xl font-bold tracking-tight mb-2">
                   {isSignUp ? t.signUpTitle : t.loginTitle}
                 </h1>
@@ -448,7 +448,7 @@ export default function Home() {
               <div className="flex items-center justify-center gap-8 mb-12 p-6 glass rounded-[2rem] border-white/40 shadow-inner relative group transition-all duration-500 hover:shadow-cyan-500/10 hover:border-cyan-500/20 mx-auto max-w-lg">
                 <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-blue-500/5 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative flex items-center gap-6">
-                  <IGenBranding className="text-5xl drop-shadow-sm" />
+                  <IGenBranding className="text-5xl drop-shadow-sm" withTagline={false} />
                   <div className="h-10 w-[1px] bg-slate-200" />
                   <div className="flex items-center gap-3 bg-white/40 px-5 py-3 rounded-2xl shadow-sm border border-white/50 group-hover:bg-white group-hover:scale-105 transition-all duration-300">
                     <GoogleIcon className="w-8 h-8" />
