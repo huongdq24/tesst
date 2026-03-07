@@ -375,7 +375,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
 
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                Đối tác chiến lược của <ColoredGoogleText /> - Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits
+                Chương trình hợp tác cùng <ColoredGoogleText /> - Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
                 {lang === 'VI' ? (
