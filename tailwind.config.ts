@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -13,6 +14,7 @@ export default {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
         toyota: ['"Toyota Type"', 'Inter', 'sans-serif'],
+        google: ['"Product Sans"', 'Inter', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
