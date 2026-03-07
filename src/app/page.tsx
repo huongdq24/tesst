@@ -445,15 +445,23 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </div>
               </div>
 
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center leading-tight">
                 <div className="font-google whitespace-nowrap">{t.claimDesc} <ColoredGoogleText className="font-bold" /></div>
-                <div className="mt-2 text-slate-900 whitespace-nowrap">{t.claimTitle}</div>
+                <div className="mt-2 text-slate-900">
+                  {lang === 'VI' ? (
+                    <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
+                  ) : lang === 'EN' ? (
+                    <>Enter the partner code provided by <ColoredGoogleText className="font-bold" /> to <span className="text-cyan-500 font-bold">iGen</span> to receive $300 Credits</>
+                  ) : (
+                    <>输入 <ColoredGoogleText className="font-bold" /> 为 <span className="text-cyan-500 font-bold">iGen</span> 提供的合作伙伴代码以领取 $300 Credits</>
+                  )}
+                </div>
               </h2>
               
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
                   <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
-                    {t.apiKeyLabel}
+                    {t.apiKeyLabel.split('iGen')[0]}<span className="text-cyan-500">iGen</span>{t.apiKeyLabel.split('iGen')[1]}
                   </Label>
                   <div className="relative">
                     <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
