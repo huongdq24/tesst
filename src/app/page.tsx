@@ -20,7 +20,9 @@ import {
   ChevronDown, 
   UserPlus, 
   Zap,
-  Languages
+  Languages,
+  Info,
+  ExternalLink
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -38,6 +40,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -188,9 +198,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     try {
       await initiateGoogleSignIn(auth);
     } catch (error: any) {
-      // Log full error for debugging
       console.error("Google Login Error:", error);
-      
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",
@@ -375,6 +383,41 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <Button onClick={() => toast({ title: "Coming Soon" })} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold">
                   <Smartphone className="w-4 h-4" /> Phone
                 </Button>
+              </div>
+
+              {/* Troubleshooting Info for Safari/White Screen */}
+              <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="link" className="text-xs text-slate-400 gap-2 hover:text-cyan-600">
+                      <Info className="w-3.5 h-3.5" /> Lỗi màn hình trắng khi dùng Gmail?
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md rounded-3xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Smartphone className="w-5 h-5 text-cyan-500" /> Khắc phục lỗi đăng nhập
+                      </DialogTitle>
+                      <DialogDescription className="pt-4 text-slate-600 text-left space-y-4">
+                        <p className="font-bold text-slate-900">Nếu bạn dùng Safari trên Mac/iPhone:</p>
+                        <ol className="list-decimal pl-4 space-y-2">
+                          <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
+                          <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
+                          <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
+                          <li>Tải lại trang và thử lại.</li>
+                        </ol>
+                        <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                          <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                            Lưu ý: Firebase Auth yêu cầu domain <b>firebaseapp.com</b> có thể liên lạc với domain preview này. Safari mặc định chặn việc này.
+                          </p>
+                        </div>
+                        <p className="text-xs flex items-center gap-1 font-bold">
+                          Hoặc dùng <Mail className="w-3 h-3" /> Email Đăng ký để thay thế.
+                        </p>
+                      </DialogDescription>
+                    </DialogHeader>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>
