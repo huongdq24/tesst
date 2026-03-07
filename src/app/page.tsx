@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -409,7 +408,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         </ol>
                         <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
                           <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                            Lưu ý: Firebase Auth yêu cầu domain <b>firebaseapp.com</b> có thể liên lạc với domain preview này. Safari mặc định chặn việc này.
+                            Lưu ý: Firebase Auth yêu cầu domain <b>firebaseapp.com</b> có thể liên lạc with domain preview này. Safari mặc định chặn việc này.
                           </p>
                         </div>
                         <p className="text-xs flex items-center gap-1 font-bold">
@@ -440,21 +439,21 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <div className="flex items-center justify-center gap-4 px-8 py-3 rounded-full bg-white border-2 border-cyan-100 shadow-xl shadow-cyan-500/10 backdrop-blur-xl group hover:border-cyan-400 hover:scale-105 transition-all duration-500 max-w-fit">
                   <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
                   <p className="text-xs font-black text-slate-800 uppercase tracking-[0.3em] flex items-center gap-2">
-                    Đối tác chiến lược của <ColoredGoogleText className="font-bold" />
+                    {t.strategicPartner} <ColoredGoogleText className="font-bold" />
                   </p>
                   <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
                 </div>
               </div>
 
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center">
-                <div className="font-google whitespace-nowrap">Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
-                <div className="mt-2 text-slate-900 whitespace-nowrap">Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
+                <div className="font-google whitespace-nowrap">{t.claimDesc} <ColoredGoogleText className="font-bold" /></div>
+                <div className="mt-2 text-slate-900 whitespace-nowrap">{t.claimTitle}</div>
               </h2>
               
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
                   <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
-                    NHẬP MÃ ĐỐI TÁC CỦA <span className="text-cyan-500 font-bold">iGen</span> ĐƯỢC <ColoredGoogleText className="font-bold" /> CUNG CẤP
+                    {t.apiKeyLabel}
                   </Label>
                   <div className="relative">
                     <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
@@ -483,7 +482,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                       <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center p-1.5 shadow-sm">
                         <GoogleLogo />
                       </div>
-                      <span>Xác nhận mã và nhận $300 Credits</span>
+                      <span>{t.claimButton}</span>
                     </>
                   )}
                 </Button>
