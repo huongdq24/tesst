@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -39,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
@@ -187,6 +189,8 @@ export default function Home() {
       });
       return;
     }
+
+    if (isVerifying) return;
 
     setIsVerifying(true);
     // Simulating verification process
@@ -493,8 +497,10 @@ export default function Home() {
               <div className="flex flex-col gap-4 max-w-md mx-auto">
                 <Button 
                   onClick={handleClaimAndVerify}
-                  disabled={isVerifying || !apiKey}
-                  className="h-16 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-lg sm:text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95 disabled:opacity-50 whitespace-normal leading-tight"
+                  className={cn(
+                    "h-16 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full text-lg sm:text-xl font-bold shadow-xl orb-glow transform transition-all active:scale-95 whitespace-normal leading-tight",
+                    (!apiKey || isVerifying) ? "opacity-60 cursor-not-allowed" : "hover:scale-105"
+                  )}
                 >
                   {isVerifying ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
