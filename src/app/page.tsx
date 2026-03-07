@@ -452,7 +452,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
                   <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
-                    NHẬP MÃ ĐỐI TÁC CHIẾN LƯỢC ĐƯỢC <ColoredGoogleText className="font-bold" /> CUNG CẤP
+                    NHẬP MÃ ĐỐI TÁC CỦA <span className="text-cyan-500 font-bold">iGen</span> ĐƯỢC <ColoredGoogleText className="font-bold" /> CUNG CẤP
                   </Label>
                   <div className="relative">
                     <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
