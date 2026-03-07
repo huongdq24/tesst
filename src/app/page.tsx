@@ -19,7 +19,7 @@ import {
   LogOut, 
   ChevronDown, 
   UserPlus, 
-  Key,
+  Zap,
   Languages
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
@@ -214,10 +214,15 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
   const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
 
-  const getLangName = (l: Language) => {
-    if (l === 'VI') return 'Tiếng Việt';
-    if (l === 'EN') return 'English';
-    return '中文';
+  const renderStyledPlaceholder = () => {
+    const parts = t.apiKeyPlaceholder.split('iGen');
+    return (
+      <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-lg flex items-center gap-1">
+        <span>{parts[0]}</span>
+        <span className="text-cyan-500 font-bold">iGen</span>
+        <span>{parts[1]}</span>
+      </div>
+    );
   };
 
   return (
@@ -386,13 +391,13 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     NHẬP MÃ ĐỐI TÁC CHIẾN LƯỢC ĐƯỢC <ColoredGoogleText /> CUNG CẤP
                   </Label>
                   <div className="relative">
-                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500" />
+                    <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
                     <Input 
-                      placeholder={t.apiKeyPlaceholder} 
-                      className="h-14 pl-10 bg-white/60 border-slate-200 rounded-xl focus-visible:ring-cyan-500 shadow-sm text-lg font-mono"
+                      className="h-14 pl-10 bg-white/60 border-slate-200 rounded-xl focus-visible:ring-cyan-500 shadow-sm text-lg font-mono relative z-0"
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
                     />
+                    {!apiKey && renderStyledPlaceholder()}
                   </div>
                 </div>
               </div>
