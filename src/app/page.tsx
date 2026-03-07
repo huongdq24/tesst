@@ -375,7 +375,17 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
 
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                Chương trình hợp tác cùng <ColoredGoogleText /> - Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits
+                {lang === 'VI' ? (
+                  <>
+                    <div>Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
+                    <div className="mt-2 text-slate-900">- Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
+                  </>
+                ) : (
+                  <>
+                    <div>In partnership with <ColoredGoogleText className="font-bold" /></div>
+                    <div className="mt-2 text-slate-900">- Claim $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
+                  </>
+                )}
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
                 {lang === 'VI' ? (
@@ -388,7 +398,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
                   <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
-                    NHẬP MÃ ĐỐI TÁC CHIẾN LƯỢC ĐƯỢC <ColoredGoogleText /> CUNG CẤP
+                    NHẬP MÃ ĐỐI TÁC CHIẾN LƯỢC ĐƯỢC <ColoredGoogleText className="font-bold" /> CUNG CẤP
                   </Label>
                   <div className="relative">
                     <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
@@ -416,7 +426,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <div className="flex items-center justify-center gap-3 mt-6 px-6 py-3 rounded-2xl bg-white/40 border border-white/60 shadow-lg backdrop-blur-sm group hover:border-cyan-200 transition-all duration-500">
                   <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
                   <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] flex items-center gap-1">
-                    Đối tác chiến lược của <ColoredGoogleText />
+                    Đối tác chiến lược của <ColoredGoogleText className="font-bold" />
                   </p>
                   <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
                 </div>
