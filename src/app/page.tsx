@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -253,8 +254,8 @@ export default function Home() {
           
           <div className="flex items-center gap-4 md:gap-6">
             {(userData?.hasClaimedCredits && userData?.apiKey) && (
-              <div className="hidden sm:flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-full shadow-lg animate-in slide-in-from-right-4">
-                <Wallet className="w-4 h-4 text-cyan-400" />
+              <div className="hidden sm:flex items-center gap-2 bg-white text-slate-900 px-4 py-1.5 rounded-full shadow-lg animate-in slide-in-from-right-4 border border-slate-100">
+                <Wallet className="w-4 h-4 text-cyan-500" />
                 <span className="text-sm font-bold tracking-tight">$300.00</span>
               </div>
             )}
