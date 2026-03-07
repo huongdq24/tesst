@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -113,11 +114,13 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   useEffect(() => {
-    if (isUserLoading || isUserDataLoading) return;
+    // If auth is still checking, or firestore doc is loading, wait
+    if (isUserLoading || (user && isUserDataLoading)) return;
 
     if (user) {
       if (userData) {
-        if (user.email === ADMIN_EMAIL && userData.apiKey !== ADMIN_AI_KEY) {
+        // Rule for Admin: Auto-activate
+        if (user.email === ADMIN_EMAIL && (!userData.hasClaimedCredits || userData.apiKey !== ADMIN_AI_KEY)) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
             apiKey: ADMIN_AI_KEY,
@@ -125,33 +128,37 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
             hasClaimedCredits: true,
             updatedAt: new Date().toISOString()
           });
+          setCurrentScreen('DASHBOARD');
+          return;
         }
 
-        const hasStoredKey = !!userData.apiKey && userData.hasClaimedCredits;
-
-        if (hasStoredKey) {
+        // Logic check: If user has already claimed credits, go to dashboard
+        if (userData.hasClaimedCredits && userData.apiKey) {
           if (['AUTH', 'CREDIT_CLAIM'].includes(currentScreen)) {
             setCurrentScreen('DASHBOARD');
           }
         } else {
+          // If logged in but not claimed, show claim screen
           if (['AUTH', 'DASHBOARD'].includes(currentScreen)) {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
       } else {
+        // Document doesn't exist yet, create it and redirect to claim screen
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
         setDocumentNonBlocking(uRef, {
           id: user.uid,
           email: user.email,
-          hasClaimedCredits: isUserAdmin,
+          hasClaimedCredits: isUserAdmin, // Admins get credits immediately
           apiKey: isUserAdmin ? ADMIN_AI_KEY : '',
           role: isUserAdmin ? 'admin' : 'user',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }, { merge: true });
 
+        // Admin goes to dashboard, regular user to claim screen
         if (isUserAdmin) {
           setCurrentScreen('DASHBOARD');
         } else {
@@ -159,6 +166,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         }
       }
     } else {
+      // Not logged in
       if (currentScreen !== 'AUTH') setCurrentScreen('AUTH');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, currentScreen, db]);
@@ -210,7 +218,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
   const handleClaimAndVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isVerifying) return;
+    if (isVerifying || !apiKey) return;
 
     setIsVerifying(true);
     setTimeout(() => {
@@ -223,12 +231,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           updatedAt: new Date().toISOString()
         });
         toast({ title: t.paymentSuccess, description: "iGen AI active." });
-        setCurrentScreen('DASHBOARD');
+        // The real-time listener (userData) will trigger the Screen switch in useEffect
       }
     }, 2000);
   };
 
-  if (isUserLoading || isUserDataLoading) {
+  if (isUserLoading || (user && isUserDataLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
@@ -431,7 +439,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   </div>
                 </div>
                 
-                {/* Integrated Strategic Partner Badge */}
                 <div className="flex items-center justify-center gap-4 px-8 py-3 rounded-full bg-white border-2 border-cyan-100 shadow-xl shadow-cyan-500/10 backdrop-blur-xl group hover:border-cyan-400 hover:scale-105 transition-all duration-500 max-w-fit">
                   <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
                   <p className="text-xs font-black text-slate-800 uppercase tracking-[0.3em] flex items-center gap-2">
@@ -442,8 +449,16 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
 
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center leading-tight">
-                <div className="font-google whitespace-nowrap">{t.claimDesc} <ColoredGoogleText className="font-bold" /></div>
-                <div className="mt-4 text-slate-500 text-xs sm:text-sm md:text-base font-normal leading-relaxed max-w-lg mx-auto">
+                <div className="font-google whitespace-nowrap">
+                  {lang === 'VI' ? (
+                    <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span></>
+                  ) : lang === 'EN' ? (
+                    <>Enter partner code provided by <ColoredGoogleText className="font-bold" /> to <span className="text-cyan-500 font-bold">iGen</span></>
+                  ) : (
+                    <>输入 <ColoredGoogleText className="font-bold" /> 为 <span className="text-cyan-500 font-bold">iGen</span> 提供的合作伙伴代码</>
+                  )}
+                </div>
+                <div className="mt-4 text-slate-500 text-sm md:text-base font-normal leading-relaxed max-w-lg mx-auto">
                   {lang === 'VI' ? (
                     <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
                   ) : lang === 'EN' ? (
