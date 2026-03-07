@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -142,7 +143,11 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           updatedAt: new Date().toISOString()
         }, { merge: true });
 
-        if (!isUserAdmin) setCurrentScreen('CREDIT_CLAIM');
+        if (isUserAdmin) {
+          setCurrentScreen('DASHBOARD');
+        } else {
+          setCurrentScreen('CREDIT_CLAIM');
+        }
       }
     } else {
       if (currentScreen !== 'AUTH') setCurrentScreen('AUTH');
@@ -167,10 +172,9 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     try {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, userEmail, password);
-        toast({ title: t.signUpTitle, description: "Account created successfully." });
-        await signOut(auth);
-        setIsSignUp(false);
-        setPassword('');
+        toast({ title: t.signUpTitle, description: "Account created successfully. Welcome to iGen!" });
+        // After successful sign up, Firebase automatically logs the user in.
+        // The useEffect will detect the new 'user' and handle navigation.
       } else {
         await initiateEmailSignIn(auth, userEmail, password);
       }

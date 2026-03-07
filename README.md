@@ -5,12 +5,13 @@
 
 ## Hướng dẫn Khắc phục lỗi Đăng nhập Gmail (Firebase Auth)
 
-Nếu bạn gặp lỗi "Missing or insufficient permissions" hoặc không thể đăng nhập bằng Gmail trên Cloud Workstations, hãy thực hiện chính xác 3 bước sau:
+Nếu bạn gặp lỗi "Missing or insufficient permissions" hoặc không thể đăng nhập bằng Gmail trên Cloud Workstations, hãy thực hiện chính xác các bước sau:
 
-### 1. Kích hoạt Identity Toolkit API (BẮT BUỘC)
+### 1. Kích hoạt Identity Toolkit API & Google People API (BẮT BUỘC)
 Đây là nguyên nhân phổ biến nhất khiến Firebase Auth không hoạt động.
-- **Link trực tiếp:** [Google Cloud Console - Identity Toolkit API](https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com?project=project-5306ce34-5626-488a-913)
-- Nhấn nút **ENABLE** (Kích hoạt).
+- **Link 1:** [Kích hoạt Identity Toolkit API](https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com?project=project-5306ce34-5626-488a-913)
+- **Link 2:** [Kích hoạt Google People API](https://console.cloud.google.com/apis/library/people.googleapis.com?project=project-5306ce34-5626-488a-913)
+- Nhấn nút **ENABLE** cho cả hai.
 
 ### 2. Gỡ giới hạn API Key
 Firebase Studio yêu cầu API Key phải có quyền truy cập vào các dịch vụ Auth.
@@ -29,16 +30,15 @@ Firebase Studio yêu cầu API Key phải có quyền truy cập vào các dịc
 
 ---
 
-## Hướng dẫn Bắt đầu nhanh cho Admin (Dự phòng)
+## ⚡ GIẢI PHÁP NHANH (Nếu Google Auth vẫn lỗi do môi trường)
 
-Nếu việc đăng nhập Google vẫn gặp khó khăn do chính sách bảo mật của trình duyệt trên Cloud Workstations:
+Nếu việc đăng nhập Google vẫn gặp khó khăn do chính sách bảo mật của trình duyệt trên Cloud Workstations, hãy sử dụng phương thức **Đăng ký (Sign Up)** trực tiếp:
 
 1. **Đăng ký tài khoản Email/Password**:
    - Truy cập vào tab **"Đăng ký" (Sign Up)** trên màn hình đăng nhập.
-   - Nhập email: `igen-architect@admin.com` và đặt mật khẩu.
-   - Sau khi nhấn Đăng ký, hệ thống sẽ thông báo thành công.
+   - Nhập email: `igen-architect@admin.com` và đặt mật khẩu bất kỳ.
+   - Nhấn **Đăng ký**.
 
-2. **Đăng nhập**:
-   - Quay lại tab **"Đăng nhập" (Login)**.
-   - Sử dụng tài khoản vừa tạo để đăng nhập.
-   - Hệ thống sẽ tự động nhận diện Email Admin, gán mã đối tác Tier 1 (`AIzaSyBF...`) và cấp đầy đủ quyền hạn.
+2. **Truy cập ngay**:
+   - Hệ thống sẽ tự động đăng nhập bạn vào Dashboard.
+   - Tài khoản này được gán mặc định là **Admin**, có sẵn mã đối tác và đầy đủ $300 Credits để bạn bắt đầu ngay mà không cần qua Google.
