@@ -240,7 +240,8 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
 
   const renderStyledPlaceholder = () => {
-    const parts = t.apiKeyPlaceholder.split('iGen');
+    const placeholderText = t.apiKeyPlaceholder;
+    const parts = placeholderText.split('iGen');
     return (
       <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-lg flex items-center gap-1">
         <span>{parts[0]}</span>
@@ -434,6 +435,15 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </div>
               </div>
 
+              {/* Strategic Partner Badge moved here */}
+              <div className="flex items-center justify-center gap-3 -mt-8 mb-10 px-6 py-2 rounded-2xl bg-white/40 border border-white/60 shadow-lg backdrop-blur-sm group hover:border-cyan-200 transition-all duration-500 max-w-fit mx-auto scale-90">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] flex items-center gap-1">
+                  Đối tác chiến lược của <ColoredGoogleText className="font-bold" />
+                </p>
+                <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
+              </div>
+
               <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center">
                 <div className="font-google">Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
                 <div className="mt-2 text-slate-900">- Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
@@ -470,14 +480,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 >
                   {isVerifying ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : "Xác nhận mã và nhận $300 Credits"}
                 </Button>
-                
-                <div className="flex items-center justify-center gap-3 mt-6 px-6 py-3 rounded-2xl bg-white/40 border border-white/60 shadow-lg backdrop-blur-sm group hover:border-cyan-200 transition-all duration-500">
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
-                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] flex items-center gap-1">
-                    Đối tác chiến lược của <ColoredGoogleText className="font-bold" />
-                  </p>
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
-                </div>
               </div>
             </div>
           </div>
