@@ -173,8 +173,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, userEmail, password);
         toast({ title: t.signUpTitle, description: "Account created successfully. Welcome to iGen!" });
-        // After successful sign up, Firebase automatically logs the user in.
-        // The useEffect will detect the new 'user' and handle navigation.
       } else {
         await initiateEmailSignIn(auth, userEmail, password);
       }
@@ -190,10 +188,13 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     try {
       await initiateGoogleSignIn(auth);
     } catch (error: any) {
+      // Log full error for debugging
+      console.error("Google Login Error:", error);
+      
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",
-        description: error.message || "Please check your browser's popup blocker."
+        description: `Code: ${error.code} - ${error.message}`
       });
     } finally {
       setIsAuthenticating(false);
@@ -390,25 +391,13 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </div>
               </div>
 
-              <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900">
-                {lang === 'VI' ? (
-                  <>
-                    <div className="font-google">Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
-                    <div className="mt-2 text-slate-900">- Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="font-google">In partnership with <ColoredGoogleText className="font-bold" /></div>
-                    <div className="mt-2 text-slate-900">- Claim $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
-                  </>
-                )}
+              <h2 className="text-4xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center">
+                <div className="font-google">Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /></div>
+                <div className="mt-2 text-slate-900">- Nhận $300 <span className="text-cyan-500 font-toyota font-bold">iGen</span> Credits</div>
               </h2>
+              
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
-                {lang === 'VI' ? (
-                  <>Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /> để hỗ trợ các dự án kiến trúc mới.</>
-                ) : (
-                  <>In partnership with <ColoredGoogleText className="font-bold" /> to support new architectural projects.</>
-                )}
+                Chương trình hợp tác cùng **Google** để hỗ trợ các dự án kiến trúc mới.
               </p>
               
               <div className="space-y-4 max-w-sm mx-auto mb-10">
