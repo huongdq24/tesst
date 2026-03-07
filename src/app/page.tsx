@@ -436,12 +436,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
 
               {/* Strategic Partner Badge moved here */}
-              <div className="flex items-center justify-center gap-3 -mt-8 mb-10 px-6 py-2 rounded-2xl bg-white/40 border border-white/60 shadow-lg backdrop-blur-sm group hover:border-cyan-200 transition-all duration-500 max-w-fit mx-auto scale-90">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] flex items-center gap-1">
+              <div className="flex items-center justify-center gap-4 -mt-10 mb-12 px-8 py-3 rounded-full bg-white border-2 border-cyan-100 shadow-xl shadow-cyan-500/10 backdrop-blur-xl group hover:border-cyan-400 hover:scale-105 transition-all duration-500 max-w-fit mx-auto">
+                <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
+                <p className="text-xs font-black text-slate-800 uppercase tracking-[0.3em] flex items-center gap-2">
                   Đối tác chiến lược của <ColoredGoogleText className="font-bold" />
                 </p>
-                <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
+                <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
               </div>
 
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center">
