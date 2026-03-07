@@ -298,7 +298,9 @@ export default function Home() {
                       <Wallet className="w-4 h-4" />
                       <span className="text-xs font-medium">Credits</span>
                     </div>
-                    <span className="text-xs font-bold text-slate-900">$300.00</span>
+                    <span className="text-xs font-bold text-slate-900">
+                      {userData?.apiKey ? '$300.00' : '$0.00'}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
@@ -443,7 +445,7 @@ export default function Home() {
         {currentScreen === 'CREDIT_CLAIM' && (
           <div className="flex items-center justify-center min-h-[80vh] animate-in zoom-in-95 duration-500">
             <div className="glass w-full max-w-2xl p-10 md:p-16 rounded-[3rem] text-center relative overflow-hidden">
-              {/* Branding iGen x Google Partner Logo */}
+              {/* iGen x Google Partner Logo */}
               <div className="flex items-center justify-center gap-8 mb-12 p-6 glass rounded-[2rem] border-white/40 shadow-inner relative group transition-all duration-500 hover:shadow-cyan-500/10 hover:border-cyan-500/20 mx-auto max-w-lg">
                 <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-blue-500/5 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative flex items-center gap-6">
