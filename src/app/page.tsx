@@ -62,7 +62,7 @@ const GoogleLogo = () => (
     />
     <path
       fill="#EA4335"
-      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
     />
   </svg>
 );
@@ -374,16 +374,16 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </h2>
               <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
                 {lang === 'VI' ? (
-                  <>Chương trình hợp tác cùng <ColoredGoogleText /> để hỗ trợ các dự án kiến trúc mới.</>
+                  <>Chương trình hợp tác cùng <ColoredGoogleText className="font-bold" /> để hỗ trợ các dự án kiến trúc mới.</>
                 ) : (
-                  <>In partnership with <ColoredGoogleText /> to support new architectural projects.</>
+                  <>In partnership with <ColoredGoogleText className="font-bold" /> to support new architectural projects.</>
                 )}
               </p>
               
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
                   <Label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-xs font-bold text-slate-500 px-1 uppercase tracking-wider">
-                    Nhập mã đối tác chiến lược được <ColoredGoogleText /> cung cấp cho <span className="text-cyan-500 font-toyota font-bold">iGen</span>
+                    NHẬP MÃ ĐỐI TÁC CHIẾN LƯỢC ĐƯỢC <ColoredGoogleText /> CUNG CẤP
                   </Label>
                   <div className="relative">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500" />
@@ -410,7 +410,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 
                 <div className="flex items-center justify-center gap-3 mt-6 px-6 py-3 rounded-2xl bg-white/40 border border-white/60 shadow-lg backdrop-blur-sm group hover:border-cyan-200 transition-all duration-500">
                   <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
-                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">
+                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] flex items-center gap-1">
                     Đối tác chiến lược của <ColoredGoogleText />
                   </p>
                   <Sparkles className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
