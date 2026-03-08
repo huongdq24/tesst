@@ -132,6 +132,23 @@ export default function Home() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // EFFECT ĐỒNG BỘ CREDITS THẬT TỪ GOOGLE CLOUD BILLING API
+  useEffect(() => {
+    const syncBilling = async () => {
+      if (user && userData && userData.hasClaimedCredits) {
+        const result = await getRealtimeCredits();
+        if (result.success && result.credits !== userData.credits) {
+          const uRef = doc(db, 'users', user.uid);
+          updateDocumentNonBlocking(uRef, {
+            credits: result.credits,
+            updatedAt: new Date().toISOString()
+          });
+        }
+      }
+    };
+    syncBilling();
+  }, [user, userData?.hasClaimedCredits, db]);
+
   useEffect(() => {
     if (isUserLoading) return;
 
