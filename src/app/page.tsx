@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -10,18 +9,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Mail, 
-  Smartphone, 
-  Globe, 
   Wallet, 
-  User as UserIcon, 
   LogOut, 
   ChevronDown, 
-  Zap,
-  Info,
-  Edit,
-  ExternalLink,
   RefreshCw,
-  Users,
   ShieldCheck,
   LayoutDashboard,
   Search,
@@ -66,7 +57,7 @@ import { getRealtimeCredits } from '@/app/actions/billing';
 
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL' | 'ADMIN_PANEL';
 
-const ADMIN_EMAIL = 'igen-architect@admin.com';
+const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
 const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || 'ADMIN_SYSTEM_KEY';
 
 const GoogleLogo = () => (
@@ -119,7 +110,6 @@ export default function Home() {
   
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
-  const [isSyncingAll, setIsSyncingAll] = useState(false);
 
   const t = translations[lang];
 
@@ -127,28 +117,41 @@ export default function Home() {
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   const usersCollectionRef = useMemoFirebase(() => {
-    if (userData?.role === 'admin') return collection(db, 'users');
+    if (userData?.role === 'admin' || (user && ADMIN_EMAILS.includes(user.email || ''))) return collection(db, 'users');
     return null;
-  }, [db, userData]);
+  }, [db, userData, user]);
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // EFFECT ĐỒNG BỘ CREDITS THẬT TỪ GOOGLE CLOUD BILLING API CHO USER HIỆN TẠI
+  // EFFECT ĐỒNG BỘ CREDITS THẬT TỪ GOOGLE CLOUD BILLING API
   useEffect(() => {
     const syncBilling = async () => {
       if (user && userData && userData.hasClaimedCredits) {
         const result = await getRealtimeCredits();
-        if (result.success && result.credits !== userData.credits) {
+        if (result.success && result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
             credits: result.credits,
             updatedAt: new Date().toISOString()
           });
+          
+          // Nếu là Admin, đồng bộ cho tất cả user hiện có để đảm bảo nhất quán
+          if (ADMIN_EMAILS.includes(user.email || '') && allUsers) {
+            allUsers.forEach(u => {
+              if (u.credits !== result.credits) {
+                const otherURef = doc(db, 'users', u.id);
+                updateDocumentNonBlocking(otherURef, {
+                  credits: result.credits,
+                  updatedAt: new Date().toISOString()
+                });
+              }
+            });
+          }
         }
       }
     };
     syncBilling();
-  }, [user, userData?.hasClaimedCredits, db]);
+  }, [user, userData?.hasClaimedCredits, db, allUsers]);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -157,7 +160,7 @@ export default function Home() {
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
-        if (user.email === ADMIN_EMAIL && userData.role !== 'admin') {
+        if (ADMIN_EMAILS.includes(user.email || '') && userData.role !== 'admin') {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
             role: 'admin',
@@ -188,7 +191,7 @@ export default function Home() {
         }
       } else {
         const uRef = doc(db, 'users', user.uid);
-        const isUserAdmin = user.email === ADMIN_EMAIL;
+        const isUserAdmin = ADMIN_EMAILS.includes(user.email || '');
         const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
         
         setDocumentNonBlocking(uRef, {
@@ -263,36 +266,6 @@ export default function Home() {
     });
   };
 
-  const handleSyncAllCredits = async () => {
-    if (!allUsers || isSyncingAll) return;
-    setIsSyncingAll(true);
-    try {
-      const result = await getRealtimeCredits();
-      if (result.success) {
-        // Cập nhật tất cả user trong danh sách lên con số thật từ API
-        allUsers.forEach(u => {
-          const uRef = doc(db, 'users', u.id);
-          updateDocumentNonBlocking(uRef, {
-            credits: result.credits,
-            updatedAt: new Date().toISOString()
-          });
-        });
-        toast({
-          title: t.syncCloud,
-          description: `Đã đồng bộ hóa số dư $${result.credits} cho tất cả người dùng.`
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Sync Failed",
-        description: "Không thể kết nối với Google Cloud Billing API."
-      });
-    } finally {
-      setIsSyncingAll(false);
-    }
-  };
-
   if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -321,7 +294,7 @@ export default function Home() {
             <div className="flex items-center gap-4 md:gap-8">
               <IGenBranding className="text-xl md:text-2xl" withTagline={true} />
               
-              {user?.email === ADMIN_EMAIL && userData?.role === 'admin' && (
+              {user && ADMIN_EMAILS.includes(user.email || '') && (
                 <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
                   <Button 
                     variant={currentScreen !== 'ADMIN_PANEL' ? 'default' : 'ghost'} 
@@ -400,7 +373,7 @@ export default function Home() {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     
-                    {user?.email === ADMIN_EMAIL && userData?.role === 'admin' && (
+                    {user && ADMIN_EMAILS.includes(user.email || '') && (
                       <>
                         <DropdownMenuItem 
                           onSelect={() => setCurrentScreen('ADMIN_PANEL')}
@@ -584,15 +557,6 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
-                <Button 
-                  variant="outline" 
-                  onClick={handleSyncAllCredits}
-                  disabled={isSyncingAll}
-                  className="h-11 rounded-xl border-cyan-200 text-cyan-600 hover:bg-cyan-50 font-bold gap-2"
-                >
-                  <RefreshCw className={cn("w-4 h-4", isSyncingAll && "animate-spin")} />
-                  {t.syncCloud}
-                </Button>
                 <div className="relative w-full md:w-80">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input 
