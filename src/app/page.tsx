@@ -229,26 +229,6 @@ export default function Home() {
     }
   };
 
-  const handleClaimAndVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isVerifying || !apiKey) return;
-
-    setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
-      if (user) {
-        const uRef = doc(db, 'users', user.uid);
-        updateDocumentNonBlocking(uRef, {
-          hasClaimedCredits: true,
-          apiKey: apiKey,
-          credits: '300.00',
-          updatedAt: new Date().toISOString()
-        });
-        toast({ title: t.paymentSuccess, description: "iGen AI active." });
-      }
-    }, 2000);
-  };
-
   const handleUpdateApiKey = (e: React.FormEvent) => {
     e.preventDefault();
     if (!tempApiKey || !user) return;
@@ -474,17 +454,7 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="relative mt-10 mb-6">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100" /></div>
-                <div className="relative flex justify-center">
-                  <span className="bg-white px-4 text-xs font-bold text-slate-600">
-                    {lang === 'VI' ? 'Hoặc đăng nhập với ' : 'Or sign in with '}
-                    <ColoredGoogleText />
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4">
+              <div className="mt-10">
                 <Button 
                   disabled={isAuthenticating} 
                   onClick={handleGoogleLogin} 
@@ -526,7 +496,24 @@ export default function Home() {
               </div>
 
               <Button 
-                onClick={handleClaimAndVerify}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (isVerifying || !apiKey) return;
+                  setIsVerifying(true);
+                  setTimeout(() => {
+                    setIsVerifying(false);
+                    if (user) {
+                      const uRef = doc(db, 'users', user.uid);
+                      updateDocumentNonBlocking(uRef, {
+                        hasClaimedCredits: true,
+                        apiKey: apiKey,
+                        credits: '300.00',
+                        updatedAt: new Date().toISOString()
+                      });
+                      toast({ title: t.paymentSuccess, description: "iGen AI active." });
+                    }
+                  }, 2000);
+                }}
                 className="h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-transform"
               >
                 {isVerifying ? <RefreshCw className="w-6 h-6 animate-spin" /> : "Kích hoạt & Đồng bộ Google Billing"}
