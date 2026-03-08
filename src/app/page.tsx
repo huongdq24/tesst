@@ -112,18 +112,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   useEffect(() => {
-    if (!isEditingApiKey) {
-      const forceRestore = () => {
-        document.body.style.pointerEvents = 'auto';
-        document.body.style.overflow = 'auto';
-      };
-      forceRestore();
-      const timer = setTimeout(forceRestore, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [isEditingApiKey]);
-
-  useEffect(() => {
     if (isUserLoading) return;
 
     if (user) {
@@ -332,10 +320,10 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     <DropdownMenuItem 
                       onSelect={(e) => {
                         e.preventDefault();
-                        setTempApiKey('');
-                        setTimeout(() => setIsEditingApiKey(true), 150);
+                        setTempApiKey(userData?.apiKey || '');
+                        setIsEditingApiKey(true);
                       }}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 cursor-pointer transition-colors group/key border-none hover:bg-slate-50 focus:bg-slate-50"
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 cursor-pointer transition-colors group/key"
                     >
                       <span className="text-xs font-medium text-slate-600 flex items-center gap-2">
                         {lang === 'VI' ? (
@@ -361,17 +349,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         </header>
       )}
 
-      <Dialog 
-        open={isEditingApiKey} 
-        onOpenChange={(open) => {
-          setIsEditingApiKey(open);
-        }}
-      >
-        <DialogContent className="max-w-md rounded-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
+        <DialogContent className="max-w-md rounded-3xl">
           <DialogHeader>
             <DialogTitle>{t.editApiKey}</DialogTitle>
-            <DialogDescription asChild>
-              <div className="text-sm text-muted-foreground">{t.paymentSubtitle}</div>
+            <DialogDescription>
+              {t.paymentSubtitle}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -380,7 +363,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               onChange={(e) => setTempApiKey(e.target.value)}
               placeholder={t.apiKeyPlaceholder}
               className="h-12 rounded-xl"
-              autoFocus
             />
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setIsEditingApiKey(false)}>{t.cancel}</Button>
@@ -392,13 +374,19 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         {currentScreen === 'AUTH' && (
-          <div className="flex items-center justify-center min-h-screen p-4 pt-20">
-            <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative mt-8 sm:mt-0">
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative">
               <div className="mt-4 text-center mb-10">
                 <h1 className="text-3xl font-bold tracking-tight mb-2">
                   <span className="text-cyan-500">iGen</span> - Trợ lý AI cho Kiến trúc sư
                 </h1>
-                <p className="text-slate-500 text-sm">{isSignUp ? t.signUpSubtitle : t.loginSubtitle}</p>
+                <div className="flex justify-center gap-4 text-xs font-bold text-slate-400 mt-4">
+                  <button onClick={() => setLang('VI')} className={cn("hover:text-cyan-500 transition-colors", lang === 'VI' && "text-cyan-600")}>VI</button>
+                  <span className="text-slate-200">|</span>
+                  <button onClick={() => setLang('EN')} className={cn("hover:text-cyan-500 transition-colors", lang === 'EN' && "text-cyan-600")}>EN</button>
+                  <span className="text-slate-200">|</span>
+                  <button onClick={() => setLang('ZH')} className={cn("hover:text-cyan-500 transition-colors", lang === 'ZH' && "text-cyan-600")}>ZH</button>
+                </div>
               </div>
               <form onSubmit={handleAuth} className="space-y-4">
                 <Input 
@@ -452,14 +440,17 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                       <DialogTitle className="flex items-center gap-2">
                         <Smartphone className="w-5 h-5 text-cyan-500" /> Khắc phục lỗi đăng nhập
                       </DialogTitle>
-                      <DialogDescription asChild>
+                      <DialogDescription>
                         <div className="pt-4 text-slate-600 text-left space-y-4">
                           <p className="font-bold text-slate-900">Nếu bạn dùng Safari trên Mac/iPhone:</p>
-                          <ol className="list-decimal pl-4 space-y-2 text-sm">
+                          <ol className="list-decimal pl-4 space-y-2">
                             <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
                             <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
                             <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
                           </ol>
+                          <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                            Lưu ý: Firebase Auth yêu cầu domain firebaseapp.com có thể liên lạc với domain preview này. Safari mặc định chặn việc này.
+                          </p>
                           <div className="text-sm font-bold text-cyan-600 bg-cyan-50 p-3 rounded-xl">
                             Mẹo: Gắn Domain riêng cho Web App sẽ khắc phục triệt để lỗi này.
                           </div>
