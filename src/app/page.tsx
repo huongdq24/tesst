@@ -345,7 +345,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         // Triggers dialog open after a short delay to allow menu to clear properly
                         setTimeout(() => setIsEditingApiKey(true), 150);
                       }}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key border-none"
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 focus:bg-slate-100 focus:text-slate-900 cursor-pointer transition-colors group/key border-none"
                     >
                       <span className="text-xs font-medium text-slate-600 flex items-center gap-2">
                         {lang === 'VI' ? (
@@ -593,3 +593,4 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     </main>
   );
 }
+
