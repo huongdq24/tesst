@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -216,7 +217,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group">
                 <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                  ${userData?.credits || '300.00'}
+                  ${userData?.credits || '0.00'}
                 </span>
                 {isSyncing && <RefreshCw className="w-3 h-3 animate-spin text-cyan-400 ml-1" />}
               </div>
@@ -278,7 +279,7 @@ export default function HomePage() {
                       <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
                         <span className="text-xs font-medium text-slate-600">Credits</span>
                         <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                          ${userData?.credits || '300.00'}
+                          ${userData?.credits || '0.00'}
                         </span>
                       </div>
                       
@@ -405,7 +406,7 @@ export default function HomePage() {
                         <TableCell>
                           <div className="flex items-center gap-1.5 font-bold text-slate-900">
                             <Wallet className="w-3.5 h-3.5 text-cyan-500" />
-                            ${u.credits || '300.00'}
+                            ${u.credits || '0.00'}
                           </div>
                         </TableCell>
                       </TableRow>
