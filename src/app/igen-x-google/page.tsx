@@ -246,9 +246,8 @@ export default function CreditClaimPage() {
           <div className="flex items-center gap-6 text-3xl">
             <IGenBranding className="text-3xl" />
             <span className="text-slate-200 font-thin text-4xl">|</span>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               <GoogleLogo />
-              <ColoredGoogleText />
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
@@ -271,7 +270,7 @@ export default function CreditClaimPage() {
             onChange={(e) => setApiKey(e.target.value)}
           />
           {!apiKey && (
-            <div className="absolute inset-0 flex items-center px-6 pointer-events-none text-slate-400 text-lg">
+            <div className="absolute inset-0 flex items-center px-6 pointer-events-none text-slate-400 text-sm opacity-60">
               Dán <span className="text-cyan-500 mx-1 font-bold">iGen</span> Code tại đây...
             </div>
           )}
