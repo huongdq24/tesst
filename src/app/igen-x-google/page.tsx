@@ -252,7 +252,6 @@ export default function CreditClaimPage() {
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <div className="h-px w-16 bg-slate-200 mb-2" />
             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
               <span>Đối tác chiến lược của</span>
               <ColoredGoogleText />
@@ -335,4 +334,3 @@ export default function CreditClaimPage() {
     </main>
   );
 }
-
