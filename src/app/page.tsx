@@ -54,7 +54,7 @@ import { cn } from "@/lib/utils";
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
 const ADMIN_EMAIL = 'igen-architect@admin.com';
-const ADMIN_AI_KEY = 'AIzaSyBF1f7Q0ZoKy4wc8VhSylPK8HlJMO1k_B0'; // Tier 1 API Key for Admin
+const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || '';
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6">
@@ -89,7 +89,6 @@ const ColoredGoogleText = ({ className = "" }: { className?: string }) => (
 );
 
 export default function Home(props: { params: Promise<any>; searchParams: Promise<any> }) {
-  // Unwrap dynamic APIs in Next.js 15 client components
   const unwrappedParams = React.use(props.params);
   const unwrappedSearchParams = React.use(props.searchParams);
 
@@ -114,12 +113,11 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   useEffect(() => {
-    // If auth is still checking, or firestore doc is loading, wait
     if (isUserLoading || (user && isUserDataLoading)) return;
 
     if (user) {
       if (userData) {
-        // Rule for Admin: Auto-activate
+        // Special case for admin to auto-claim
         if (user.email === ADMIN_EMAIL && (!userData.hasClaimedCredits || userData.apiKey !== ADMIN_AI_KEY)) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -132,33 +130,30 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           return;
         }
 
-        // Logic check: If user has already claimed credits, go to dashboard
         if (userData.hasClaimedCredits && userData.apiKey) {
           if (['AUTH', 'CREDIT_CLAIM'].includes(currentScreen)) {
             setCurrentScreen('DASHBOARD');
           }
         } else {
-          // If logged in but not claimed, show claim screen
           if (['AUTH', 'DASHBOARD'].includes(currentScreen)) {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
       } else {
-        // Document doesn't exist yet, create it and redirect to claim screen
+        // First login: create record
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
         setDocumentNonBlocking(uRef, {
           id: user.uid,
           email: user.email,
-          hasClaimedCredits: isUserAdmin, // Admins get credits immediately
+          hasClaimedCredits: isUserAdmin,
           apiKey: isUserAdmin ? ADMIN_AI_KEY : '',
           role: isUserAdmin ? 'admin' : 'user',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }, { merge: true });
 
-        // Admin goes to dashboard, regular user to claim screen
         if (isUserAdmin) {
           setCurrentScreen('DASHBOARD');
         } else {
@@ -166,7 +161,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         }
       }
     } else {
-      // Not logged in
       if (currentScreen !== 'AUTH') setCurrentScreen('AUTH');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, currentScreen, db]);
@@ -436,23 +430,21 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     <GoogleLogo />
                   </div>
                 </div>
-                
-                <div className="flex items-center justify-center gap-4 px-8 py-3 rounded-full bg-white border-2 border-cyan-100 shadow-xl shadow-cyan-500/10 backdrop-blur-xl group hover:border-cyan-400 hover:scale-105 transition-all duration-500 max-w-fit">
-                  <p className="text-xs font-black text-slate-800 uppercase tracking-[0.3em] flex items-center gap-2">
-                    {t.strategicPartner} <ColoredGoogleText className="font-bold" />
-                  </p>
-                </div>
               </div>
 
               <div className="space-y-4 mb-10">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 text-left md:text-center leading-tight">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
                   <span className="font-google block">
-                    {lang === 'VI' ? 'Chương trình hợp tác cùng ' : lang === 'EN' ? 'Collaboration program with ' : '与 '}
-                    <ColoredGoogleText className="font-bold" />
-                    {lang === 'ZH' ? ' 的合作项目' : ''}
+                    {lang === 'VI' ? (
+                      <>Chương trình hợp tác cùng <ColoredGoogleText /></>
+                    ) : lang === 'EN' ? (
+                      <>Collaboration program with <ColoredGoogleText /></>
+                    ) : (
+                      <>与 <ColoredGoogleText /> 的合作项目</>
+                    )}
                   </span>
                 </h2>
-                <p className="text-slate-500 text-xs md:text-sm font-normal leading-relaxed max-w-lg mx-auto text-left md:text-center">
+                <p className="text-slate-500 text-[10px] md:text-xs font-normal leading-relaxed max-w-lg mx-auto">
                   {lang === 'VI' ? (
                     <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
                   ) : lang === 'EN' ? (
@@ -464,16 +456,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               </div>
               
               <div className="space-y-4 max-w-sm mx-auto mb-10">
-                <div className="space-y-2 text-left">
-                  <div className="relative">
-                    <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
-                    <Input 
-                      className="h-14 pl-10 bg-white/60 border-slate-200 rounded-xl focus-visible:ring-cyan-500 shadow-sm text-lg font-mono relative z-0"
-                      value={apiKey}
-                      placeholder={t.apiKeyPlaceholder}
-                      onChange={(e) => setApiKey(e.target.value)}
-                    />
-                  </div>
+                <div className="relative">
+                  <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
+                  <Input 
+                    className="h-14 pl-10 bg-white/60 border-slate-200 rounded-xl focus-visible:ring-cyan-500 shadow-sm text-lg font-mono relative z-0"
+                    value={apiKey}
+                    placeholder={t.apiKeyPlaceholder}
+                    onChange={(e) => setApiKey(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -528,3 +518,4 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     </main>
   );
 }
+
