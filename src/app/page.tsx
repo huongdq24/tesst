@@ -55,7 +55,7 @@ type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
 const ADMIN_EMAIL = 'igen-architect@admin.com';
 const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || '';
 
-// Link to Google Cloud Billing Console provided by the user
+// Link to Google Cloud Billing Console
 const GOOGLE_BILLING_URL = "https://console.cloud.google.com/billing/017D0B-3695DA-8D7FB7/credits/all?authuser=3&chat=true&hl=en-US&organizationId=501548273108&project=project-5306ce34-5626-488a-913";
 
 const GoogleLogo = () => (
@@ -110,7 +110,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-  // FIX: Restore body interaction when dialog closes to prevent "freezing"
+  // CRITICAL FIX: Ensure body interaction is restored when dialog closes
   useEffect(() => {
     if (!isEditingApiKey) {
       const timer = setTimeout(() => {
@@ -302,12 +302,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   href={GOOGLE_BILLING_URL} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white text-slate-900 px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group animate-in slide-in-from-right-4"
+                  className="flex items-center gap-2 bg-white text-slate-900 px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group"
                 >
                   <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-bold tracking-tight text-slate-900 flex items-center gap-1">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
                     ${realtimeCredits}
-                    <ExternalLink className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ExternalLink className="w-3 h-3 text-slate-300" />
                   </span>
                 </a>
               </div>
@@ -371,7 +371,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         <span className="text-xs font-medium text-slate-600">Credits (Real-time)</span>
                         <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
                           ${realtimeCredits}
-                          <ExternalLink className="w-3 h-3 opacity-0 group-hover/item:opacity-100" />
+                          <ExternalLink className="w-3 h-3" />
                         </span>
                       </a>
                       
@@ -383,13 +383,13 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                             setTempApiKey(userData?.apiKey || '');
                             setIsEditingApiKey(true);
                           }}
-                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100 focus:text-inherit"
+                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
                         >
                           <div className="flex flex-col">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t.apiKeyLabel}</span>
                             <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
                           </div>
-                          <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500 transition-colors" />
+                          <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500" />
                         </DropdownMenuItem>
                         <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl">
                           <DialogHeader>
@@ -442,7 +442,17 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         {currentScreen === 'AUTH' && (
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative text-center">
-              <IGenBranding className="text-3xl mb-10" />
+              <IGenBranding className="text-3xl mb-4" />
+              
+              {/* Language Switcher Section */}
+              <div className="flex items-center justify-center gap-4 mb-10 text-xs font-bold text-slate-400">
+                <button onClick={() => setLang('VI')} className={cn("hover:text-cyan-500 transition-colors", lang === 'VI' && "text-cyan-600")}>VI</button>
+                <div className="w-px h-3 bg-slate-200" />
+                <button onClick={() => setLang('EN')} className={cn("hover:text-cyan-500 transition-colors", lang === 'EN' && "text-cyan-600")}>EN</button>
+                <div className="w-px h-3 bg-slate-200" />
+                <button onClick={() => setLang('ZH')} className={cn("hover:text-cyan-500 transition-colors", lang === 'ZH' && "text-cyan-600")}>ZH</button>
+              </div>
+
               <form onSubmit={handleAuth} className="space-y-4">
                 <Input 
                   type="email" 

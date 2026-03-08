@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -27,7 +28,7 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 export function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
   const provider = new GoogleAuthProvider();
   
-  // Add scope to read billing information
+  // Add scope to read billing information - requires verification for production
   provider.addScope('https://www.googleapis.com/auth/cloud-billing.readonly');
   
   // Ensure "Identity Toolkit API" and "Google People API" are enabled in Google Cloud Console
