@@ -12,7 +12,6 @@ import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 import { MediaPart } from 'genkit';
-import { Buffer } from 'buffer';
 
 // Helper to extract MIME type from a data URI
 function extractMimeTypeFromDataUri(dataUri: string): string | undefined {
@@ -79,7 +78,6 @@ export type AIVideoWalkthroughGeneratorOutput = z.infer<
  * @returns A promise that resolves to the base64 encoded video data URI.
  */
 async function fetchVideoAsBase64(video: MediaPart, userKey?: string): Promise<string> {
-  const fetch = (await import('node-fetch')).default;
   const apiKey = userKey || process.env.VITE_IGEN_MOTION_API_KEY; // Fallback to server key if user key not provided
 
   if (!apiKey) {

@@ -231,7 +231,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           updatedAt: new Date().toISOString()
         });
         toast({ title: t.paymentSuccess, description: "iGen AI active." });
-        // The real-time listener (userData) will trigger the Screen switch in useEffect
       }
     }, 2000);
   };
@@ -389,7 +388,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </Button>
               </div>
 
-              {/* Troubleshooting Info for Safari/White Screen */}
               <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center">
                 <Dialog>
                   <DialogTrigger asChild>
@@ -412,7 +410,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         </ol>
                         <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
                           <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                            Lưu ý: Firebase Auth yêu cầu domain <b>firebaseapp.com</b> có thể liên lạc with domain preview này. Safari mặc định chặn việc này.
+                            Lưu ý: Firebase Auth yêu cầu domain <b>firebaseapp.com</b> có thể liên lạc với domain preview này. Safari mặc định chặn việc này.
                           </p>
                         </div>
                         <p className="text-xs flex items-center gap-1 font-bold">
@@ -448,17 +446,15 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </div>
               </div>
 
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight mb-4 text-slate-900 text-left md:text-center leading-tight">
-                <div className="font-google whitespace-nowrap">
-                  {lang === 'VI' ? (
-                    <>Chương trình hợp tác với <ColoredGoogleText className="font-bold" /></>
-                  ) : lang === 'EN' ? (
-                    <>Collaboration program with <ColoredGoogleText className="font-bold" /></>
-                  ) : (
-                    <>与 <ColoredGoogleText className="font-bold" /> 的合作项目</>
-                  )}
-                </div>
-                <div className="mt-4 text-slate-500 text-xs md:text-sm font-normal leading-relaxed max-w-lg mx-auto">
+              <div className="space-y-4 mb-10">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 text-left md:text-center leading-tight">
+                  <span className="font-google block">
+                    {lang === 'VI' ? 'Chương trình hợp tác với ' : lang === 'EN' ? 'Collaboration program with ' : '与 '}
+                    <ColoredGoogleText className="font-bold" />
+                    {lang === 'ZH' ? ' 的合作项目' : ''}
+                  </span>
+                </h2>
+                <p className="text-slate-500 text-xs md:text-sm font-normal leading-relaxed max-w-lg mx-auto text-left md:text-center">
                   {lang === 'VI' ? (
                     <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
                   ) : lang === 'EN' ? (
@@ -466,8 +462,8 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   ) : (
                     <>输入 <ColoredGoogleText className="font-bold" /> 为 <span className="text-cyan-500 font-bold">iGen</span> 提供的合作伙伴代码以领取 $300 Credits</>
                   )}
-                </div>
-              </h2>
+                </p>
+              </div>
               
               <div className="space-y-4 max-w-sm mx-auto mb-10">
                 <div className="space-y-2 text-left">
