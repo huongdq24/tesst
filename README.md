@@ -14,9 +14,12 @@
 
 ## 🛠 Hướng dẫn Khắc phục lỗi Đăng nhập Gmail (Firebase Auth)
 
-### 1. Sử dụng Tên miền riêng (KHUYÊN DÙNG)
-Việc sử dụng tên miền chính thức (ví dụ: `igen.ai`) thay vì domain mặc định của Firebase sẽ khắc phục triệt để lỗi "trắng màn hình" trên Safari/Mac/iOS.
-- Sau khi mua domain, hãy thêm nó vào **Authorized Domains** trong Firebase Console.
+### 1. Cách sử dụng Billing API mà KHÔNG cần Verification (Xác minh)
+Nếu bạn chưa có logo hoặc domain chính thức, bạn vẫn có thể sử dụng tính năng đồng bộ số dư bằng cách:
+- Truy cập [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent?project=project-5306ce34-5626-488a-913).
+- Đảm bảo **Publishing status** là **Testing** (KHÔNG nhấn Publish).
+- Tại mục **Test users**, nhấn **ADD USERS** và thêm các địa chỉ Gmail sẽ sử dụng ứng dụng.
+- **Khi đăng nhập:** Nếu thấy cảnh báo "Google hasn't verified this app", hãy nhấn **Advanced** -> **Go to [App Name] (unsafe)** để tiếp tục.
 
 ### 2. Thiết lập Email Hỗ trợ Dự án (BẮT BUỘC)
 Google OAuth sẽ KHÔNG hoạt động nếu thiếu thông tin này.
