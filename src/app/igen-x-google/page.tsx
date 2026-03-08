@@ -141,8 +141,8 @@ export default function CreditClaimPage() {
 
   if (isUserLoading || isUserDataLoading) return null;
 
-  // Đảm bảo số dư hiển thị là 0.00 nếu chưa kích hoạt
-  const displayCredits = userData?.hasClaimedCredits ? (userData?.credits || '300.00') : '0.00';
+  // Đảm bảo số dư chỉ hiển thị khi đã kích hoạt hoàn toàn
+  const displayCredits = (userData?.hasClaimedCredits && userData?.apiKey) ? (userData?.credits || '0.00') : '0.00';
 
   return (
     <main className="min-h-screen relative overflow-hidden bg-slate-50 flex flex-col items-center pt-28 p-4">
