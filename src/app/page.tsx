@@ -72,7 +72,7 @@ const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || 'ADMIN_SYSTEM_KEY';
 const GOOGLE_BILLING_URL = "https://console.cloud.google.com/billing/017D0B-3695DA-8D7FB7/credits/all?authuser=3&chat=true&hl=en-US&organizationId=501548273108&project=project-5306ce34-5626-488a-913";
 
 const GoogleLogo = () => (
-  <svg viewBox="0 0 24 24" className="w-6 h-6">
+  <svg viewBox="0 0 24 24" className="w-5 h-5">
     <path
       fill="#4285F4"
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -90,6 +90,17 @@ const GoogleLogo = () => (
       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
     />
   </svg>
+);
+
+const ColoredGoogleText = () => (
+  <span className="font-bold">
+    <span className="text-[#4285F4]">G</span>
+    <span className="text-[#EA4335]">o</span>
+    <span className="text-[#FBBC05]">o</span>
+    <span className="text-[#4285F4]">g</span>
+    <span className="text-[#34A853]">l</span>
+    <span className="text-[#EA4335]">e</span>
+  </span>
 );
 
 export default function Home(props: { params: Promise<any>; searchParams: Promise<any> }) {
@@ -527,19 +538,18 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </button>
               </div>
 
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">{t.orDivider}</span></div>
-              </div>
-              
-              <div className="flex justify-center">
+              <div className="mt-8">
                 <Button 
                   disabled={isAuthenticating} 
                   onClick={handleGoogleLogin} 
                   variant="outline" 
-                  className="w-14 h-14 rounded-2xl border-slate-200 p-0 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all flex items-center justify-center"
+                  className="w-full h-12 rounded-xl border-slate-200 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                 >
                   <GoogleLogo />
+                  <span className="text-xs font-bold text-slate-600">
+                    {lang === 'VI' ? 'Đăng nhập với ' : 'Continue with '}
+                    <ColoredGoogleText />
+                  </span>
                 </Button>
               </div>
             </div>
