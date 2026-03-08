@@ -10,6 +10,7 @@ import { RefreshCw } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { IGenBranding } from '@/components/Branding';
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
@@ -99,13 +100,19 @@ export default function LoginPage() {
   if (isUserLoading) return null;
 
   return (
-    <main className="min-h-screen relative overflow-hidden bg-slate-50 flex items-center justify-center p-4">
+    <main className="min-h-screen relative overflow-hidden bg-slate-50 flex flex-col items-center pt-28 p-4">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-100/30 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-100/30 blur-[120px] rounded-full" />
       </div>
 
-      <div className="glass w-full max-w-md p-10 rounded-[2.5rem] relative text-center shadow-2xl">
+      <header className="fixed top-0 left-0 w-full z-50 glass h-20 border-b border-slate-200/50">
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <IGenBranding className="text-xl md:text-2xl" withTagline={true} />
+        </div>
+      </header>
+
+      <div className="glass w-full max-w-md p-10 rounded-[2.5rem] relative text-center shadow-2xl z-10">
         <h1 className="text-3xl font-bold tracking-tight mb-4">
           <span className="text-cyan-500 font-toyota">iGen</span> - Trợ lý AI cho Kiến trúc sư
         </h1>
