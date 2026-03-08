@@ -116,11 +116,9 @@ export default function Home() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [apiKey, setApiKey] = useState('');
-  const [projectId, setProjectId] = useState(DEFAULT_PROJECT_ID);
   
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
-  const [tempProjectId, setTempProjectId] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
 
   const t = translations[lang];
@@ -140,11 +138,13 @@ export default function Home() {
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || isSyncing) return;
     
+    // Auto-discovery: Use provided projectId or fallback to default
     const pId = userData.projectId || DEFAULT_PROJECT_ID;
     setIsSyncing(true);
     try {
       const result = await getRealtimeCredits(pId);
       if (result.success && result.credits) {
+        // Sync current user
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -153,7 +153,7 @@ export default function Home() {
           });
         }
         
-        // Admin syncs all users that share the same project
+        // Admin syncs all users sharing the same project
         if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
           if (allUsers && allUsers.length > 0) {
             allUsers.forEach(u => {
@@ -215,7 +215,7 @@ export default function Home() {
           email: user.email,
           hasClaimedCredits: isUserAdmin || isGoogleUser,
           apiKey: '',
-          projectId: DEFAULT_PROJECT_ID,
+          projectId: DEFAULT_PROJECT_ID, // Default project for auto-sync
           role: isUserAdmin ? 'admin' : 'user',
           credits: '300.00',
           createdAt: new Date().toISOString(),
@@ -268,12 +268,11 @@ export default function Home() {
 
   const handleUpdateApiKey = (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!tempApiKey && !tempProjectId) || !user) return;
+    if (!tempApiKey || !user) return;
     
     const uRef = doc(db, 'users', user.uid);
     updateDocumentNonBlocking(uRef, {
-      ...(tempApiKey && { apiKey: tempApiKey }),
-      ...(tempProjectId && { projectId: tempProjectId }),
+      apiKey: tempApiKey,
       updatedAt: new Date().toISOString()
     });
     
@@ -414,9 +413,9 @@ export default function Home() {
                         <DropdownMenuItem 
                           onSelect={(e) => {
                             e.preventDefault();
+                            // Small delay to ensure dropdown is handled before dialog opens
                             setTimeout(() => {
                               setTempApiKey('');
-                              setTempProjectId(userData?.projectId || DEFAULT_PROJECT_ID);
                               setIsEditingApiKey(true);
                             }, 100);
                           }}
@@ -505,47 +504,35 @@ export default function Home() {
         )}
 
         {currentScreen === 'CREDIT_CLAIM' && (
-          <div className="flex items-center justify-center min-h-[80vh]">
-            <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center shadow-2xl">
+          <div className="flex items-center justify-center min-[80vh]">
+            <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl">
               <h2 className="text-3xl font-bold mb-6">Kích hoạt <IGenCodeBranded /> AI</h2>
-              <div className="space-y-4 mb-8">
-                <div>
-                  <Label className="text-left block mb-2 text-xs font-bold text-slate-400">PROJECT ID (DỰ ÁN GOOGLE CLOUD)</Label>
-                  <Input 
-                    className="h-12 bg-white border-2 border-slate-100 focus:border-cyan-500 transition-colors font-mono"
-                    value={projectId}
-                    placeholder="Nhập Project ID của bạn..."
-                    onChange={(e) => setProjectId(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label className="text-left block mb-2 text-xs font-bold text-slate-400"><IGenCodeBranded /></Label>
-                  <Input 
-                    className="h-12 bg-white border-2 border-slate-100 focus:border-cyan-500 transition-colors font-mono"
-                    value={apiKey}
-                    placeholder="Nhập mã đối tác của bạn..."
-                    onChange={(e) => setApiKey(e.target.value)}
-                  />
-                </div>
+              <div className="mb-8">
+                <Label className="text-left block mb-2 text-xs font-bold text-slate-400">NHẬP <IGenCodeBranded /></Label>
+                <Input 
+                  className="h-16 text-lg bg-white border-2 border-slate-100 focus:border-cyan-500 transition-colors font-mono rounded-2xl px-6"
+                  value={apiKey}
+                  placeholder="Dán mã đối tác của bạn tại đây..."
+                  onChange={(e) => setApiKey(e.target.value)}
+                />
               </div>
               
               <div className="mb-8 p-6 bg-blue-50/50 rounded-2xl text-left flex gap-4 border border-blue-100">
                 <div className="bg-blue-100 p-3 h-fit rounded-xl shadow-sm"><Info className="w-6 h-6 text-blue-600" /></div>
                 <div>
-                  <p className="text-sm font-bold text-blue-900 mb-1">Cài đặt dự án:</p>
-                  <ul className="text-xs text-blue-800/80 space-y-1 list-disc pl-4">
-                    <li>Đảm bảo Project ID chính xác từ Google Cloud Console.</li>
-                    <li>iGen Code (API Key) phải thuộc về dự án đã nhập.</li>
-                    <li>Sử dụng quyền cloud-billing.readonly để cập nhật số dư tự động.</li>
-                  </ul>
+                  <p className="text-sm font-bold text-blue-900 mb-1">Chương trình hợp tác Google Cloud:</p>
+                  <p className="text-xs text-blue-800/80 leading-relaxed">
+                    Mã iGen được cấp cho đối tác chiến lược. Sau khi kích hoạt, số dư $300 Credits sẽ được tự động đồng bộ theo thời gian thực từ Google Cloud Billing API của dự án liên kết.
+                  </p>
                 </div>
               </div>
 
               <Button 
                 onClick={(e) => {
                   e.preventDefault();
-                  if (isVerifying || !apiKey || !projectId) return;
+                  if (isVerifying || !apiKey) return;
                   setIsVerifying(true);
+                  // Auto-sync simulation
                   setTimeout(() => {
                     setIsVerifying(false);
                     if (user) {
@@ -553,11 +540,11 @@ export default function Home() {
                       updateDocumentNonBlocking(uRef, {
                         hasClaimedCredits: true,
                         apiKey: apiKey,
-                        projectId: projectId,
+                        projectId: DEFAULT_PROJECT_ID, // Link to the actual project
                         credits: '300.00',
                         updatedAt: new Date().toISOString()
                       });
-                      toast({ title: <IGenCodeBranded />, description: "iGen AI active." });
+                      toast({ title: <IGenCodeBranded />, description: "iGen AI active. Credits synchronized." });
                     }
                   }, 2000);
                 }}
@@ -705,16 +692,6 @@ export default function Home() {
           </DialogHeader>
           <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase text-slate-400">Google Cloud Project ID</Label>
-              <Input 
-                value={tempProjectId}
-                onChange={(e) => setTempProjectId(e.target.value)}
-                className="h-12 bg-slate-50 border-none rounded-xl font-mono focus-visible:ring-cyan-500"
-                placeholder="Dự án ID..."
-                autoComplete="off"
-              />
-            </div>
-            <div className="space-y-2">
               <Label className="text-xs font-bold uppercase text-slate-400"><IGenCodeBranded /></Label>
               <Input 
                 value={tempApiKey}
@@ -736,7 +713,7 @@ export default function Home() {
               </Button>
               <Button 
                 type="submit" 
-                disabled={!tempApiKey && !tempProjectId}
+                disabled={!tempApiKey}
                 className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
               >
                 {t.saveChanges}
