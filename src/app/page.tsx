@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -94,6 +95,12 @@ const ColoredGoogleText = () => (
   </span>
 );
 
+const IGenCodeBranded = () => (
+  <span className="font-toyota font-bold">
+    <span className="text-cyan-500">iGen</span> Code
+  </span>
+);
+
 export default function Home() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -126,7 +133,6 @@ export default function Home() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // HÀM ĐỒNG BỘ CREDITS CHUẨN TỪ GOOGLE CLOUD BILLING API
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || isSyncing) return;
     
@@ -134,7 +140,6 @@ export default function Home() {
     try {
       const result = await getRealtimeCredits();
       if (result.success && result.credits) {
-        // 1. Cập nhật cho chính tài khoản đang đăng nhập
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -143,7 +148,6 @@ export default function Home() {
           });
         }
         
-        // 2. Nếu là Admin, đồng bộ cho tất cả user khác đang dùng chung Project
         if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
           if (allUsers && allUsers.length > 0) {
             allUsers.forEach(u => {
@@ -178,7 +182,6 @@ export default function Home() {
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
-        // Cập nhật vai trò Admin nhưng không tự động đổi apiKey
         if (ADMIN_EMAILS.includes(user.email || '') && userData.role !== 'admin') {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -269,7 +272,7 @@ export default function Home() {
     setIsEditingApiKey(false);
     toast({
       title: t.paymentSuccess,
-      description: "API Key updated successfully."
+      description: <div className="flex items-center gap-1"><IGenCodeBranded /> updated successfully.</div>
     });
   };
 
@@ -403,7 +406,6 @@ export default function Home() {
                         <DropdownMenuItem 
                           onSelect={(e) => {
                             e.preventDefault();
-                            // Small timeout to allow dropdown to fully close and release body lock before opening dialog
                             setTimeout(() => {
                               setTempApiKey('');
                               setIsEditingApiKey(true);
@@ -412,7 +414,7 @@ export default function Home() {
                           className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
                         >
                           <div className="flex flex-col">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t.apiKeyLabel}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight"><IGenCodeBranded /></span>
                             <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
                           </div>
                           <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500" />
@@ -591,7 +593,7 @@ export default function Home() {
                   <TableRow className="hover:bg-transparent border-slate-100">
                     <TableHead className="font-bold py-6 pl-8 text-slate-500 uppercase tracking-widest text-[10px]">{t.userEmail}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userRole}</TableHead>
-                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.apiKeyLabel}</TableHead>
+                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]"><IGenCodeBranded /></TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userCredits}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -670,14 +672,16 @@ export default function Home() {
       {(currentScreen !== 'AUTH' && currentScreen !== 'CREDIT_CLAIM') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} currentCredits={userData?.credits} />}
 
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl">
+        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[160]">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <IGenCodeBranded /> {lang === 'VI' ? 'Mới' : 'Update'}
+            </DialogTitle>
             <DialogDescription>{t.paymentSubtitle}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase text-slate-400">{t.apiKeyLabel}</Label>
+              <Label className="text-xs font-bold uppercase text-slate-400"><IGenCodeBranded /></Label>
               <Input 
                 value={tempApiKey}
                 onChange={(e) => setTempApiKey(e.target.value)}
