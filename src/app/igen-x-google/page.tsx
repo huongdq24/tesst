@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Globe, Wallet, ChevronDown, LogOut, Edit } from 'lucide-react';
+import { RefreshCw, Globe, Wallet, ChevronDown, LogOut, Edit, X } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -243,6 +243,15 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
+        <div className="inline-flex items-center gap-3 bg-white/50 backdrop-blur-sm px-5 py-2.5 rounded-2xl shadow-sm border border-white/50 mb-6 group hover:bg-white transition-all duration-500">
+          <IGenBranding className="text-xl" />
+          <span className="text-slate-300 font-light text-xl">×</span>
+          <div className="flex items-center gap-2 text-xl">
+            <GoogleLogo />
+            <ColoredGoogleText />
+          </div>
+        </div>
+
         <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
         <p className="text-slate-500 mb-8 font-medium text-sm">
           Nhập mã đối tác của <span className="text-cyan-500 font-bold">iGen</span> do <ColoredGoogleText /> cung cấp để nhận $300 Credits
