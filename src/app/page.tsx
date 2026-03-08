@@ -335,7 +335,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         setTempApiKey('');
                         setTimeout(() => setIsEditingApiKey(true), 150);
                       }}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 focus:bg-slate-100 cursor-pointer transition-colors group/key border-none"
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 cursor-pointer transition-colors group/key border-none hover:bg-slate-50 focus:bg-slate-50"
                     >
                       <span className="text-xs font-medium text-slate-600 flex items-center gap-2">
                         {lang === 'VI' ? (
@@ -370,7 +370,9 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         <DialogContent className="max-w-md rounded-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{t.editApiKey}</DialogTitle>
-            <DialogDescription>{t.paymentSubtitle}</DialogDescription>
+            <DialogDescription asChild>
+              <div className="text-sm text-muted-foreground">{t.paymentSubtitle}</div>
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <Input
@@ -390,7 +392,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         {currentScreen === 'AUTH' && (
-          <div className="flex items-center justify-center min-h-screen p-4 pt-16 sm:pt-20">
+          <div className="flex items-center justify-center min-h-screen p-4 pt-20">
             <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative mt-8 sm:mt-0">
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white p-4 rounded-3xl shadow-2xl border border-slate-100 ring-8 ring-slate-50/50">
                 <IGenBranding className="text-xl sm:text-3xl" withTagline={true} />
@@ -451,16 +453,18 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                       <DialogTitle className="flex items-center gap-2">
                         <Smartphone className="w-5 h-5 text-cyan-500" /> Khắc phục lỗi đăng nhập
                       </DialogTitle>
-                      <DialogDescription className="pt-4 text-slate-600 text-left space-y-4">
-                        <p className="font-bold text-slate-900">Nếu bạn dùng Safari trên Mac/iPhone:</p>
-                        <ol className="list-decimal pl-4 space-y-2">
-                          <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
-                          <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
-                          <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
-                        </ol>
-                        <p className="text-sm font-bold text-cyan-600 bg-cyan-50 p-3 rounded-xl">
-                          Mẹo: Gắn Domain riêng cho Web App sẽ khắc phục triệt để lỗi này.
-                        </p>
+                      <DialogDescription asChild>
+                        <div className="pt-4 text-slate-600 text-left space-y-4">
+                          <div className="font-bold text-slate-900">Nếu bạn dùng Safari trên Mac/iPhone:</div>
+                          <ol className="list-decimal pl-4 space-y-2 text-sm">
+                            <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
+                            <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
+                            <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
+                          </ol>
+                          <div className="text-sm font-bold text-cyan-600 bg-cyan-50 p-3 rounded-xl">
+                            Mẹo: Gắn Domain riêng cho Web App sẽ khắc phục triệt để lỗi này.
+                          </div>
+                        </div>
                       </DialogDescription>
                     </DialogHeader>
                   </DialogContent>
