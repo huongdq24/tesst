@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -78,17 +79,6 @@ const GoogleLogo = () => (
   </svg>
 );
 
-const ColoredGoogleText = ({ className = "" }: { className?: string }) => (
-  <span className={cn("font-google font-bold", className)}>
-    <span style={{ color: '#4285F4' }}>G</span>
-    <span style={{ color: '#EA4335' }}>o</span>
-    <span style={{ color: '#FBBC05' }}>o</span>
-    <span style={{ color: '#4285F4' }}>g</span>
-    <span style={{ color: '#34A853' }}>l</span>
-    <span style={{ color: '#EA4335' }}>e</span>
-  </span>
-);
-
 export default function Home(props: { params: Promise<any>; searchParams: Promise<any> }) {
   const unwrappedParams = React.use(props.params);
   const unwrappedSearchParams = React.use(props.searchParams);
@@ -119,6 +109,17 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
+
+  // FIX: Restore body interaction when dialog closes to prevent "freezing"
+  useEffect(() => {
+    if (!isEditingApiKey) {
+      const timer = setTimeout(() => {
+        document.body.style.pointerEvents = 'auto';
+        document.body.style.overflow = 'auto';
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isEditingApiKey]);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -247,6 +248,23 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     }, 2000);
   };
 
+  const handleUpdateApiKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tempApiKey || !user) return;
+    
+    const uRef = doc(db, 'users', user.uid);
+    updateDocumentNonBlocking(uRef, {
+      apiKey: tempApiKey,
+      updatedAt: new Date().toISOString()
+    });
+    
+    setIsEditingApiKey(false);
+    toast({
+      title: t.paymentSuccess,
+      description: "API Key updated successfully."
+    });
+  };
+
   if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -356,6 +374,57 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                           <ExternalLink className="w-3 h-3 opacity-0 group-hover/item:opacity-100" />
                         </span>
                       </a>
+                      
+                      {/* API Key Update Feature */}
+                      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
+                        <DropdownMenuItem 
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setTempApiKey(userData?.apiKey || '');
+                            setIsEditingApiKey(true);
+                          }}
+                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100 focus:text-inherit"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t.apiKeyLabel}</span>
+                            <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
+                          </div>
+                          <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500 transition-colors" />
+                        </DropdownMenuItem>
+                        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl">
+                          <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
+                            <DialogDescription>{t.paymentSubtitle}</DialogDescription>
+                          </DialogHeader>
+                          <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs font-bold uppercase text-slate-400">{t.apiKeyLabel}</Label>
+                              <Input 
+                                value={tempApiKey}
+                                onChange={(e) => setTempApiKey(e.target.value)}
+                                className="h-12 bg-slate-50 border-none rounded-xl font-mono"
+                                placeholder={t.apiKeyPlaceholder}
+                              />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                onClick={() => setIsEditingApiKey(false)}
+                                className="flex-1 h-12 rounded-xl font-bold"
+                              >
+                                {t.cancel}
+                              </Button>
+                              <Button 
+                                type="submit" 
+                                className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
+                              >
+                                {t.saveChanges}
+                              </Button>
+                            </div>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
