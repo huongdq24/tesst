@@ -205,7 +205,7 @@ export default function Home() {
           id: user.uid,
           email: user.email,
           hasClaimedCredits: isUserAdmin || isGoogleUser,
-          apiKey: '', // Để trống để người dùng tự nhập hoặc cập nhật riêng
+          apiKey: '',
           role: isUserAdmin ? 'admin' : 'user',
           credits: '300.00',
           createdAt: new Date().toISOString(),
@@ -401,9 +401,13 @@ export default function Home() {
                         </div>
                         
                         <DropdownMenuItem 
-                          onSelect={() => {
-                            setTempApiKey('');
-                            setIsEditingApiKey(true);
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            // Small timeout to allow dropdown to fully close and release body lock before opening dialog
+                            setTimeout(() => {
+                              setTempApiKey('');
+                              setIsEditingApiKey(true);
+                            }, 100);
                           }}
                           className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
                         >

@@ -34,6 +34,11 @@
   body {
     @apply bg-slate-50 text-foreground font-body;
   }
+  
+  /* Definitively prevent UI freezing due to stuck pointer-events: none on body from Radix Dialogs */
+  body[style*="pointer-events: none"] {
+    pointer-events: auto !important;
+  }
 }
 
 @layer components {
