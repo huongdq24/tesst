@@ -141,7 +141,6 @@ export default function CreditClaimPage() {
 
   if (isUserLoading || isUserDataLoading) return null;
 
-  // Đảm bảo số dư chỉ hiển thị khi đã kích hoạt hoàn toàn
   const displayCredits = (userData?.hasClaimedCredits && userData?.apiKey) ? (userData?.credits || '0.00') : '0.00';
 
   return (
@@ -248,7 +247,6 @@ export default function CreditClaimPage() {
           Nhập mã đối tác của <span className="text-cyan-500 font-bold">iGen</span> do <ColoredGoogleText /> cung cấp để nhận $300 Credits
         </p>
         <div className="mb-8">
-          <Label className="text-left block mb-2 text-xs font-bold text-slate-400">NHẬP <IGenCodeBranded /></Label>
           <Input 
             className="h-16 text-lg bg-white border-2 border-slate-100 focus:border-cyan-500 transition-colors font-mono rounded-2xl px-6"
             value={apiKey}
