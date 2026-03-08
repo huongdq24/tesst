@@ -438,11 +438,9 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </div>
                 
                 <div className="flex items-center justify-center gap-4 px-8 py-3 rounded-full bg-white border-2 border-cyan-100 shadow-xl shadow-cyan-500/10 backdrop-blur-xl group hover:border-cyan-400 hover:scale-105 transition-all duration-500 max-w-fit">
-                  <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
                   <p className="text-xs font-black text-slate-800 uppercase tracking-[0.3em] flex items-center gap-2">
                     {t.strategicPartner} <ColoredGoogleText className="font-bold" />
                   </p>
-                  <Sparkles className="w-4 h-4 text-cyan-500 animate-pulse" />
                 </div>
               </div>
 
