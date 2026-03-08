@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -91,7 +90,6 @@ export const FeatureWorkspace = ({
     try {
       let outputUrl = '';
       
-      // 1. Phân phối luồng AI tương ứng với tính năng
       if (featureId === 'videoCreator') {
         const result = await aiVideoWalkthroughGenerator({
           description: prompt,
@@ -102,7 +100,6 @@ export const FeatureWorkspace = ({
         outputUrl = result.videoDataUri;
         setMediaType('VIDEO');
       } else {
-        // Mặc định sử dụng Logic Engine và Vision cho các tính năng khác
         const result = await aiDesignConceptGenerator({
           designPrompt: prompt
         });
@@ -112,7 +109,7 @@ export const FeatureWorkspace = ({
       
       setResultMedia(outputUrl);
 
-      // 2. Lưu lịch sử
+      // Lưu lịch sử
       const projectRef = collection(db, 'users', user.uid, 'projects');
       addDocumentNonBlocking(projectRef, {
         userId: user.uid,
@@ -126,18 +123,13 @@ export const FeatureWorkspace = ({
         updatedAt: new Date().toISOString()
       });
 
-      // 3. TỰ ĐỘNG ĐỒNG BỘ GOOGLE BILLING SAU KHI DÙNG API
-      const resultCredits = await getRealtimeCredits(currentCredits);
+      // ĐỒNG BỘ THỰC TẾ TỪ GOOGLE CLOUD BILLING API
+      const resultCredits = await getRealtimeCredits();
       if (resultCredits.success && resultCredits.credits) {
         const uRef = doc(db, 'users', user.uid);
         updateDocumentNonBlocking(uRef, {
           credits: resultCredits.credits,
           updatedAt: new Date().toISOString()
-        });
-        
-        toast({
-          title: "iGen Sync Completed",
-          description: `Số dư còn lại: $${resultCredits.credits}`,
         });
       }
 

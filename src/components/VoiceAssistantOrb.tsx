@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from 'react';
@@ -50,8 +49,8 @@ export const VoiceAssistantOrb = ({
           description: result.responseText,
         });
 
-        // TỰ ĐỘNG ĐỒNG BỘ GOOGLE BILLING SAU KHI DÙNG TRỢ LÝ
-        const resultCredits = await getRealtimeCredits(currentCredits);
+        // ĐỒNG BỘ THỰC TẾ TỪ GOOGLE CLOUD BILLING API
+        const resultCredits = await getRealtimeCredits();
         if (resultCredits.success && resultCredits.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {

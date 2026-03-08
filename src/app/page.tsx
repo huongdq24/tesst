@@ -61,13 +61,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { getRealtimeCredits } from '@/app/actions/billing';
 
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL' | 'ADMIN_PANEL';
 
 const ADMIN_EMAIL = 'igen-architect@admin.com';
 const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || 'ADMIN_SYSTEM_KEY';
-
-const GOOGLE_BILLING_URL = "https://console.cloud.google.com/billing/017D0B-3695DA-8D7FB7/credits/all?authuser=3&chat=true&hl=en-US&organizationId=501548273108&project=project-5306ce34-5626-488a-913";
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
@@ -530,7 +529,7 @@ export default function Home() {
                   {t.adminPanel}
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-slate-500 text-sm font-medium">{t.totalUsers}:</span>
+                  <span className="text-slate-500 text-sm font-medium">Tổng số người dùng:</span>
                   <Badge variant="secondary" className="bg-cyan-50 text-cyan-600 border-cyan-100 font-bold px-2 py-0">
                     {allUsers?.length || 0}
                   </Badge>
