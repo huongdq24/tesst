@@ -7,7 +7,12 @@ import { CloudBillingClient } from '@google-cloud/billing';
  * Sử dụng Application Default Credentials (ADC).
  */
 const billingClient = new CloudBillingClient();
-const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || 'project-5306ce34-5626-488a-913';
+
+/**
+ * PROJECT_ID CHUẨN TỪ HÌNH ẢNH NGƯỜI DÙNG CUNG CẤP:
+ * gen-lang-client-0683922819
+ */
+const PROJECT_ID = 'gen-lang-client-0683922819';
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
@@ -24,7 +29,7 @@ export async function getRealtimeCredits() {
      * GIẢI THÍCH KỸ THUẬT:
      * Google Cloud Billing API trả về trạng thái 'billingEnabled'.
      * Nếu billingEnabled = true, tài khoản đang có hiệu lực (Active).
-     * Vì SDK không trả về con số "Số dư Tín dụng còn lại" trực tiếp (cần BigQuery),
+     * Vì SDK không trả về con số "Số dư Tín dụng còn lại" trực tiếp,
      * iGen sẽ hiển thị con số $300.00 chuẩn của Free Trial nếu trạng thái là Enabled.
      */
     if (billingInfo.billingEnabled) {
