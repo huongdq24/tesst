@@ -401,7 +401,7 @@ export default function Home() {
                           rel="noopener noreferrer"
                           className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-cyan-50 transition-colors group/item"
                         >
-                          <span className="text-xs font-medium text-slate-600">Credits (Auto-Sync)</span>
+                          <span className="text-xs font-medium text-slate-600">Credits</span>
                           <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
                             ${userData?.credits || '0.00'}
                             <ExternalLink className="w-3 h-3" />
