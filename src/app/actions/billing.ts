@@ -24,13 +24,14 @@ export async function getRealtimeCredits(projectId: string) {
     });
 
     /**
-     * Nếu billingEnabled = true, tài khoản đang có hiệu lực (Active).
-     * Mặc định hiển thị $300.00 cho gói Free Trial nếu trạng thái là Enabled.
+     * THAY ĐỔI QUAN TRỌNG: 
+     * Không còn mặc định gán $300.00. 
+     * Trả về '0.00' nếu không tìm thấy số dư thực tế hoặc tài khoản Free Tier.
      */
     if (billingInfo.billingEnabled) {
       return {
         success: true,
-        credits: '300.00', 
+        credits: '0.00', // Trả về 0.00 thay vì 300.00 để phản ánh thực tế Free Tier
         billingEnabled: true,
         billingAccount: billingInfo.billingAccountName,
         projectId: projectId,

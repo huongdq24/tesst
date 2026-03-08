@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -102,19 +101,24 @@ export default function CreditClaimPage() {
     e.preventDefault();
     if (isVerifying || !apiKey || !user) return;
     setIsVerifying(true);
+    
+    // Giả lập xác thực mã và đồng bộ hóa lần đầu
     setTimeout(() => {
       setIsVerifying(false);
       const uRef = doc(db, 'users', user.uid);
+      
+      // Khởi tạo credits là 0.00 để chờ đồng bộ thực tế từ Billing API
       updateDocumentNonBlocking(uRef, {
         hasClaimedCredits: true,
         apiKey: apiKey,
         projectId: DEFAULT_PROJECT_ID,
-        credits: '300.00',
+        credits: '0.00', 
         updatedAt: new Date().toISOString()
       });
+      
       toast({ 
         title: <div className="flex items-center gap-1"><IGenCodeBranded /> updated.</div>, 
-        description: "iGen AI active. Credits synchronized." 
+        description: "iGen AI active. Real-time credits synchronization initiated." 
       });
       router.push('/home');
     }, 2000);
@@ -141,7 +145,6 @@ export default function CreditClaimPage() {
 
   if (isUserLoading || isUserDataLoading) return null;
 
-  // Hiển thị $0.00 nếu chưa kích hoạt
   const displayCredits = (userData?.hasClaimedCredits && userData?.apiKey) ? (userData?.credits || '0.00') : '0.00';
 
   return (
@@ -243,12 +246,12 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
-        <div className="glass-card inline-flex flex-col items-center gap-6 px-12 py-10 rounded-[4rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
-          <div className="flex items-center gap-8 text-5xl md:text-6xl">
+        <div className="glass-card inline-flex flex-col items-center gap-10 px-12 py-10 rounded-[4rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
+          <div className="flex items-center gap-10">
             <IGenBranding className="text-5xl md:text-6xl" />
-            <X className="w-8 h-8 md:w-12 md:h-12 text-slate-300" />
-            <div className="flex items-center scale-150">
-              <GoogleLogo className="w-10 h-10 md:w-12 md:h-12" />
+            <X className="w-10 h-10 text-slate-300" />
+            <div className="flex items-center scale-[1.8]">
+              <GoogleLogo className="w-10 h-10" />
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
@@ -260,7 +263,7 @@ export default function CreditClaimPage() {
         </div>
 
         <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
-        <p className="text-slate-500 mb-8 font-medium text-sm">
+        <p className="text-sm text-slate-500 mb-8 font-medium">
           Nhập mã đối tác của <span className="text-cyan-500 font-bold">iGen</span> do <ColoredGoogleText /> cung cấp để nhận $300 Credits
         </p>
         <div className="mb-8 relative">
