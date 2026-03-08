@@ -6,11 +6,18 @@ import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Globe } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { IGenBranding } from '@/components/Branding';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
@@ -109,6 +116,27 @@ export default function LoginPage() {
       <header className="fixed top-0 left-0 w-full z-50 glass h-20 border-b border-slate-200/50">
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <IGenBranding className="text-xl md:text-2xl" withTagline={true} />
+          
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-slate-100 transition-colors">
+                  <Globe className="w-5 h-5 text-slate-500" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 rounded-2xl p-2 shadow-2xl border-slate-100">
+                <DropdownMenuItem onClick={() => setLang('VI')} className={cn("rounded-xl cursor-pointer p-3", lang === 'VI' && "bg-slate-50 font-bold text-cyan-600")}>
+                  Tiếng Việt
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLang('EN')} className={cn("rounded-xl cursor-pointer p-3", lang === 'EN' && "bg-slate-50 font-bold text-cyan-600")}>
+                  English
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLang('ZH')} className={cn("rounded-xl cursor-pointer p-3", lang === 'ZH' && "bg-slate-50 font-bold text-cyan-600")}>
+                  中文
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
@@ -117,15 +145,7 @@ export default function LoginPage() {
           <span className="text-cyan-500 font-toyota">iGen</span> - Trợ lý AI cho Kiến trúc sư
         </h1>
         
-        <div className="flex items-center justify-center gap-4 mb-8 text-xs font-bold text-slate-400 bg-slate-50/50 w-fit mx-auto px-4 py-2 rounded-full border border-slate-100">
-          <button onClick={() => setLang('VI')} className={`hover:text-cyan-500 transition-colors px-2 ${lang === 'VI' ? "text-cyan-600 bg-white shadow-sm rounded-full py-0.5" : ""}`}>VI</button>
-          <div className="w-px h-3 bg-slate-200" />
-          <button onClick={() => setLang('EN')} className={`hover:text-cyan-500 transition-colors px-2 ${lang === 'EN' ? "text-cyan-600 bg-white shadow-sm rounded-full py-0.5" : ""}`}>EN</button>
-          <div className="w-px h-3 bg-slate-200" />
-          <button onClick={() => setLang('ZH')} className={`hover:text-cyan-500 transition-colors px-2 ${lang === 'ZH' ? "text-cyan-600 bg-white shadow-sm rounded-full py-0.5" : ""}`}>ZH</button>
-        </div>
-
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-4 pt-4">
           <Input 
             type="email" 
             placeholder={t.emailPlaceholder} 
