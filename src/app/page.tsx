@@ -328,7 +328,8 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     <div 
                       onClick={(e) => {
                         e.stopPropagation();
-                        setTempApiKey(userData?.apiKey || '');
+                        // Reset tempApiKey to empty string to hide sensitive key and show placeholder
+                        setTempApiKey('');
                         setIsEditingApiKey(true);
                       }}
                       className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key"
