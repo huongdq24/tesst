@@ -444,7 +444,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     )}
                   </span>
                 </h2>
-                <p className="text-slate-500 text-[10px] md:text-xs font-normal leading-relaxed max-w-lg mx-auto">
+                <p className="text-slate-500 text-sm md:text-base font-normal leading-relaxed max-w-lg mx-auto">
                   {lang === 'VI' ? (
                     <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
                   ) : lang === 'EN' ? (
@@ -518,4 +518,3 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     </main>
   );
 }
-

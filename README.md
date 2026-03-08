@@ -3,6 +3,15 @@
 
 Ứng dụng hỗ trợ thiết kế kiến trúc bằng trí tuệ nhân tạo.
 
+## 📊 Quản lý Dự án (Dành cho Chủ sở hữu)
+
+Để xem danh sách người dùng và các API Key đã được lưu trữ, bạn hãy truy cập các đường dẫn sau trong Firebase Console:
+
+- **Danh sách Tài khoản (Gmail/Email):** [Firebase Auth Users](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/authentication/users)
+- **Dữ liệu & API Keys:** [Firestore Database - Users Collection](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/firestore/data/~2Fusers)
+
+**Lưu ý:** Chỉ có bạn (chủ sở hữu dự án trên Google Cloud) mới có quyền truy cập vào các trang quản trị này. Dữ liệu của người dùng được bảo vệ an toàn bằng Firebase Security Rules.
+
 ## 🛠 Hướng dẫn Khắc phục lỗi Đăng nhập Gmail (Firebase Auth)
 
 Nếu bạn gặp lỗi màn hình trắng hoặc "Google Sign-In Failed", hãy thực hiện chính xác các bước sau:
@@ -23,19 +32,6 @@ Google OAuth sẽ KHÔNG hoạt động nếu thiếu thông tin này.
 Safari chặn liên lạc chéo giữa popup và trang chính.
 - Vào **Safari Settings** -> **Privacy**.
 - **BỎ CHỌN (Uncheck)** mục: `Prevent Cross-Site Tracking` (Ngăn chặn theo dõi chéo trang).
-- Nếu vẫn lỗi, thử dùng **Google Chrome** hoặc **Microsoft Edge**.
 
-### 4. Gỡ giới hạn API Key
-- Truy cập: [Google Cloud Console - Credentials](https://console.cloud.google.com/apis/credentials?project=project-5306ce34-5626-488a-913)
-- Nhấp vào API Key của dự án (`AIzaSyCnv...`).
-- Đảm bảo chọn **Don't restrict key**.
-
----
-
-## ⚡ GIẢI PHÁP NHANH (Vượt qua mọi rào cản trình duyệt)
-
-Nếu việc đăng nhập Google vẫn gặp khó khăn do chính sách bảo mật của môi trường Cloud Workstation, hãy sử dụng phương thức **Đăng ký (Sign Up)** trực tiếp:
-
-1. Truy cập tab **"Đăng ký" (Sign Up)**.
-2. Nhập email: `igen-architect@admin.com` và mật khẩu bất kỳ.
-3. Hệ thống sẽ tự động cấp quyền **Admin** và sẵn **$300 Credits**.
+### 4. Giải pháp thay thế
+Nếu việc đăng nhập Google vẫn gặp khó khăn, hãy sử dụng phương thức **Đăng ký (Sign Up)** trực tiếp bằng Email để nhận đầy đủ quyền lợi.
