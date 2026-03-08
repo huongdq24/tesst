@@ -313,39 +313,39 @@ export default function Home() {
       </div>
 
       {currentScreen !== 'AUTH' && (
-        <header className="fixed top-0 left-0 w-full z-50 glass h-20 px-8 flex items-center justify-between border-b border-slate-200/50">
-          <div className="flex items-center gap-8">
-            <IGenBranding className="text-2xl" withTagline={true} />
+        <header className="fixed top-0 left-0 w-full z-50 glass h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/50">
+          <div className="flex items-center gap-4 md:gap-8">
+            <IGenBranding className="text-xl md:text-2xl" withTagline={true} />
             
             {userData?.role === 'admin' && (
-              <div className="hidden lg:flex items-center gap-2 bg-slate-100 p-1 rounded-xl shadow-inner">
+              <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
                 <Button 
-                  variant={currentScreen === 'DASHBOARD' || currentScreen === 'FEATURE_DETAIL' ? 'default' : 'ghost'} 
+                  variant={currentScreen !== 'ADMIN_PANEL' ? 'default' : 'ghost'} 
                   onClick={() => setCurrentScreen('DASHBOARD')}
                   className={cn(
-                    "h-10 px-4 gap-2 rounded-lg font-bold transition-all", 
-                    (currentScreen === 'DASHBOARD' || currentScreen === 'FEATURE_DETAIL') ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
+                    "h-9 px-3 gap-2 rounded-lg font-bold transition-all text-xs", 
+                    (currentScreen !== 'ADMIN_PANEL') ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
                   )}
                 >
-                  <LayoutDashboard className="w-4 h-4" />
+                  <LayoutDashboard className="w-3.5 h-3.5" />
                   {t.rendering}
                 </Button>
                 <Button 
                   variant={currentScreen === 'ADMIN_PANEL' ? 'default' : 'ghost'} 
                   onClick={() => setCurrentScreen('ADMIN_PANEL')}
                   className={cn(
-                    "h-10 px-4 gap-2 rounded-lg font-bold transition-all", 
+                    "h-9 px-3 gap-2 rounded-lg font-bold transition-all text-xs", 
                     currentScreen === 'ADMIN_PANEL' ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
                   )}
                 >
-                  <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
                   {t.adminPanel}
                 </Button>
               </div>
             )}
           </div>
           
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-2 md:gap-4">
             {(userData?.hasClaimedCredits && userData?.apiKey) && (
               <div className="hidden sm:flex items-center gap-2">
                 <Button 
@@ -361,7 +361,7 @@ export default function Home() {
                   href={GOOGLE_BILLING_URL} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white text-slate-900 px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group"
+                  className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group"
                 >
                   <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
                   <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
@@ -375,7 +375,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full hover:bg-slate-100 transition-colors">
+                  <Button variant="ghost" size="icon" className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-slate-100 transition-colors">
                     <Globe className="w-5 h-5 text-slate-500" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -394,8 +394,8 @@ export default function Home() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <div className="flex items-center gap-3 cursor-pointer group">
-                    <Avatar className="w-10 h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-colors">
+                  <div className="flex items-center gap-2 md:gap-3 cursor-pointer group">
+                    <Avatar className="w-9 h-9 md:w-10 md:h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-colors">
                       <AvatarImage src={user?.photoURL || undefined} referrerPolicy="no-referrer" />
                       <AvatarFallback className="bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-bold">
                         {user?.email?.[0]?.toUpperCase()}
@@ -410,6 +410,19 @@ export default function Home() {
                     <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  
+                  {userData?.role === 'admin' && (
+                    <>
+                      <DropdownMenuItem 
+                        onClick={() => setCurrentScreen('ADMIN_PANEL')}
+                        className="p-3 rounded-xl font-bold gap-3 cursor-pointer text-cyan-600 hover:bg-cyan-50"
+                      >
+                        <ShieldCheck className="w-4 h-4" /> {t.adminPanel}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+
                   <div className="p-2 space-y-1">
                     <div className="flex flex-col gap-1">
                       <Button 
@@ -732,4 +745,3 @@ export default function Home() {
     </main>
   );
 }
-
