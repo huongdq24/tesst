@@ -462,8 +462,7 @@ export default function Home() {
                 >
                   <GoogleLogo />
                   <span className="text-xs font-bold text-slate-600">
-                    {lang === 'VI' ? 'Hoặc đăng nhập với ' : 'Or sign in with '}
-                    <ColoredGoogleText />
+                    Hoặc đăng nhập với <ColoredGoogleText />
                   </span>
                 </Button>
               </div>
@@ -561,13 +560,12 @@ export default function Home() {
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userRole}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.apiKeyLabel}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userCredits}</TableHead>
-                    <TableHead className="font-bold text-right pr-8 text-slate-500 uppercase tracking-widest text-[10px]">Info</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isAllUsersLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-60 text-center">
+                      <TableCell colSpan={4} className="h-60 text-center">
                         <div className="w-10 h-10 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
@@ -610,16 +608,11 @@ export default function Home() {
                             ${u.credits || '300.00'}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right pr-8">
-                           <div className="flex flex-col items-end">
-                             <span className="text-[10px] font-mono text-slate-400">UID: {u.id.substring(0, 12)}...</span>
-                           </div>
-                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-40 text-center text-slate-400">
+                      <TableCell colSpan={4} className="h-40 text-center text-slate-400">
                         Không tìm thấy người dùng nào.
                       </TableCell>
                     </TableRow>
