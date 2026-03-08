@@ -505,7 +505,7 @@ export default function Home() {
         )}
 
         {currentScreen === 'CREDIT_CLAIM' && (
-          <div className="flex items-center justify-center min-[80vh]">
+          <div className="flex items-center justify-center min-h-[80vh]">
             <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl">
               <h2 className="text-3xl font-bold mb-6">Kích hoạt <IGenCodeBranded /> AI</h2>
               <div className="mb-8">
