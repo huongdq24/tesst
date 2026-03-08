@@ -39,6 +39,11 @@
   body[style*="pointer-events: none"] {
     pointer-events: auto !important;
   }
+  
+  /* Đảm bảo scrolling hoạt động bình thường */
+  body.overflow-hidden {
+    overflow: auto !important;
+  }
 }
 
 @layer components {

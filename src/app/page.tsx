@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { IGenBranding } from '@/components/Branding';
 import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
@@ -120,6 +120,7 @@ export default function Home() {
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const syncLock = useRef(false);
 
   const t = translations[lang];
 
@@ -136,15 +137,16 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const performBillingSync = useCallback(async () => {
-    if (!user || !userData || !userData.hasClaimedCredits || isSyncing) return;
+    if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
-    // Auto-discovery: Use provided projectId or fallback to default
     const pId = userData.projectId || DEFAULT_PROJECT_ID;
+    syncLock.current = true;
     setIsSyncing(true);
+    
     try {
       const result = await getRealtimeCredits(pId);
       if (result.success && result.credits) {
-        // Sync current user
+        // Sync current user if data differs
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -154,29 +156,29 @@ export default function Home() {
         }
         
         // Admin syncs all users sharing the same project
-        if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
-          if (allUsers && allUsers.length > 0) {
-            allUsers.forEach(u => {
-              if (u.projectId === pId && u.credits !== result.credits) {
-                const otherURef = doc(db, 'users', u.id);
-                updateDocumentNonBlocking(otherURef, {
-                  credits: result.credits,
-                  updatedAt: new Date().toISOString()
-                });
-              }
-            });
-          }
+        const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+        if (isAdminUser && allUsers && allUsers.length > 0) {
+          allUsers.forEach(u => {
+            if (u.projectId === pId && u.credits !== result.credits) {
+              const otherURef = doc(db, 'users', u.id);
+              updateDocumentNonBlocking(otherURef, {
+                credits: result.credits,
+                updatedAt: new Date().toISOString()
+              });
+            }
+          });
         }
       }
     } catch (error) {
       console.error("Sync Error:", error);
     } finally {
       setIsSyncing(false);
+      syncLock.current = false;
     }
-  }, [user, userData, db, allUsers, isSyncing]);
+  }, [user, userData?.credits, userData?.role, userData?.projectId, userData?.hasClaimedCredits, db, allUsers]);
 
   useEffect(() => {
-    if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
+    if (user && userData?.hasClaimedCredits && !isUserDataLoading && !syncLock.current) {
       performBillingSync();
     }
   }, [user, userData?.hasClaimedCredits, isUserDataLoading, !!allUsers, performBillingSync]);
@@ -215,7 +217,7 @@ export default function Home() {
           email: user.email,
           hasClaimedCredits: isUserAdmin || isGoogleUser,
           apiKey: '',
-          projectId: DEFAULT_PROJECT_ID, // Default project for auto-sync
+          projectId: DEFAULT_PROJECT_ID,
           role: isUserAdmin ? 'admin' : 'user',
           credits: '300.00',
           createdAt: new Date().toISOString(),
@@ -413,7 +415,6 @@ export default function Home() {
                         <DropdownMenuItem 
                           onSelect={(e) => {
                             e.preventDefault();
-                            // Small delay to ensure dropdown is handled before dialog opens
                             setTimeout(() => {
                               setTempApiKey('');
                               setIsEditingApiKey(true);
@@ -532,7 +533,6 @@ export default function Home() {
                   e.preventDefault();
                   if (isVerifying || !apiKey) return;
                   setIsVerifying(true);
-                  // Auto-sync simulation
                   setTimeout(() => {
                     setIsVerifying(false);
                     if (user) {
@@ -540,7 +540,7 @@ export default function Home() {
                       updateDocumentNonBlocking(uRef, {
                         hasClaimedCredits: true,
                         apiKey: apiKey,
-                        projectId: DEFAULT_PROJECT_ID, // Link to the actual project
+                        projectId: DEFAULT_PROJECT_ID,
                         credits: '300.00',
                         updatedAt: new Date().toISOString()
                       });
