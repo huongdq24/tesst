@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -562,14 +561,13 @@ export default function Home() {
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userRole}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.apiKeyLabel}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userCredits}</TableHead>
-                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userStatus}</TableHead>
                     <TableHead className="font-bold text-right pr-8 text-slate-500 uppercase tracking-widest text-[10px]">Info</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isAllUsersLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-60 text-center">
+                      <TableCell colSpan={5} className="h-60 text-center">
                         <div className="w-10 h-10 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
@@ -612,19 +610,6 @@ export default function Home() {
                             ${u.credits || '300.00'}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {u.hasClaimedCredits ? (
-                            <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 w-fit px-3 py-1 rounded-full border border-emerald-100">
-                              <Zap className="w-3 h-3 fill-emerald-600" />
-                              {t.active}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-slate-400 font-medium text-xs bg-slate-50 w-fit px-3 py-1 rounded-full border border-slate-200">
-                              <Info className="w-3 h-3" />
-                              {t.inactive}
-                            </div>
-                          )}
-                        </TableCell>
                         <TableCell className="text-right pr-8">
                            <div className="flex flex-col items-end">
                              <span className="text-[10px] font-mono text-slate-400">UID: {u.id.substring(0, 12)}...</span>
@@ -634,7 +619,7 @@ export default function Home() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-40 text-center text-slate-400">
+                      <TableCell colSpan={5} className="h-40 text-center text-slate-400">
                         Không tìm thấy người dùng nào.
                       </TableCell>
                     </TableRow>
