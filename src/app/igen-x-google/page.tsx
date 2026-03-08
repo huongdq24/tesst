@@ -242,7 +242,7 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
-        <h2 className="text-3xl font-bold mb-2">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
+        <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
         <p className="text-slate-500 mb-8 font-medium">
           Nhập mã đối tác của <span className="text-cyan-500 font-bold">iGen</span> do <ColoredGoogleText /> cung cấp để nhận $300 Credits
         </p>
@@ -250,7 +250,7 @@ export default function CreditClaimPage() {
           <Input 
             className="h-16 text-lg bg-white border-2 border-slate-100 focus:border-cyan-500 transition-colors font-mono rounded-2xl px-6"
             value={apiKey}
-            placeholder="Dán mã đối tác của bạn tại đây..."
+            placeholder="Dán iGen Code tại đây..."
             onChange={(e) => setApiKey(e.target.value)}
           />
         </div>
