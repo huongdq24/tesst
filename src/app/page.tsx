@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -146,7 +147,6 @@ export default function Home() {
     try {
       const result = await getRealtimeCredits(pId);
       if (result.success && result.credits) {
-        // Sync current user if data differs
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -155,7 +155,6 @@ export default function Home() {
           });
         }
         
-        // Admin syncs all users sharing the same project
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
@@ -516,16 +515,6 @@ export default function Home() {
                   placeholder="Dán mã đối tác của bạn tại đây..."
                   onChange={(e) => setApiKey(e.target.value)}
                 />
-              </div>
-              
-              <div className="mb-8 p-6 bg-blue-50/50 rounded-2xl text-left flex gap-4 border border-blue-100">
-                <div className="bg-blue-100 p-3 h-fit rounded-xl shadow-sm"><Info className="w-6 h-6 text-blue-600" /></div>
-                <div>
-                  <p className="text-sm font-bold text-blue-900 mb-1">Chương trình hợp tác Google Cloud:</p>
-                  <p className="text-xs text-blue-800/80 leading-relaxed">
-                    Mã iGen được cấp cho đối tác chiến lược. Sau khi kích hoạt, số dư $300 Credits sẽ được tự động đồng bộ theo thời gian thực từ Google Cloud Billing API của dự án liên kết.
-                  </p>
-                </div>
               </div>
 
               <Button 
