@@ -394,10 +394,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         {currentScreen === 'AUTH' && (
           <div className="flex items-center justify-center min-h-screen p-4 pt-20">
             <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative mt-8 sm:mt-0">
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white p-4 rounded-3xl shadow-2xl border border-slate-100 ring-8 ring-slate-50/50">
-                <IGenBranding className="text-xl sm:text-3xl" withTagline={true} />
-              </div>
-              <div className="mt-12 text-center mb-10">
+              <div className="mt-4 text-center mb-10">
                 <h1 className="text-3xl font-bold tracking-tight mb-2">
                   <span className="text-cyan-500">iGen</span> - Trợ lý AI cho Kiến trúc sư
                 </h1>
@@ -457,7 +454,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                       </DialogTitle>
                       <DialogDescription asChild>
                         <div className="pt-4 text-slate-600 text-left space-y-4">
-                          <div className="font-bold text-slate-900">Nếu bạn dùng Safari trên Mac/iPhone:</div>
+                          <p className="font-bold text-slate-900">Nếu bạn dùng Safari trên Mac/iPhone:</p>
                           <ol className="list-decimal pl-4 space-y-2 text-sm">
                             <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
                             <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
