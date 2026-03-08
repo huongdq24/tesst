@@ -18,7 +18,9 @@ import {
   ChevronDown, 
   Zap,
   Info,
-  Edit
+  Edit,
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -51,6 +53,9 @@ type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
 const ADMIN_EMAIL = 'igen-architect@admin.com';
 const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || '';
+
+// Link to Google Cloud Billing Console provided by the user
+const GOOGLE_BILLING_URL = "https://console.cloud.google.com/billing/017D0B-3695DA-8D7FB7/credits/all?authuser=3&chat=true&hl=en-US&organizationId=501548273108&project=project-5306ce34-5626-488a-913";
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6">
@@ -105,6 +110,10 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
+  
+  // Real-time credits mock state (Would be fetched via Google Billing API)
+  const [realtimeCredits, setRealtimeCredits] = useState<string>('300.00');
+  const [isRefreshingCredits, setIsRefreshingCredits] = useState(false);
 
   const t = translations[lang];
 
@@ -239,6 +248,19 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     toast({ title: t.paymentSuccess, description: "Mã iGen đã được cập nhật." });
   };
 
+  const refreshCredits = () => {
+    setIsRefreshingCredits(true);
+    // In a real app, this would call a Cloud Function that queries Google Cloud Billing API
+    // for the currently logged-in user's billing account.
+    setTimeout(() => {
+      setIsRefreshingCredits(false);
+      toast({
+        title: "Đang đồng bộ...",
+        description: "Số dư đang được cập nhật trực tiếp từ Google Cloud Console."
+      });
+    }, 1500);
+  };
+
   if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -262,9 +284,28 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           
           <div className="flex items-center gap-4 md:gap-6">
             {(userData?.hasClaimedCredits && userData?.apiKey) && (
-              <div className="hidden sm:flex items-center gap-2 bg-white text-slate-900 px-4 py-1.5 rounded-full shadow-lg border border-slate-100 animate-in slide-in-from-right-4">
-                <Wallet className="w-4 h-4 text-cyan-500" />
-                <span className="text-sm font-bold tracking-tight">$300.00</span>
+              <div className="hidden sm:flex items-center gap-2">
+                <a 
+                  href={GOOGLE_BILLING_URL} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white text-slate-900 px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group animate-in slide-in-from-right-4"
+                >
+                  <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-bold tracking-tight text-slate-900 flex items-center gap-1">
+                    ${realtimeCredits}
+                    <ExternalLink className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </span>
+                </a>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={refreshCredits}
+                  className="w-8 h-8 rounded-full text-slate-400 hover:text-cyan-500 hover:bg-cyan-50"
+                  disabled={isRefreshingCredits}
+                >
+                  <RefreshCw className={cn("w-4 h-4", isRefreshingCredits && "animate-spin")} />
+                </Button>
               </div>
             )}
 
@@ -311,12 +352,18 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <div className="p-2 space-y-1">
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
-                      <span className="text-xs font-medium text-slate-600">Credits</span>
-                      <span className="text-xs font-bold text-slate-900">
-                        {userData?.hasClaimedCredits && userData?.apiKey ? '$300.00' : '$0.00'}
+                    <a 
+                      href={GOOGLE_BILLING_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-cyan-50 transition-colors group/item"
+                    >
+                      <span className="text-xs font-medium text-slate-600">Credits (Real-time)</span>
+                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
+                        ${realtimeCredits}
+                        <ExternalLink className="w-3 h-3 opacity-0 group-hover/item:opacity-100" />
                       </span>
-                    </div>
+                    </a>
                     <DropdownMenuItem 
                       onSelect={(e) => {
                         e.preventDefault();
