@@ -243,7 +243,10 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
-        <h2 className="text-3xl font-bold mb-6">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
+        <h2 className="text-3xl font-bold mb-2">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
+        <p className="text-slate-500 mb-8 font-medium">
+          Nhập mã đối tác của <span className="text-cyan-500 font-bold">iGen</span> do <ColoredGoogleText /> cung cấp để nhận $300 Credits
+        </p>
         <div className="mb-8">
           <Label className="text-left block mb-2 text-xs font-bold text-slate-400">NHẬP <IGenCodeBranded /></Label>
           <Input 
