@@ -121,7 +121,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     if (isUserLoading) return;
 
     if (user) {
-      // Race condition fix: wait for Firestore confirm (null or data)
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
@@ -147,7 +146,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           }
         }
       } else {
-        // Confirmed null: Initialize new user record
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
@@ -328,9 +326,11 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     <div 
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Reset tempApiKey to empty string to hide sensitive key and show placeholder
+                        // Reset tempApiKey to empty string for security
                         setTempApiKey('');
-                        setIsEditingApiKey(true);
+                        // Delay opening the dialog to allow the DropdownMenu to close correctly
+                        // and avoid overlay/focus conflicts that freeze the UI
+                        setTimeout(() => setIsEditingApiKey(true), 100);
                       }}
                       className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key"
                     >
@@ -448,7 +448,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         <ol className="list-decimal pl-4 space-y-2">
                           <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
                           <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
-                          <li><b>BỎ CHỌY</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
+                          <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
                           <li>Tải lại trang và thử lại.</li>
                         </ol>
                         <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
@@ -479,6 +479,13 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     <GoogleLogo />
                   </div>
                 </div>
+                <div className="bg-slate-50 px-6 py-2 rounded-full border border-slate-100 flex items-center gap-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{t.strategicPartner}</span>
+                  <div className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full shadow-sm">
+                    <GoogleLogo />
+                    <span className="font-google text-sm font-bold">Google</span>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-4 mb-10">
@@ -495,11 +502,11 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </h2>
                 <p className="text-slate-500 text-xs md:text-sm font-normal leading-relaxed max-w-lg mx-auto">
                   {lang === 'VI' ? (
-                    <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp để kích hoạt <span className="text-cyan-500 font-bold">iGen AI</span></>
+                    <>Vui lòng nhập Mã đối tác của bạn để kích hoạt <span className="text-cyan-500 font-bold">iGen AI</span></>
                   ) : lang === 'EN' ? (
-                    <>Enter the partner code provided by <ColoredGoogleText className="font-bold" /> to activate <span className="text-cyan-500 font-bold">iGen AI</span></>
+                    <>Please enter your Partner Code to activate <span className="text-cyan-500 font-bold">iGen AI</span></>
                   ) : (
-                    <>输入 <ColoredGoogleText className="font-bold" /> 提供的合作伙伴代码以激活 <span className="text-cyan-500 font-bold">iGen AI</span></>
+                    <>请输入您的合作伙伴代码以激活 <span className="text-cyan-500 font-bold">iGen AI</span></>
                   )}
                 </p>
               </div>
