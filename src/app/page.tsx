@@ -121,7 +121,6 @@ export default function Home() {
   
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
-  const [isRefreshingCredits, setIsRefreshingCredits] = useState(false);
 
   const t = translations[lang];
 
@@ -232,33 +231,6 @@ export default function Home() {
     }
   };
 
-  const refreshCredits = async () => {
-    if (!user) return;
-    setIsRefreshingCredits(true);
-    try {
-      const result = await getRealtimeCredits(userData?.credits);
-      if (result.success && result.credits) {
-        const uRef = doc(db, 'users', user.uid);
-        updateDocumentNonBlocking(uRef, {
-          credits: result.credits,
-          updatedAt: new Date().toISOString()
-        });
-        toast({
-          title: "Đồng bộ thành công",
-          description: `Số dư hiện tại: $${result.credits} (Cập nhật từ Google Cloud API)`
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Lỗi đồng bộ",
-        description: "Không thể kết nối với Google Cloud Billing API."
-      });
-    } finally {
-      setIsRefreshingCredits(false);
-    }
-  };
-
   const handleClaimAndVerify = (e: React.FormEvent) => {
     e.preventDefault();
     if (isVerifying || !apiKey) return;
@@ -355,15 +327,6 @@ export default function Home() {
             <div className="flex items-center gap-2 md:gap-4">
               {(userData?.hasClaimedCredits && userData?.apiKey) && (
                 <div className="hidden sm:flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={refreshCredits}
-                    className="w-8 h-8 rounded-full text-slate-400 hover:text-cyan-500 hover:bg-cyan-50"
-                    disabled={isRefreshingCredits}
-                  >
-                    <RefreshCw className={cn("w-4 h-4", isRefreshingCredits && "animate-spin")} />
-                  </Button>
                   <a 
                     href={GOOGLE_BILLING_URL} 
                     target="_blank" 
@@ -432,22 +395,13 @@ export default function Home() {
 
                     <div className="p-2 space-y-1">
                       <div className="flex flex-col gap-1">
-                        <Button 
-                          variant="ghost" 
-                          onClick={refreshCredits}
-                          disabled={isRefreshingCredits}
-                          className="w-full justify-start text-[10px] h-8 gap-2 text-slate-500 hover:text-cyan-600"
-                        >
-                          <RefreshCw className={cn("w-3 h-3", isRefreshingCredits && "animate-spin")} />
-                          {t.syncCloud}
-                        </Button>
                         <a 
                           href={GOOGLE_BILLING_URL}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-cyan-50 transition-colors group/item"
                         >
-                          <span className="text-xs font-medium text-slate-600">Credits (Real-time)</span>
+                          <span className="text-xs font-medium text-slate-600">Credits (Auto-Sync)</span>
                           <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
                             ${userData?.credits || '0.00'}
                             <ExternalLink className="w-3 h-3" />
@@ -618,9 +572,6 @@ export default function Home() {
                     className="pl-10 h-11 bg-white border-none rounded-xl shadow-sm focus:ring-2 ring-cyan-500/20"
                   />
                 </div>
-                <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl bg-white shadow-sm text-slate-400 hover:text-cyan-500">
-                  <RefreshCw className="w-5 h-5" />
-                </Button>
               </div>
             </div>
 
@@ -719,7 +670,7 @@ export default function Home() {
         )}
       </div>
 
-      {(currentScreen !== 'AUTH' && currentScreen !== 'CREDIT_CLAIM') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />}
+      {(currentScreen !== 'AUTH' && currentScreen !== 'CREDIT_CLAIM') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} currentCredits={userData?.credits} />}
 
       {/* API Key Update Dialog */}
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>

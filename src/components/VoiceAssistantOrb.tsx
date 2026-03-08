@@ -8,14 +8,28 @@ import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { IGenBranding } from './Branding';
 import { Language } from '@/lib/i18n';
+import { getRealtimeCredits } from '@/app/actions/billing';
+import { useUser, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
-export const VoiceAssistantOrb = ({ lang, userApiKey }: { lang: Language, userApiKey?: string }) => {
+export const VoiceAssistantOrb = ({ 
+  lang, 
+  userApiKey, 
+  currentCredits 
+}: { 
+  lang: Language, 
+  userApiKey?: string, 
+  currentCredits?: string 
+}) => {
+  const { user } = useUser();
+  const db = useFirestore();
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
   const handleOrbClick = async () => {
-    if (isProcessing) return;
+    if (isProcessing || !user) return;
     
     setIsListening(true);
     // Simulating voice capture...
@@ -35,6 +49,16 @@ export const VoiceAssistantOrb = ({ lang, userApiKey }: { lang: Language, userAp
           title: <div className="flex items-center gap-1"><IGenBranding /> Assistant</div>,
           description: result.responseText,
         });
+
+        // TỰ ĐỘNG ĐỒNG BỘ GOOGLE BILLING SAU KHI DÙNG TRỢ LÝ
+        const resultCredits = await getRealtimeCredits(currentCredits);
+        if (resultCredits.success && resultCredits.credits) {
+          const uRef = doc(db, 'users', user.uid);
+          updateDocumentNonBlocking(uRef, {
+            credits: resultCredits.credits,
+            updatedAt: new Date().toISOString()
+          });
+        }
       } catch (error) {
         toast({
           variant: "destructive",
