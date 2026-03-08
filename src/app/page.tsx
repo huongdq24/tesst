@@ -138,17 +138,6 @@ export default function Home() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fix freezing pointer events issue when closing dialogs
-  useEffect(() => {
-    if (!isEditingApiKey) {
-      const timer = setTimeout(() => {
-        document.body.style.pointerEvents = 'auto';
-        document.body.style.overflow = 'auto';
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isEditingApiKey]);
-
   useEffect(() => {
     if (isUserLoading) return;
 
@@ -156,7 +145,6 @@ export default function Home() {
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
-        // Strict Admin Enforcement: Only igen-architect@admin.com can be an admin
         if (user.email === ADMIN_EMAIL && userData.role !== 'admin') {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -320,7 +308,6 @@ export default function Home() {
             <div className="flex items-center gap-4 md:gap-8">
               <IGenBranding className="text-xl md:text-2xl" withTagline={true} />
               
-              {/* Only show Admin Switcher if account is the system admin email */}
               {user?.email === ADMIN_EMAIL && userData?.role === 'admin' && (
                 <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
                   <Button 
@@ -451,56 +438,20 @@ export default function Home() {
                           </span>
                         </a>
                         
-                        <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-                          <DropdownMenuItem 
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              // Don't pre-fill with the secret key to follow user request for security
-                              setTempApiKey('');
-                              setIsEditingApiKey(true);
-                            }}
-                            className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
-                          >
-                            <div className="flex flex-col">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t.apiKeyLabel}</span>
-                              <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
-                            </div>
-                            <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500" />
-                          </DropdownMenuItem>
-                          <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl">
-                            <DialogHeader>
-                              <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
-                              <DialogDescription>{t.paymentSubtitle}</DialogDescription>
-                            </DialogHeader>
-                            <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
-                              <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-slate-400">{t.apiKeyLabel}</Label>
-                                <Input 
-                                  value={tempApiKey}
-                                  onChange={(e) => setTempApiKey(e.target.value)}
-                                  className="h-12 bg-slate-50 border-none rounded-xl font-mono"
-                                  placeholder={t.apiKeyPlaceholder}
-                                />
-                              </div>
-                              <div className="flex gap-3 pt-2">
-                                <Button 
-                                  type="button" 
-                                  variant="ghost" 
-                                  onClick={() => setIsEditingApiKey(false)}
-                                  className="flex-1 h-12 rounded-xl font-bold"
-                                >
-                                  {t.cancel}
-                                </Button>
-                                <Button 
-                                  type="submit" 
-                                  className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
-                                >
-                                  {t.saveChanges}
-                                </Button>
-                              </div>
-                            </form>
-                          </DialogContent>
-                        </Dialog>
+                        <DropdownMenuItem 
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setTempApiKey('');
+                            setIsEditingApiKey(true);
+                          }}
+                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t.apiKeyLabel}</span>
+                            <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
+                          </div>
+                          <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500" />
+                        </DropdownMenuItem>
                       </div>
                     </div>
                     <DropdownMenuSeparator />
@@ -514,6 +465,45 @@ export default function Home() {
           </div>
         </header>
       )}
+
+      {/* API Key Update Dialog (Outside Dropdown to prevent pointer event issues) */}
+      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
+        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[101]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
+            <DialogDescription>{t.paymentSubtitle}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase text-slate-400">{t.apiKeyLabel}</Label>
+              <Input 
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                className="h-12 bg-slate-50 border-none rounded-xl font-mono"
+                placeholder={t.apiKeyPlaceholder}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setIsEditingApiKey(false)}
+                className="flex-1 h-12 rounded-xl font-bold"
+              >
+                {t.cancel}
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!tempApiKey}
+                className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
+              >
+                {t.saveChanges}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         {currentScreen === 'AUTH' && (
