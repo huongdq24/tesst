@@ -304,18 +304,12 @@ export default function Home() {
             <div className="flex items-center gap-2 md:gap-4">
               {(userData?.hasClaimedCredits && userData?.apiKey) && (
                 <div className="hidden sm:flex items-center gap-2">
-                  <a 
-                    href={GOOGLE_BILLING_URL} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group"
-                  >
+                  <div className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group">
                     <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
                     <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
                       ${userData?.credits || '300.00'}
-                      <ExternalLink className="w-3 h-3 text-slate-300" />
                     </span>
-                  </a>
+                  </div>
                 </div>
               )}
 
@@ -380,11 +374,9 @@ export default function Home() {
                         </div>
                         
                         <DropdownMenuItem 
-                          onSelect={() => {
-                            setTimeout(() => {
-                              setTempApiKey('');
-                              setIsEditingApiKey(true);
-                            }, 150);
+                          onSelect={(e) => {
+                            setTempApiKey('');
+                            setIsEditingApiKey(true);
                           }}
                           className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
                         >
@@ -537,7 +529,12 @@ export default function Home() {
                   <ShieldCheck className="w-8 h-8 text-cyan-500" />
                   {t.adminPanel}
                 </h2>
-                <p className="text-slate-500">{allUsers?.length || 0} {t.totalUsers}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-slate-500 text-sm font-medium">{t.totalUsers}:</span>
+                  <Badge variant="secondary" className="bg-cyan-50 text-cyan-600 border-cyan-100 font-bold px-2 py-0">
+                    {allUsers?.length || 0}
+                  </Badge>
+                </div>
               </div>
               <div className="flex gap-4">
                 <div className="relative w-full md:w-80">
