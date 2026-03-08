@@ -398,7 +398,9 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <IGenBranding className="text-xl sm:text-3xl" withTagline={true} />
               </div>
               <div className="mt-12 text-center mb-10">
-                <h1 className="text-3xl font-bold tracking-tight mb-2">{isSignUp ? t.signUpTitle : t.loginTitle}</h1>
+                <h1 className="text-3xl font-bold tracking-tight mb-2">
+                  <span className="text-cyan-500">iGen</span> - Trợ lý AI cho Kiến trúc sư
+                </h1>
                 <p className="text-slate-500 text-sm">{isSignUp ? t.signUpSubtitle : t.loginSubtitle}</p>
               </div>
               <form onSubmit={handleAuth} className="space-y-4">
