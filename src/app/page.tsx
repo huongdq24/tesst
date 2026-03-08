@@ -447,7 +447,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               <div className="space-y-4 mb-10">
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 text-left md:text-center leading-tight">
                   <span className="font-google block">
-                    {lang === 'VI' ? 'Chương trình hợp tác với ' : lang === 'EN' ? 'Collaboration program with ' : '与 '}
+                    {lang === 'VI' ? 'Chương trình hợp tác cùng ' : lang === 'EN' ? 'Collaboration program with ' : '与 '}
                     <ColoredGoogleText className="font-bold" />
                     {lang === 'ZH' ? ' 的合作项目' : ''}
                   </span>

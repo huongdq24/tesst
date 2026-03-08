@@ -20,7 +20,7 @@ export const translations = {
     orDivider: 'Hoặc',
     continueWithGoogle: 'Tiếp tục với Google',
     continueWithPhone: 'Tiếp tục với Số điện thoại',
-    claimTitle: 'Chương trình hợp tác với Google',
+    claimTitle: 'Chương trình hợp tác cùng Google',
     claimDesc: 'Nhập mã đối tác được Google cung cấp cho iGen để nhận $300 Credits',
     claimButton: 'Xác nhận mã và nhận $300 Credits',
     claimSuccess: 'Chúc mừng! Bạn đã kích hoạt thành công $300 credits.',
