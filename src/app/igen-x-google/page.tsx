@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { Language, translations } from '@/lib/i18n';
 
 const GoogleLogo = () => (
-  <svg viewBox="0 0 24 24" className="w-5 h-5">
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
     <path
       fill="#4285F4"
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -141,7 +141,6 @@ export default function CreditClaimPage() {
 
   if (isUserLoading || isUserDataLoading) return null;
 
-  // Số dư chỉ hiển thị khi đã kích hoạt hoàn tất
   const displayCredits = (userData?.hasClaimedCredits && userData?.apiKey) ? (userData?.credits || '0.00') : '0.00';
 
   return (
@@ -243,12 +242,21 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
-        <div className="inline-flex items-center gap-3 bg-white/50 backdrop-blur-sm px-5 py-2.5 rounded-2xl shadow-sm border border-white/50 mb-6 group hover:bg-white transition-all duration-500">
-          <IGenBranding className="text-xl" />
-          <span className="text-slate-300 font-light text-xl">×</span>
-          <div className="flex items-center gap-2 text-xl">
-            <GoogleLogo />
-            <ColoredGoogleText />
+        <div className="glass-card inline-flex flex-col items-center gap-4 px-10 py-8 rounded-[3rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
+          <div className="flex items-center gap-6 text-3xl">
+            <IGenBranding className="text-3xl" />
+            <span className="text-slate-200 font-thin text-4xl">|</span>
+            <div className="flex items-center gap-3">
+              <GoogleLogo />
+              <ColoredGoogleText />
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <div className="h-px w-16 bg-slate-200 mb-2" />
+            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+              <span>Đối tác chiến lược của</span>
+              <ColoredGoogleText />
+            </div>
           </div>
         </div>
 
