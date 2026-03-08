@@ -327,23 +327,23 @@ export default function Home() {
                     variant={currentScreen !== 'ADMIN_PANEL' ? 'default' : 'ghost'} 
                     onClick={() => setCurrentScreen('DASHBOARD')}
                     className={cn(
-                      "h-9 px-3 gap-2 rounded-lg font-bold transition-all text-xs", 
+                      "h-9 w-9 p-0 rounded-lg transition-all", 
                       (currentScreen !== 'ADMIN_PANEL') ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
                     )}
+                    title={t.rendering}
                   >
-                    <LayoutDashboard className="w-3.5 h-3.5" />
-                    {t.rendering}
+                    <LayoutDashboard className="w-4 h-4" />
                   </Button>
                   <Button 
                     variant={currentScreen === 'ADMIN_PANEL' ? 'default' : 'ghost'} 
                     onClick={() => setCurrentScreen('ADMIN_PANEL')}
                     className={cn(
-                      "h-9 px-3 gap-2 rounded-lg font-bold transition-all text-xs", 
+                      "h-9 w-9 p-0 rounded-lg transition-all", 
                       currentScreen === 'ADMIN_PANEL' ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
                     )}
+                    title={t.adminPanel}
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                    {t.adminPanel}
+                    <ShieldCheck className="w-4 h-4 text-cyan-400" />
                   </Button>
                 </div>
               )}
