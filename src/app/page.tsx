@@ -496,7 +496,7 @@ export default function Home() {
                 >
                   <GoogleLogo />
                   <span className="text-xs font-bold text-slate-600">
-                    Hoặc đăng nhập với <ColoredGoogleText />
+                    Đăng nhập với tài khoản <ColoredGoogleText />
                   </span>
                 </Button>
               </div>
