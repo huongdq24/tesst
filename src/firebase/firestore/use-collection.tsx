@@ -42,13 +42,10 @@ export interface InternalQuery extends Query<DocumentData> {
  * React hook to subscribe to a Firestore collection or query in real-time.
  * Handles nullable references/queries.
  * 
- *
  * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
- * references
  *  
  * @template T Optional type for document data. Defaults to any.
- * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} targetRefOrQuery -
+ * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} memoizedTargetRefOrQuery -
  * The Firestore CollectionReference or Query. Waits if null/undefined.
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
@@ -58,8 +55,17 @@ export function useCollection<T = any>(
   type StateDataType = WithId<T>[] | null | undefined;
 
   const [data, setData] = useState<StateDataType>(undefined);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(!!memoizedTargetRefOrQuery);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+
+  // Sync state when query changes to avoid stale data during render cycles
+  const [currentQuery, setCurrentQuery] = useState(memoizedTargetRefOrQuery);
+  if (memoizedTargetRefOrQuery !== currentQuery) {
+    setCurrentQuery(memoizedTargetRefOrQuery);
+    setIsLoading(!!memoizedTargetRefOrQuery);
+    setData(undefined);
+    setError(null);
+  }
 
   useEffect(() => {
     if (!memoizedTargetRefOrQuery) {

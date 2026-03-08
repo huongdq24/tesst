@@ -112,12 +112,16 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   useEffect(() => {
-    // If auth is still checking, or user exists but Firestore data is still being fetched, wait.
-    if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) return;
+    // If auth is still checking, wait.
+    if (isUserLoading) return;
 
     if (user) {
+      // If we are still loading user data from Firestore, wait.
+      // Crucial: check both isLoading and if the data is undefined (initial hook state).
+      if (isUserDataLoading || userData === undefined) return;
+
       if (userData) {
-        // Case for admin: enforce admin key and role
+        // CASE: Admin email - ensure specific key and role
         if (user.email === ADMIN_EMAIL && (!userData.hasClaimedCredits || userData.apiKey !== ADMIN_AI_KEY)) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -130,20 +134,20 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           return;
         }
 
-        // Case for regular user who already has setup completed
+        // CASE: User already activated
         if (userData.hasClaimedCredits && userData.apiKey) {
           if (['AUTH', 'CREDIT_CLAIM'].includes(currentScreen)) {
             setCurrentScreen('DASHBOARD');
           }
         } else {
-          // Case for user who logged in but hasn't claimed credits yet
+          // CASE: Logged in but not activated
           if (['AUTH', 'DASHBOARD'].includes(currentScreen)) {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
-      } else if (userData === null) {
-        // CONFIRMED first login: document does not exist in Firestore.
-        // We create it with defaults.
+      } else {
+        // CASE: userData is explicitly NULL (document does not exist)
+        // This only happens after isUserDataLoading is false and userData is still null.
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
