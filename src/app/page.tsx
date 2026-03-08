@@ -438,13 +438,13 @@ export default function Home() {
                         </a>
                         
                         <DropdownMenuItem 
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            // Use a tiny timeout to allow DropdownMenu to release focus before opening Dialog
+                          onSelect={() => {
+                            // Removing e.preventDefault() to allow the DropdownMenu to close naturally
+                            // Use a slightly longer timeout to ensure it unmounts and cleans up pointer-events
                             setTimeout(() => {
                               setTempApiKey('');
                               setIsEditingApiKey(true);
-                            }, 50);
+                            }, 150);
                           }}
                           className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
                         >
@@ -702,7 +702,7 @@ export default function Home() {
 
       {(currentScreen !== 'AUTH' && currentScreen !== 'CREDIT_CLAIM') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />}
 
-      {/* API Key Update Dialog - Placed at the very end to ensure focus management works correctly */}
+      {/* API Key Update Dialog - Outside of navigation for safety */}
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
         <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[200]">
           <DialogHeader>
@@ -744,4 +744,3 @@ export default function Home() {
     </main>
   );
 }
-
