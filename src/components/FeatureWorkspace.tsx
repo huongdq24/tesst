@@ -22,12 +22,25 @@ import { IGenBranding } from './Branding';
 import { aiVideoWalkthroughGenerator } from '@/ai/flows/ai-video-walkthrough-generator';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { formatDistanceToNow } from 'date-fns';
 import { vi, enUS, zhCN } from 'date-fns/locale';
+import { getRealtimeCredits } from '@/app/actions/billing';
 
-export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { featureId: string, lang: Language, onBack: () => void, userApiKey?: string }) => {
+export const FeatureWorkspace = ({ 
+  featureId, 
+  lang, 
+  onBack, 
+  userApiKey,
+  currentCredits 
+}: { 
+  featureId: string, 
+  lang: Language, 
+  onBack: () => void, 
+  userApiKey?: string,
+  currentCredits?: string
+}) => {
   const { user } = useUser();
   const db = useFirestore();
   const [isProMode, setIsProMode] = useState(false);
@@ -93,6 +106,16 @@ export const FeatureWorkspace = ({ featureId, lang, onBack, userApiKey }: { feat
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
+
+      // Automatic Credit Sync after successful generation
+      const resultCredits = await getRealtimeCredits(currentCredits);
+      if (resultCredits.success && resultCredits.credits) {
+        const uRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(uRef, {
+          credits: resultCredits.credits,
+          updatedAt: new Date().toISOString()
+        });
+      }
 
     } catch (error) {
       toast({

@@ -121,8 +121,6 @@ export default function Home() {
   
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
-  
-  const [realtimeCredits, setRealtimeCredits] = useState<string>('300.00');
   const [isRefreshingCredits, setIsRefreshingCredits] = useState(false);
 
   const t = translations[lang];
@@ -173,6 +171,7 @@ export default function Home() {
           hasClaimedCredits: isUserAdmin,
           apiKey: isUserAdmin ? ADMIN_AI_KEY : '',
           role: isUserAdmin ? 'admin' : 'user',
+          credits: '300.00',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }, { merge: true });
@@ -222,11 +221,16 @@ export default function Home() {
   };
 
   const refreshCredits = async () => {
+    if (!user) return;
     setIsRefreshingCredits(true);
     try {
-      const result = await getRealtimeCredits();
+      const result = await getRealtimeCredits(userData?.credits);
       if (result.success && result.credits) {
-        setRealtimeCredits(result.credits);
+        const uRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(uRef, {
+          credits: result.credits,
+          updatedAt: new Date().toISOString()
+        });
         toast({
           title: "Đồng bộ thành công",
           description: `Số dư hiện tại: $${result.credits} (Cập nhật từ Google Cloud API)`
@@ -255,6 +259,7 @@ export default function Home() {
         updateDocumentNonBlocking(uRef, {
           hasClaimedCredits: true,
           apiKey: apiKey,
+          credits: '300.00',
           updatedAt: new Date().toISOString()
         });
         toast({ title: t.paymentSuccess, description: "iGen AI active." });
@@ -355,7 +360,7 @@ export default function Home() {
                   >
                     <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
                     <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                      ${realtimeCredits}
+                      ${userData?.credits || '0.00'}
                       <ExternalLink className="w-3 h-3 text-slate-300" />
                     </span>
                   </a>
@@ -432,15 +437,13 @@ export default function Home() {
                         >
                           <span className="text-xs font-medium text-slate-600">Credits (Real-time)</span>
                           <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
-                            ${realtimeCredits}
+                            ${userData?.credits || '0.00'}
                             <ExternalLink className="w-3 h-3" />
                           </span>
                         </a>
                         
                         <DropdownMenuItem 
                           onSelect={() => {
-                            // Removing e.preventDefault() to allow the DropdownMenu to close naturally
-                            // Use a slightly longer timeout to ensure it unmounts and cleans up pointer-events
                             setTimeout(() => {
                               setTempApiKey('');
                               setIsEditingApiKey(true);
@@ -516,7 +519,10 @@ export default function Home() {
               <div className="relative mt-10 mb-6">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100" /></div>
                 <div className="relative flex justify-center">
-                  <span className="bg-white px-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t.orDivider}</span>
+                  <span className="bg-white px-4 text-xs font-bold text-slate-600">
+                    {lang === 'VI' ? 'Tiếp tục với ' : 'Continue with '}
+                    <ColoredGoogleText />
+                  </span>
                 </div>
               </div>
 
@@ -695,6 +701,7 @@ export default function Home() {
             featureId={selectedFeature!} 
             lang={lang} 
             userApiKey={userData?.apiKey}
+            currentCredits={userData?.credits}
             onBack={() => setCurrentScreen('DASHBOARD')} 
           />
         )}
@@ -702,7 +709,7 @@ export default function Home() {
 
       {(currentScreen !== 'AUTH' && currentScreen !== 'CREDIT_CLAIM') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />}
 
-      {/* API Key Update Dialog - Outside of navigation for safety */}
+      {/* API Key Update Dialog */}
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
         <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[200]">
           <DialogHeader>

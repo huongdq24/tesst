@@ -8,14 +8,19 @@ const BILLING_ACCOUNT_ID = '017D0B-3695DA-8D7FB7';
 
 /**
  * Lấy số dư thực tế từ Google Cloud Billing API.
+ * Trong môi trường demo, chúng ta giả lập việc tiêu hao credits sau mỗi lần gọi.
  */
-export async function getRealtimeCredits() {
+export async function getRealtimeCredits(currentBalance?: string) {
   try {
     // Để tích hợp thật, bạn cần cài đặt Service Account JSON hoặc sử dụng Access Token từ OAuth
-    // Dưới đây là logic giả lập đồng bộ thành công
+    // Ở đây chúng ta giả lập việc giảm số dư sau mỗi lần tác vụ AI hoàn thành
+    const baseBalance = currentBalance ? parseFloat(currentBalance) : 300.00;
+    const usageCost = (Math.random() * 0.5 + 0.1); // Tiêu tốn từ $0.1 đến $0.6 mỗi lần dùng
+    const newBalance = Math.max(0, baseBalance - usageCost).toFixed(2);
+
     return {
       success: true,
-      credits: (Math.random() * 10 + 290).toFixed(2), // Giả lập con số đang giảm dần
+      credits: newBalance,
       timestamp: new Date().toISOString()
     };
   } catch (error) {

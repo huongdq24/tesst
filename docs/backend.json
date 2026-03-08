@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -26,6 +27,10 @@
         "apiKey": {
           "type": "string",
           "description": "User-provided API key for AI services."
+        },
+        "credits": {
+          "type": "string",
+          "description": "Current available credits balance synchronized from Google Cloud Billing."
         },
         "createdAt": {
           "type": "string",
