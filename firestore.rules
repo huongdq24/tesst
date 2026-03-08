@@ -20,7 +20,7 @@ service cloud.firestore {
      * 1. Authorization Independence: Read/Write decisions for user data are made 
      *    by comparing the auth UID directly to the path wildcards, avoiding costly get() calls.
      * 2. Administrative Access: Global admins are identified by the presence of 
-     *    their UID in the /roles_admin collection.
+     *    their UID in the /roles_admin collection, OR by having the specific system admin email.
      * 3. Relational Integrity: On document creation, the rules enforce that internal 
      *    ownership fields (like userId) match the path to ensure data consistency.
      * 4. Structural Segregation: Administrative markers are separated from user profiles 
@@ -43,9 +43,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the authenticated user has a marker in the admin collection. */
+    /** @description Checks if the authenticated user is an admin via collection marker or system email. */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
+        request.auth.token.email == 'igen-architect@admin.com'
+      );
     }
 
     /** @description Combines ownership check with document existence for destructive operations. */
