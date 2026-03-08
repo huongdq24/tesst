@@ -61,7 +61,6 @@ import { getRealtimeCredits } from '@/app/actions/billing';
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL' | 'ADMIN_PANEL';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
-const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || 'ADMIN_SYSTEM_KEY';
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
@@ -135,7 +134,7 @@ export default function Home() {
     try {
       const result = await getRealtimeCredits();
       if (result.success && result.credits) {
-        // 1. Cập nhật cho chính tài khoản đang đăng nhập (Xóa bỏ con số cũ ngay lập tức)
+        // 1. Cập nhật cho chính tài khoản đang đăng nhập
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -166,12 +165,11 @@ export default function Home() {
     }
   }, [user, userData, db, allUsers, isSyncing]);
 
-  // Tự động đồng bộ khi các dữ liệu liên quan sẵn sàng
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
       performBillingSync();
     }
-  }, [user, userData?.hasClaimedCredits, isUserDataLoading, !!allUsers]);
+  }, [user, userData?.hasClaimedCredits, isUserDataLoading, !!allUsers, performBillingSync]);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -180,22 +178,11 @@ export default function Home() {
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
+        // Cập nhật vai trò Admin nhưng không tự động đổi apiKey
         if (ADMIN_EMAILS.includes(user.email || '') && userData.role !== 'admin') {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
             role: 'admin',
-            apiKey: ADMIN_AI_KEY,
-            hasClaimedCredits: true,
-            updatedAt: new Date().toISOString()
-          });
-        }
-
-        if (user.providerData.some(p => p.providerId === 'google.com') && !userData.hasClaimedCredits) {
-          const uRef = doc(db, 'users', user.uid);
-          updateDocumentNonBlocking(uRef, {
-            hasClaimedCredits: true,
-            apiKey: 'GOOGLE_CLOUD_MANAGED',
-            credits: '300.00',
             updatedAt: new Date().toISOString()
           });
         }
@@ -218,7 +205,7 @@ export default function Home() {
           id: user.uid,
           email: user.email,
           hasClaimedCredits: isUserAdmin || isGoogleUser,
-          apiKey: isUserAdmin ? ADMIN_AI_KEY : (isGoogleUser ? 'GOOGLE_CLOUD_MANAGED' : ''),
+          apiKey: '', // Để trống để người dùng tự nhập hoặc cập nhật riêng
           role: isUserAdmin ? 'admin' : 'user',
           credits: '300.00',
           createdAt: new Date().toISOString(),
@@ -323,7 +310,6 @@ export default function Home() {
                       "h-9 w-9 p-0 rounded-lg transition-all", 
                       (currentScreen !== 'ADMIN_PANEL') ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
                     )}
-                    title={t.rendering}
                   >
                     <LayoutDashboard className="w-4 h-4" />
                   </Button>
@@ -334,7 +320,6 @@ export default function Home() {
                       "h-9 w-9 p-0 rounded-lg transition-all", 
                       currentScreen === 'ADMIN_PANEL' ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
                     )}
-                    title={t.adminPanel}
                   >
                     <ShieldCheck className="w-4 h-4 text-cyan-400" />
                   </Button>
@@ -416,7 +401,7 @@ export default function Home() {
                         </div>
                         
                         <DropdownMenuItem 
-                          onSelect={(e) => {
+                          onSelect={() => {
                             setTempApiKey('');
                             setIsEditingApiKey(true);
                           }}
@@ -505,7 +490,7 @@ export default function Home() {
         )}
 
         {currentScreen === 'CREDIT_CLAIM' && (
-          <div className="flex items-center justify-center min-[80vh]">
+          <div className="flex items-center justify-center min-h-[80vh]">
             <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center shadow-2xl">
               <h2 className="text-3xl font-bold mb-6">Kích hoạt iGen AI</h2>
               <Input 
@@ -681,7 +666,7 @@ export default function Home() {
       {(currentScreen !== 'AUTH' && currentScreen !== 'CREDIT_CLAIM') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} currentCredits={userData?.credits} />}
 
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[200]">
+        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
             <DialogDescription>{t.paymentSubtitle}</DialogDescription>
@@ -702,9 +687,7 @@ export default function Home() {
               <Button 
                 type="button" 
                 variant="ghost" 
-                onClick={() => {
-                  setIsEditingApiKey(false);
-                }}
+                onClick={() => setIsEditingApiKey(false)}
                 className="flex-1 h-12 rounded-xl font-bold"
               >
                 {t.cancel}

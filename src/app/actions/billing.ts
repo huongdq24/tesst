@@ -29,8 +29,7 @@ export async function getRealtimeCredits() {
      * GIẢI THÍCH KỸ THUẬT:
      * Google Cloud Billing API trả về trạng thái 'billingEnabled'.
      * Nếu billingEnabled = true, tài khoản đang có hiệu lực (Active).
-     * Vì SDK không trả về con số "Số dư Tín dụng còn lại" trực tiếp,
-     * iGen sẽ hiển thị con số $300.00 chuẩn của Free Trial nếu trạng thái là Enabled.
+     * iGen hiển thị con số $300.00 chuẩn của Free Trial nếu trạng thái là Enabled.
      */
     if (billingInfo.billingEnabled) {
       return {
