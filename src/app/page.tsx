@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { IGenBranding } from '@/components/Branding';
 import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
@@ -114,6 +114,7 @@ export default function Home() {
   
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const t = translations[lang];
 
@@ -127,20 +128,26 @@ export default function Home() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // EFFECT ĐỒNG BỘ CREDITS THẬT TỪ GOOGLE CLOUD BILLING API
-  useEffect(() => {
-    const syncBilling = async () => {
-      if (user && userData && userData.hasClaimedCredits) {
-        const result = await getRealtimeCredits();
-        if (result.success && result.credits) {
+  // HÀM ĐỒNG BỘ CREDITS CHUẨN TỪ GOOGLE CLOUD BILLING API
+  const performBillingSync = useCallback(async () => {
+    if (!user || !userData || !userData.hasClaimedCredits || isSyncing) return;
+    
+    setIsSyncing(true);
+    try {
+      const result = await getRealtimeCredits();
+      if (result.success && result.credits) {
+        // 1. Cập nhật cho chính tài khoản đang đăng nhập (Xóa bỏ con số cũ ngay lập tức)
+        if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
             credits: result.credits,
             updatedAt: new Date().toISOString()
           });
-          
-          // Nếu là Admin, đồng bộ cho tất cả user hiện có để đảm bảo nhất quán
-          if (ADMIN_EMAILS.includes(user.email || '') && allUsers) {
+        }
+        
+        // 2. Nếu là Admin, đồng bộ cho tất cả user khác đang dùng chung Project
+        if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
+          if (allUsers && allUsers.length > 0) {
             allUsers.forEach(u => {
               if (u.credits !== result.credits) {
                 const otherURef = doc(db, 'users', u.id);
@@ -153,9 +160,19 @@ export default function Home() {
           }
         }
       }
-    };
-    syncBilling();
-  }, [user, userData?.hasClaimedCredits, db, allUsers]);
+    } catch (error) {
+      console.error("Sync Error:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [user, userData, db, allUsers, isSyncing]);
+
+  // Tự động đồng bộ khi các dữ liệu liên quan sẵn sàng
+  useEffect(() => {
+    if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
+      performBillingSync();
+    }
+  }, [user, userData?.hasClaimedCredits, isUserDataLoading, !!allUsers]);
 
   useEffect(() => {
     if (isUserLoading) return;
@@ -298,7 +315,7 @@ export default function Home() {
             <div className="flex items-center gap-4 md:gap-8">
               <IGenBranding className="text-xl md:text-2xl" withTagline={true} />
               
-              {user && ADMIN_EMAILS.includes(user.email || '') && (
+              {user && (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) && (
                 <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
                   <Button 
                     variant={currentScreen !== 'ADMIN_PANEL' ? 'default' : 'ghost'} 
@@ -334,6 +351,7 @@ export default function Home() {
                     <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
                       ${userData?.credits || '300.00'}
                     </span>
+                    {isSyncing && <RefreshCw className="w-3 h-3 animate-spin text-cyan-400 ml-1" />}
                   </div>
                 </div>
               )}
@@ -377,7 +395,7 @@ export default function Home() {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     
-                    {user && ADMIN_EMAILS.includes(user.email || '') && (
+                    {user && (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) && (
                       <>
                         <DropdownMenuItem 
                           onSelect={() => setCurrentScreen('ADMIN_PANEL')}
@@ -558,6 +576,12 @@ export default function Home() {
                   <Badge variant="secondary" className="bg-cyan-50 text-cyan-600 border-cyan-100 font-bold px-3 py-1 rounded-full text-xs">
                     {allUsers?.length || 0} {lang === 'VI' ? 'Tổng số người dùng' : 'Total Users'}
                   </Badge>
+                  {isSyncing && (
+                    <div className="flex items-center gap-2 text-[10px] text-cyan-500 font-bold animate-pulse">
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      Auto-syncing...
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
