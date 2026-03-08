@@ -21,7 +21,7 @@ export type WithId<T> = T & { id: string };
  * @template T Type of the document data.
  */
 export interface UseCollectionResult<T> {
-  data: WithId<T>[] | null; // Document data with ID, or null.
+  data: WithId<T>[] | null | undefined; // Document data with ID, or null if not found, undefined if loading.
   isLoading: boolean;       // True if loading.
   error: FirestoreError | Error | null; // Error object, or null.
 }
@@ -55,9 +55,9 @@ export interface InternalQuery extends Query<DocumentData> {
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: (CollectionReference<DocumentData> | Query<DocumentData>)  | null | undefined,
 ): UseCollectionResult<T> {
-  type StateDataType = WithId<T>[] | null;
+  type StateDataType = WithId<T>[] | null | undefined;
 
-  const [data, setData] = useState<StateDataType>(null);
+  const [data, setData] = useState<StateDataType>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 

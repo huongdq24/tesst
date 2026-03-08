@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -113,11 +112,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   useEffect(() => {
-    if (isUserLoading || (user && isUserDataLoading)) return;
+    // If auth is still checking, or user exists but Firestore data is still being fetched, wait.
+    if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) return;
 
     if (user) {
       if (userData) {
-        // Special case for admin to auto-claim
+        // Case for admin: enforce admin key and role
         if (user.email === ADMIN_EMAIL && (!userData.hasClaimedCredits || userData.apiKey !== ADMIN_AI_KEY)) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -130,17 +130,20 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           return;
         }
 
+        // Case for regular user who already has setup completed
         if (userData.hasClaimedCredits && userData.apiKey) {
           if (['AUTH', 'CREDIT_CLAIM'].includes(currentScreen)) {
             setCurrentScreen('DASHBOARD');
           }
         } else {
+          // Case for user who logged in but hasn't claimed credits yet
           if (['AUTH', 'DASHBOARD'].includes(currentScreen)) {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
-      } else {
-        // First login: create record
+      } else if (userData === null) {
+        // CONFIRMED first login: document does not exist in Firestore.
+        // We create it with defaults.
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
@@ -161,6 +164,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         }
       }
     } else {
+      // User is logged out
       if (currentScreen !== 'AUTH') setCurrentScreen('AUTH');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, currentScreen, db]);
@@ -229,7 +233,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     }, 2000);
   };
 
-  if (isUserLoading || (user && isUserDataLoading)) {
+  if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
@@ -444,7 +448,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     )}
                   </span>
                 </h2>
-                <p className="text-slate-500 text-sm md:text-base font-normal leading-relaxed max-w-lg mx-auto">
+                <p className="text-slate-500 text-xs md:text-sm font-normal leading-relaxed max-w-lg mx-auto">
                   {lang === 'VI' ? (
                     <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
                   ) : lang === 'EN' ? (
