@@ -103,7 +103,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const [isVerifying, setIsVerifying] = useState(false);
   const [apiKey, setApiKey] = useState('');
   
-  // States for Editing API Key
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
 
@@ -112,15 +111,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-  // CRITICAL FIX: Ensure app doesn't freeze when dialog closes
   useEffect(() => {
     if (!isEditingApiKey) {
       const forceRestore = () => {
         document.body.style.pointerEvents = 'auto';
         document.body.style.overflow = 'auto';
       };
-      
-      // Run immediately and after a short delay to override radix side effects
       forceRestore();
       const timer = setTimeout(forceRestore, 150);
       return () => clearTimeout(timer);
@@ -131,7 +127,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     if (isUserLoading) return;
 
     if (user) {
-      // Wait for userData to finish loading definitively
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
@@ -366,7 +361,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         </header>
       )}
 
-      {/* API Key Edit Dialog */}
       <Dialog 
         open={isEditingApiKey} 
         onOpenChange={(open) => {
@@ -449,7 +443,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="link" className="text-xs text-slate-400 gap-2 hover:text-cyan-600">
-                      <Info className="w-3.5 h-3.5" /> Lỗi màn hình trắng khi dùng Gmail?
+                      <Info className="w-3.5 h-3.5" /> Khắc phục lỗi đăng nhập
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md rounded-3xl">
@@ -463,10 +457,9 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                           <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
                           <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
                           <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
-                          <li>Tải lại trang và thử lại.</li>
                         </ol>
-                        <p className="text-xs flex items-center gap-1 font-bold">
-                          Hoặc dùng <Mail className="w-3 h-3" /> Email Đăng ký để thay thế.
+                        <p className="text-sm font-bold text-cyan-600 bg-cyan-50 p-3 rounded-xl">
+                          Mẹo: Gắn Domain riêng cho Web App sẽ khắc phục triệt để lỗi này.
                         </p>
                       </DialogDescription>
                     </DialogHeader>

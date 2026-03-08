@@ -14,24 +14,21 @@
 
 ## 🛠 Hướng dẫn Khắc phục lỗi Đăng nhập Gmail (Firebase Auth)
 
-Nếu bạn gặp lỗi màn hình trắng hoặc "Google Sign-In Failed", hãy thực hiện chính xác các bước sau:
+### 1. Sử dụng Tên miền riêng (KHUYÊN DÙNG)
+Việc sử dụng tên miền chính thức (ví dụ: `igen.ai`) thay vì domain mặc định của Firebase sẽ khắc phục triệt để lỗi "trắng màn hình" trên Safari/Mac/iOS.
+- Sau khi mua domain, hãy thêm nó vào **Authorized Domains** trong Firebase Console.
 
-### 1. Thiết lập Email Hỗ trợ Dự án (BẮT BUỘC)
+### 2. Thiết lập Email Hỗ trợ Dự án (BẮT BUỘC)
 Google OAuth sẽ KHÔNG hoạt động nếu thiếu thông tin này.
 - Truy cập: [Firebase Console - Project Settings](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/settings/general)
-- Tại mục **Public-facing name**, đảm bảo đã đặt tên (ví dụ: iGen AI).
-- Tại mục **Support email**, chọn địa chỉ email của bạn từ danh sách thả xuống.
+- Tại mục **Support email**, chọn địa chỉ email của bạn.
 - Nhấn **Save**.
 
-### 2. Kích hoạt Identity Toolkit API & Google People API
+### 3. Kích hoạt Identity Toolkit API & Google People API
 - **Link 1:** [Kích hoạt Identity Toolkit API](https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com?project=project-5306ce34-5626-488a-913)
 - **Link 2:** [Kích hoạt Google People API](https://console.cloud.google.com/apis/library/people.googleapis.com?project=project-5306ce34-5626-488a-913)
 - Nhấn nút **ENABLE** cho cả hai.
 
-### 3. Cấu hình cho Safari (Nếu dùng Mac/iPhone)
-Safari chặn liên lạc chéo giữa popup và trang chính.
+### 4. Cấu hình cho Safari (Giải pháp tạm thời)
 - Vào **Safari Settings** -> **Privacy**.
-- **BỎ CHỌN (Uncheck)** mục: `Prevent Cross-Site Tracking` (Ngăn chặn theo dõi chéo trang).
-
-### 4. Giải pháp thay thế
-Nếu việc đăng nhập Google vẫn gặp khó khăn, hãy sử dụng phương thức **Đăng ký (Sign Up)** trực tiếp bằng Email để nhận đầy đủ quyền lợi.
+- **BỎ CHỌN** mục: `Prevent Cross-Site Tracking` (Ngăn chặn theo dõi chéo trang).
