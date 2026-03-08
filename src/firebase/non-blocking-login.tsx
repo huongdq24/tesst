@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Auth,
@@ -28,14 +27,16 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 export function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
   const provider = new GoogleAuthProvider();
   
-  // Add scope to read billing information - requires verification for production
+  /** 
+   * THÊM QUYỀN ĐỌC BILLING:
+   * Quyền này cho phép ứng dụng truy vấn số dư thực tế từ tài khoản Google của bạn.
+   * Lưu ý: Trong môi trường Production, Google sẽ yêu cầu xác minh App để sử dụng Scope này.
+   */
   provider.addScope('https://www.googleapis.com/auth/cloud-billing.readonly');
   
-  // Ensure "Identity Toolkit API" and "Google People API" are enabled in Google Cloud Console
   return signInWithPopup(authInstance, provider)
     .then(() => {})
     .catch((error) => {
-      // Re-throw if it's not a user-cancelled action so UI can show it
       if (error.code !== 'auth/popup-closed-by-user') {
         throw error;
       }

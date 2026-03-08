@@ -140,6 +140,7 @@ export default function Home() {
     try {
       const result = await getRealtimeCredits();
       if (result.success && result.credits) {
+        // Cập nhật cho chính mình
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -148,6 +149,7 @@ export default function Home() {
           });
         }
         
+        // Cập nhật cho tất cả nếu là admin
         if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
           if (allUsers && allUsers.length > 0) {
             allUsers.forEach(u => {

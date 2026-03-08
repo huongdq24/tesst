@@ -34,7 +34,7 @@ Truy cập [Google Cloud Console - OAuth Consent Screen](https://console.cloud.g
 Dành cho bạn để quản lý người dùng hiện tại:
 
 - **Danh sách Tài khoản:** [Firebase Auth Users](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/authentication/users)
-- **Dữ liệu & API Keys:** [Firestore Database - Users Collection](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/firestore/data/~2Fusers)
+- **Dữ liệu & iGen Codes:** [Firestore Database - Users Collection](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/firestore/data/~2Fusers)
 
 ## 🛠 Hướng dẫn cho giai đoạn Thử nghiệm (Testing)
 
