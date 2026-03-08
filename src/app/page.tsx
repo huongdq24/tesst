@@ -138,6 +138,7 @@ export default function Home() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Fix freezing pointer events issue when closing dialogs
   useEffect(() => {
     if (!isEditingApiKey) {
       const timer = setTimeout(() => {
@@ -155,6 +156,7 @@ export default function Home() {
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
+        // Strict Admin Enforcement: Only igen-architect@admin.com can be an admin
         if (user.email === ADMIN_EMAIL && userData.role !== 'admin') {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -313,197 +315,200 @@ export default function Home() {
       </div>
 
       {currentScreen !== 'AUTH' && (
-        <header className="fixed top-0 left-0 w-full z-50 glass h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/50">
-          <div className="flex items-center gap-4 md:gap-8">
-            <IGenBranding className="text-xl md:text-2xl" withTagline={true} />
-            
-            {userData?.role === 'admin' && (
-              <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
-                <Button 
-                  variant={currentScreen !== 'ADMIN_PANEL' ? 'default' : 'ghost'} 
-                  onClick={() => setCurrentScreen('DASHBOARD')}
-                  className={cn(
-                    "h-9 px-3 gap-2 rounded-lg font-bold transition-all text-xs", 
-                    (currentScreen !== 'ADMIN_PANEL') ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
-                  )}
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  {t.rendering}
-                </Button>
-                <Button 
-                  variant={currentScreen === 'ADMIN_PANEL' ? 'default' : 'ghost'} 
-                  onClick={() => setCurrentScreen('ADMIN_PANEL')}
-                  className={cn(
-                    "h-9 px-3 gap-2 rounded-lg font-bold transition-all text-xs", 
-                    currentScreen === 'ADMIN_PANEL' ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
-                  )}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                  {t.adminPanel}
-                </Button>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2 md:gap-4">
-            {(userData?.hasClaimedCredits && userData?.apiKey) && (
-              <div className="hidden sm:flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={refreshCredits}
-                  className="w-8 h-8 rounded-full text-slate-400 hover:text-cyan-500 hover:bg-cyan-50"
-                  disabled={isRefreshingCredits}
-                >
-                  <RefreshCw className={cn("w-4 h-4", isRefreshingCredits && "animate-spin")} />
-                </Button>
-                <a 
-                  href={GOOGLE_BILLING_URL} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group"
-                >
-                  <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                    ${realtimeCredits}
-                    <ExternalLink className="w-3 h-3 text-slate-300" />
-                  </span>
-                </a>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-slate-100 transition-colors">
-                    <Globe className="w-5 h-5 text-slate-500" />
+        <header className="fixed top-0 left-0 w-full z-50 glass h-20 border-b border-slate-200/50">
+          <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div className="flex items-center gap-4 md:gap-8">
+              <IGenBranding className="text-xl md:text-2xl" withTagline={true} />
+              
+              {/* Only show Admin Switcher if account is the system admin email */}
+              {user?.email === ADMIN_EMAIL && userData?.role === 'admin' && (
+                <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
+                  <Button 
+                    variant={currentScreen !== 'ADMIN_PANEL' ? 'default' : 'ghost'} 
+                    onClick={() => setCurrentScreen('DASHBOARD')}
+                    className={cn(
+                      "h-9 px-3 gap-2 rounded-lg font-bold transition-all text-xs", 
+                      (currentScreen !== 'ADMIN_PANEL') ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
+                    )}
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    {t.rendering}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 rounded-2xl p-2 shadow-2xl border-slate-100">
-                  <DropdownMenuItem onClick={() => setLang('VI')} className={cn("rounded-xl cursor-pointer p-3", lang === 'VI' && "bg-slate-50 font-bold text-cyan-600")}>
-                    Tiếng Việt
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLang('EN')} className={cn("rounded-xl cursor-pointer p-3", lang === 'EN' && "bg-slate-50 font-bold text-cyan-600")}>
-                    English
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLang('ZH')} className={cn("rounded-xl cursor-pointer p-3", lang === 'ZH' && "bg-slate-50 font-bold text-cyan-600")}>
-                    中文
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Button 
+                    variant={currentScreen === 'ADMIN_PANEL' ? 'default' : 'ghost'} 
+                    onClick={() => setCurrentScreen('ADMIN_PANEL')}
+                    className={cn(
+                      "h-9 px-3 gap-2 rounded-lg font-bold transition-all text-xs", 
+                      currentScreen === 'ADMIN_PANEL' ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
+                    )}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                    {t.adminPanel}
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2 md:gap-4">
+              {(userData?.hasClaimedCredits && userData?.apiKey) && (
+                <div className="hidden sm:flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={refreshCredits}
+                    className="w-8 h-8 rounded-full text-slate-400 hover:text-cyan-500 hover:bg-cyan-50"
+                    disabled={isRefreshingCredits}
+                  >
+                    <RefreshCw className={cn("w-4 h-4", isRefreshingCredits && "animate-spin")} />
+                  </Button>
+                  <a 
+                    href={GOOGLE_BILLING_URL} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group"
+                  >
+                    <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                      ${realtimeCredits}
+                      <ExternalLink className="w-3 h-3 text-slate-300" />
+                    </span>
+                  </a>
+                </div>
+              )}
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <div className="flex items-center gap-2 md:gap-3 cursor-pointer group">
-                    <Avatar className="w-9 h-9 md:w-10 md:h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-colors">
-                      <AvatarImage src={user?.photoURL || undefined} referrerPolicy="no-referrer" />
-                      <AvatarFallback className="bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-bold">
-                        {user?.email?.[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-cyan-500" />
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 shadow-2xl border-slate-100">
-                  <DropdownMenuLabel className="p-3">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{userData?.role === 'admin' ? t.roleAdmin : t.roleUser}</p>
-                    <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  
-                  {userData?.role === 'admin' && (
-                    <>
-                      <DropdownMenuItem 
-                        onClick={() => setCurrentScreen('ADMIN_PANEL')}
-                        className="p-3 rounded-xl font-bold gap-3 cursor-pointer text-cyan-600 hover:bg-cyan-50"
-                      >
-                        <ShieldCheck className="w-4 h-4" /> {t.adminPanel}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-slate-100 transition-colors">
+                      <Globe className="w-5 h-5 text-slate-500" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40 rounded-2xl p-2 shadow-2xl border-slate-100">
+                    <DropdownMenuItem onClick={() => setLang('VI')} className={cn("rounded-xl cursor-pointer p-3", lang === 'VI' && "bg-slate-50 font-bold text-cyan-600")}>
+                      Tiếng Việt
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLang('EN')} className={cn("rounded-xl cursor-pointer p-3", lang === 'EN' && "bg-slate-50 font-bold text-cyan-600")}>
+                      English
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLang('ZH')} className={cn("rounded-xl cursor-pointer p-3", lang === 'ZH' && "bg-slate-50 font-bold text-cyan-600")}>
+                      中文
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                  <div className="p-2 space-y-1">
-                    <div className="flex flex-col gap-1">
-                      <Button 
-                        variant="ghost" 
-                        onClick={refreshCredits}
-                        disabled={isRefreshingCredits}
-                        className="w-full justify-start text-[10px] h-8 gap-2 text-slate-500 hover:text-cyan-600"
-                      >
-                        <RefreshCw className={cn("w-3 h-3", isRefreshingCredits && "animate-spin")} />
-                        {t.syncCloud}
-                      </Button>
-                      <a 
-                        href={GOOGLE_BILLING_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-cyan-50 transition-colors group/item"
-                      >
-                        <span className="text-xs font-medium text-slate-600">Credits (Real-time)</span>
-                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
-                          ${realtimeCredits}
-                          <ExternalLink className="w-3 h-3" />
-                        </span>
-                      </a>
-                      
-                      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-                        <DropdownMenuItem 
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            setTempApiKey(userData?.apiKey || '');
-                            setIsEditingApiKey(true);
-                          }}
-                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t.apiKeyLabel}</span>
-                            <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
-                          </div>
-                          <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500" />
-                        </DropdownMenuItem>
-                        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl">
-                          <DialogHeader>
-                            <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
-                            <DialogDescription>{t.paymentSubtitle}</DialogDescription>
-                          </DialogHeader>
-                          <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
-                            <div className="space-y-2">
-                              <Label className="text-xs font-bold uppercase text-slate-400">{t.apiKeyLabel}</Label>
-                              <Input 
-                                value={tempApiKey}
-                                onChange={(e) => setTempApiKey(e.target.value)}
-                                className="h-12 bg-slate-50 border-none rounded-xl font-mono"
-                                placeholder={t.apiKeyPlaceholder}
-                              />
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                              <Button 
-                                type="button" 
-                                variant="ghost" 
-                                onClick={() => setIsEditingApiKey(false)}
-                                className="flex-1 h-12 rounded-xl font-bold"
-                              >
-                                {t.cancel}
-                              </Button>
-                              <Button 
-                                type="submit" 
-                                className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
-                              >
-                                {t.saveChanges}
-                              </Button>
-                            </div>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div className="flex items-center gap-2 md:gap-3 cursor-pointer group">
+                      <Avatar className="w-9 h-9 md:w-10 md:h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-colors">
+                        <AvatarImage src={user?.photoURL || undefined} referrerPolicy="no-referrer" />
+                        <AvatarFallback className="bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-bold">
+                          {user?.email?.[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-cyan-500" />
                     </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => auth.signOut()} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
-                    <LogOut className="w-4 h-4" /> Đăng xuất
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 shadow-2xl border-slate-100">
+                    <DropdownMenuLabel className="p-3">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{userData?.role === 'admin' ? t.roleAdmin : t.roleUser}</p>
+                      <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    
+                    {user?.email === ADMIN_EMAIL && userData?.role === 'admin' && (
+                      <>
+                        <DropdownMenuItem 
+                          onClick={() => setCurrentScreen('ADMIN_PANEL')}
+                          className="p-3 rounded-xl font-bold gap-3 cursor-pointer text-cyan-600 hover:bg-cyan-50"
+                        >
+                          <ShieldCheck className="w-4 h-4" /> {t.adminPanel}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+
+                    <div className="p-2 space-y-1">
+                      <div className="flex flex-col gap-1">
+                        <Button 
+                          variant="ghost" 
+                          onClick={refreshCredits}
+                          disabled={isRefreshingCredits}
+                          className="w-full justify-start text-[10px] h-8 gap-2 text-slate-500 hover:text-cyan-600"
+                        >
+                          <RefreshCw className={cn("w-3 h-3", isRefreshingCredits && "animate-spin")} />
+                          {t.syncCloud}
+                        </Button>
+                        <a 
+                          href={GOOGLE_BILLING_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-cyan-50 transition-colors group/item"
+                        >
+                          <span className="text-xs font-medium text-slate-600">Credits (Real-time)</span>
+                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
+                            ${realtimeCredits}
+                            <ExternalLink className="w-3 h-3" />
+                          </span>
+                        </a>
+                        
+                        <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
+                          <DropdownMenuItem 
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setTempApiKey(userData?.apiKey || '');
+                              setIsEditingApiKey(true);
+                            }}
+                            className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t.apiKeyLabel}</span>
+                              <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
+                            </div>
+                            <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500" />
+                          </DropdownMenuItem>
+                          <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl">
+                            <DialogHeader>
+                              <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
+                              <DialogDescription>{t.paymentSubtitle}</DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
+                              <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase text-slate-400">{t.apiKeyLabel}</Label>
+                                <Input 
+                                  value={tempApiKey}
+                                  onChange={(e) => setTempApiKey(e.target.value)}
+                                  className="h-12 bg-slate-50 border-none rounded-xl font-mono"
+                                  placeholder={t.apiKeyPlaceholder}
+                                />
+                              </div>
+                              <div className="flex gap-3 pt-2">
+                                <Button 
+                                  type="button" 
+                                  variant="ghost" 
+                                  onClick={() => setIsEditingApiKey(false)}
+                                  className="flex-1 h-12 rounded-xl font-bold"
+                                >
+                                  {t.cancel}
+                                </Button>
+                                <Button 
+                                  type="submit" 
+                                  className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
+                                >
+                                  {t.saveChanges}
+                                </Button>
+                              </div>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => auth.signOut()} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
+                      <LogOut className="w-4 h-4" /> Đăng xuất
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </header>
