@@ -507,7 +507,7 @@ export default function Home() {
         {currentScreen === 'CREDIT_CLAIM' && (
           <div className="flex items-center justify-center min-h-[80vh]">
             <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl">
-              <h2 className="text-3xl font-bold mb-6">Kích hoạt <IGenCodeBranded /> AI</h2>
+              <h2 className="text-3xl font-bold mb-6">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
               <div className="mb-8">
                 <Label className="text-left block mb-2 text-xs font-bold text-slate-400">NHẬP <IGenCodeBranded /></Label>
                 <Input 
