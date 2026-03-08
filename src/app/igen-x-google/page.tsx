@@ -252,7 +252,7 @@ export default function CreditClaimPage() {
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
+            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border border-slate-200 rounded-full px-4 py-1.5 bg-slate-50/50">
               <span>Đối tác chiến lược của</span>
               <ColoredGoogleText />
             </div>
@@ -270,8 +270,8 @@ export default function CreditClaimPage() {
             onChange={(e) => setApiKey(e.target.value)}
           />
           {!apiKey && (
-            <div className="absolute inset-0 flex items-center px-6 pointer-events-none text-slate-400 text-sm opacity-60">
-              Dán <span className="text-cyan-500 mx-1 font-bold">iGen</span> Code tại đây...
+            <div className="absolute inset-0 flex items-center px-6 pointer-events-none opacity-60">
+              <span className="text-sm font-medium">Dán <span className="text-cyan-500 font-bold">iGen</span> Code tại đây...</span>
             </div>
           )}
         </div>
