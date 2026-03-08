@@ -61,6 +61,7 @@ import { getRealtimeCredits } from '@/app/actions/billing';
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL' | 'ADMIN_PANEL';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
+const DEFAULT_PROJECT_ID = 'gen-lang-client-0683922819';
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
@@ -115,9 +116,11 @@ export default function Home() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [projectId, setProjectId] = useState(DEFAULT_PROJECT_ID);
   
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
+  const [tempProjectId, setTempProjectId] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
 
   const t = translations[lang];
@@ -126,7 +129,6 @@ export default function Home() {
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   const usersCollectionRef = useMemoFirebase(() => {
-    // Admin check for emails directly to ensure initial sync
     if (user && (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || ''))) {
       return collection(db, 'users');
     }
@@ -138,11 +140,11 @@ export default function Home() {
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || isSyncing) return;
     
+    const pId = userData.projectId || DEFAULT_PROJECT_ID;
     setIsSyncing(true);
     try {
-      const result = await getRealtimeCredits();
+      const result = await getRealtimeCredits(pId);
       if (result.success && result.credits) {
-        // Cập nhật cho chính mình
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -151,11 +153,11 @@ export default function Home() {
           });
         }
         
-        // Cập nhật cho tất cả nếu là admin
+        // Admin syncs all users that share the same project
         if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
           if (allUsers && allUsers.length > 0) {
             allUsers.forEach(u => {
-              if (u.credits !== result.credits) {
+              if (u.projectId === pId && u.credits !== result.credits) {
                 const otherURef = doc(db, 'users', u.id);
                 updateDocumentNonBlocking(otherURef, {
                   credits: result.credits,
@@ -213,6 +215,7 @@ export default function Home() {
           email: user.email,
           hasClaimedCredits: isUserAdmin || isGoogleUser,
           apiKey: '',
+          projectId: DEFAULT_PROJECT_ID,
           role: isUserAdmin ? 'admin' : 'user',
           credits: '300.00',
           createdAt: new Date().toISOString(),
@@ -265,18 +268,19 @@ export default function Home() {
 
   const handleUpdateApiKey = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tempApiKey || !user) return;
+    if ((!tempApiKey && !tempProjectId) || !user) return;
     
     const uRef = doc(db, 'users', user.uid);
     updateDocumentNonBlocking(uRef, {
-      apiKey: tempApiKey,
+      ...(tempApiKey && { apiKey: tempApiKey }),
+      ...(tempProjectId && { projectId: tempProjectId }),
       updatedAt: new Date().toISOString()
     });
     
     setIsEditingApiKey(false);
     toast({
-      title: <div className="flex items-center gap-1"><IGenCodeBranded /> updated successfully.</div>,
-      description: <div className="flex items-center gap-1"><IGenCodeBranded /> has been updated for your account.</div>
+      title: <div className="flex items-center gap-1"><IGenCodeBranded /> updated.</div>,
+      description: "Settings have been updated."
     });
   };
 
@@ -412,6 +416,7 @@ export default function Home() {
                             e.preventDefault();
                             setTimeout(() => {
                               setTempApiKey('');
+                              setTempProjectId(userData?.projectId || DEFAULT_PROJECT_ID);
                               setIsEditingApiKey(true);
                             }, 100);
                           }}
@@ -442,7 +447,7 @@ export default function Home() {
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="glass w-full max-w-md p-10 rounded-[2.5rem] relative text-center shadow-2xl">
               <h1 className="text-3xl font-bold tracking-tight mb-4">
-                <span className="text-cyan-500">iGen</span> - Trợ lý AI cho Kiến trúc sư
+                <span className="text-cyan-500 font-toyota">iGen</span> - Trợ lý AI cho Kiến trúc sư
               </h1>
               
               <div className="flex items-center justify-center gap-4 mb-8 text-xs font-bold text-slate-400 bg-slate-50/50 w-fit mx-auto px-4 py-2 rounded-full border border-slate-100">
@@ -503,21 +508,35 @@ export default function Home() {
           <div className="flex items-center justify-center min-h-[80vh]">
             <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center shadow-2xl">
               <h2 className="text-3xl font-bold mb-6">Kích hoạt <IGenCodeBranded /> AI</h2>
-              <Input 
-                className="h-14 mb-4 text-center text-xl font-mono border-2 border-slate-100 focus:border-cyan-500 transition-colors"
-                value={apiKey}
-                placeholder="Nhập mã đối tác của bạn..."
-                onChange={(e) => setApiKey(e.target.value)}
-              />
+              <div className="space-y-4 mb-8">
+                <div>
+                  <Label className="text-left block mb-2 text-xs font-bold text-slate-400">PROJECT ID (DỰ ÁN GOOGLE CLOUD)</Label>
+                  <Input 
+                    className="h-12 bg-white border-2 border-slate-100 focus:border-cyan-500 transition-colors font-mono"
+                    value={projectId}
+                    placeholder="Nhập Project ID của bạn..."
+                    onChange={(e) => setProjectId(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-left block mb-2 text-xs font-bold text-slate-400"><IGenCodeBranded /></Label>
+                  <Input 
+                    className="h-12 bg-white border-2 border-slate-100 focus:border-cyan-500 transition-colors font-mono"
+                    value={apiKey}
+                    placeholder="Nhập mã đối tác của bạn..."
+                    onChange={(e) => setApiKey(e.target.value)}
+                  />
+                </div>
+              </div>
               
               <div className="mb-8 p-6 bg-blue-50/50 rounded-2xl text-left flex gap-4 border border-blue-100">
                 <div className="bg-blue-100 p-3 h-fit rounded-xl shadow-sm"><Info className="w-6 h-6 text-blue-600" /></div>
                 <div>
-                  <p className="text-sm font-bold text-blue-900 mb-1">Quy tắc credits từ Google:</p>
+                  <p className="text-sm font-bold text-blue-900 mb-1">Cài đặt dự án:</p>
                   <ul className="text-xs text-blue-800/80 space-y-1 list-disc pl-4">
-                    <li>Free trial $300 áp dụng cho tài khoản Gmail mới đăng ký Google Cloud.</li>
-                    <li>Credits dùng chung cho mọi Project trong tài khoản Gmail đó.</li>
-                    <li>Tài khoản cần có thẻ Visa/Mastercard để định danh (không bị trừ tiền).</li>
+                    <li>Đảm bảo Project ID chính xác từ Google Cloud Console.</li>
+                    <li>iGen Code (API Key) phải thuộc về dự án đã nhập.</li>
+                    <li>Sử dụng quyền cloud-billing.readonly để cập nhật số dư tự động.</li>
                   </ul>
                 </div>
               </div>
@@ -525,7 +544,7 @@ export default function Home() {
               <Button 
                 onClick={(e) => {
                   e.preventDefault();
-                  if (isVerifying || !apiKey) return;
+                  if (isVerifying || !apiKey || !projectId) return;
                   setIsVerifying(true);
                   setTimeout(() => {
                     setIsVerifying(false);
@@ -534,6 +553,7 @@ export default function Home() {
                       updateDocumentNonBlocking(uRef, {
                         hasClaimedCredits: true,
                         apiKey: apiKey,
+                        projectId: projectId,
                         credits: '300.00',
                         updatedAt: new Date().toISOString()
                       });
@@ -679,11 +699,21 @@ export default function Home() {
         <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[160]">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <IGenCodeBranded /> {lang === 'VI' ? 'Mới' : 'Update'}
+              <IGenCodeBranded /> settings
             </DialogTitle>
             <DialogDescription>{t.paymentSubtitle}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase text-slate-400">Google Cloud Project ID</Label>
+              <Input 
+                value={tempProjectId}
+                onChange={(e) => setTempProjectId(e.target.value)}
+                className="h-12 bg-slate-50 border-none rounded-xl font-mono focus-visible:ring-cyan-500"
+                placeholder="Dự án ID..."
+                autoComplete="off"
+              />
+            </div>
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase text-slate-400"><IGenCodeBranded /></Label>
               <Input 
@@ -706,7 +736,7 @@ export default function Home() {
               </Button>
               <Button 
                 type="submit" 
-                disabled={!tempApiKey}
+                disabled={!tempApiKey && !tempProjectId}
                 className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
               >
                 {t.saveChanges}
