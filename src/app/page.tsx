@@ -323,7 +323,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         setTempApiKey(userData?.apiKey || '');
                         setIsEditingApiKey(true);
                       }}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 cursor-pointer transition-colors group/key"
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 cursor-pointer transition-colors group/key data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900"
                     >
                       <span className="text-xs font-medium text-slate-600 flex items-center gap-2">
                         {lang === 'VI' ? (
