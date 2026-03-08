@@ -31,8 +31,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Language, translations } from '@/lib/i18n';
 
-const GoogleLogo = () => (
-  <svg viewBox="0 0 24 24" className="w-6 h-6">
+const GoogleLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className}>
     <path
       fill="#4285F4"
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -243,12 +243,12 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
-        <div className="glass-card inline-flex flex-col items-center gap-4 px-10 py-8 rounded-[3rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
-          <div className="flex items-center gap-6 text-3xl">
-            <IGenBranding className="text-3xl" />
-            <X className="w-6 h-6 text-slate-300" />
-            <div className="flex items-center">
-              <GoogleLogo />
+        <div className="glass-card inline-flex flex-col items-center gap-6 px-12 py-10 rounded-[4rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
+          <div className="flex items-center gap-8 text-5xl md:text-6xl">
+            <IGenBranding className="text-5xl md:text-6xl" />
+            <X className="w-8 h-8 md:w-12 md:h-12 text-slate-300" />
+            <div className="flex items-center scale-150">
+              <GoogleLogo className="w-10 h-10 md:w-12 md:h-12" />
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
@@ -283,7 +283,7 @@ export default function CreditClaimPage() {
           {isVerifying ? <RefreshCw className="w-6 h-6 animate-spin" /> : (
             <>
               <div className="bg-white p-1 rounded-full flex items-center justify-center">
-                <GoogleLogo />
+                <GoogleLogo className="w-6 h-6" />
               </div>
               Xác nhận mã và nhận $300 Credits
             </>
