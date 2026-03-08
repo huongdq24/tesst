@@ -537,9 +537,16 @@ export default function Home() {
                     }
                   }, 2000);
                 }}
-                className="h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-transform"
+                className="h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-transform flex items-center gap-3"
               >
-                {isVerifying ? <RefreshCw className="w-6 h-6 animate-spin" /> : "Kích hoạt & Đồng bộ Google Billing"}
+                {isVerifying ? <RefreshCw className="w-6 h-6 animate-spin" /> : (
+                  <>
+                    <div className="bg-white p-1 rounded-full flex items-center justify-center">
+                      <GoogleLogo />
+                    </div>
+                    Xác nhận mã và nhận $300 Credits
+                  </>
+                )}
               </Button>
             </div>
           </div>

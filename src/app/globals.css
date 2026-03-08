@@ -36,7 +36,7 @@
     @apply bg-slate-50 text-foreground font-body;
   }
   
-  /* Cưỡng bức giải phóng UI khi Radix Dialog bị kẹt pointer-events: none */
+  /* Xử lý triệt để lỗi "đóng băng" UI bằng cách cưỡng bức pointer-events sau khi đóng modal */
   body[style*="pointer-events: none"] {
     pointer-events: auto !important;
   }
