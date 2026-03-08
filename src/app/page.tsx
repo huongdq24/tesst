@@ -537,7 +537,7 @@ export default function Home() {
                   <ShieldCheck className="w-8 h-8 text-cyan-500" />
                   {t.adminPanel}
                 </h2>
-                <p className="text-slate-500">{t.userList} • {allUsers?.length || 0} {t.totalUsers}</p>
+                <p className="text-slate-500">{allUsers?.length || 0} {t.totalUsers}</p>
               </div>
               <div className="flex gap-4">
                 <div className="relative w-full md:w-80">
@@ -658,7 +658,9 @@ export default function Home() {
               <Button 
                 type="button" 
                 variant="ghost" 
-                onClick={() => setIsEditingApiKey(false)}
+                onClick={() => {
+                  setIsEditingApiKey(false);
+                }}
                 className="flex-1 h-12 rounded-xl font-bold"
               >
                 {t.cancel}
