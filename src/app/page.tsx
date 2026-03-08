@@ -117,16 +117,15 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-  // Force restore pointer events when dialog closes to prevent app freezing
-  // This is a critical fix for Radix UI dialog overlay issues
+  // CRITICAL FIX: Ensure app doesn't freeze when dialog closes
   useEffect(() => {
     if (!isEditingApiKey) {
-      document.body.style.pointerEvents = 'auto';
-      // Ensure other overlays are cleared
-      const overlays = document.querySelectorAll('[data-radix-focus-guard]');
-      if (overlays.length === 0) {
+      // Forcefully restore pointer events and overflow
+      const timer = setTimeout(() => {
+        document.body.style.pointerEvents = 'auto';
         document.body.style.overflow = 'auto';
-      }
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isEditingApiKey]);
 
@@ -134,11 +133,10 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     if (isUserLoading) return;
 
     if (user) {
-      // Wait for userData to finish loading before deciding what to do
+      // Wait for userData to finish loading definitively
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
-        // Admin special handling
         if (user.email === ADMIN_EMAIL && (!userData.hasClaimedCredits || userData.apiKey !== ADMIN_AI_KEY)) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -151,19 +149,16 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           return;
         }
 
-        // Normal user flow: if they have key, go to dashboard
         if (userData.hasClaimedCredits && userData.apiKey) {
           if (['AUTH', 'CREDIT_CLAIM'].includes(currentScreen)) {
             setCurrentScreen('DASHBOARD');
           }
         } else {
-          // If they haven't claimed, show claim screen
           if (['AUTH', 'DASHBOARD'].includes(currentScreen)) {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
       } else {
-        // ONLY initialize if userData is definitively null (not found in DB)
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
@@ -341,14 +336,15 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         {userData?.hasClaimedCredits && userData?.apiKey ? '$300.00' : '$0.00'}
                       </span>
                     </div>
-                    <div 
-                      onClick={(e) => {
-                        e.stopPropagation();
+                    {/* FIXED: Use DropdownMenuItem to ensure clean menu closure before opening dialog */}
+                    <DropdownMenuItem 
+                      onSelect={(e) => {
+                        e.preventDefault();
                         setTempApiKey('');
-                        // Using timeout to ensure dropdown closes and doesn't conflict with dialog focus
-                        setTimeout(() => setIsEditingApiKey(true), 100);
+                        // Triggers dialog open after a short delay to allow menu to clear
+                        setTimeout(() => setIsEditingApiKey(true), 150);
                       }}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key"
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key border-none"
                     >
                       <span className="text-xs font-medium text-slate-600 flex items-center gap-2">
                         {lang === 'VI' ? (
@@ -361,7 +357,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500 transition-colors" />
                       </span>
                       <span className="text-[10px] font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
-                    </div>
+                    </DropdownMenuItem>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => auth.signOut()} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
@@ -375,7 +371,19 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
       )}
 
       {/* API Key Edit Dialog */}
-      <Dialog open={isEditingApiKey} onOpenChange={(open) => setIsEditingApiKey(open)}>
+      <Dialog 
+        open={isEditingApiKey} 
+        onOpenChange={(open) => {
+          setIsEditingApiKey(open);
+          if (!open) {
+            // Force restoration of interaction when closing
+            setTimeout(() => {
+              document.body.style.pointerEvents = 'auto';
+              document.body.style.overflow = 'auto';
+            }, 0);
+          }
+        }}
+      >
         <DialogContent className="max-w-md rounded-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{t.editApiKey}</DialogTitle>
