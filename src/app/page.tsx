@@ -117,13 +117,28 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
+  // Force restore pointer events when dialog closes to prevent app freezing
+  // This is a critical fix for Radix UI dialog overlay issues
+  useEffect(() => {
+    if (!isEditingApiKey) {
+      document.body.style.pointerEvents = 'auto';
+      // Ensure other overlays are cleared
+      const overlays = document.querySelectorAll('[data-radix-focus-guard]');
+      if (overlays.length === 0) {
+        document.body.style.overflow = 'auto';
+      }
+    }
+  }, [isEditingApiKey]);
+
   useEffect(() => {
     if (isUserLoading) return;
 
     if (user) {
+      // Wait for userData to finish loading before deciding what to do
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
+        // Admin special handling
         if (user.email === ADMIN_EMAIL && (!userData.hasClaimedCredits || userData.apiKey !== ADMIN_AI_KEY)) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -136,16 +151,19 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           return;
         }
 
+        // Normal user flow: if they have key, go to dashboard
         if (userData.hasClaimedCredits && userData.apiKey) {
           if (['AUTH', 'CREDIT_CLAIM'].includes(currentScreen)) {
             setCurrentScreen('DASHBOARD');
           }
         } else {
+          // If they haven't claimed, show claim screen
           if (['AUTH', 'DASHBOARD'].includes(currentScreen)) {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
       } else {
+        // ONLY initialize if userData is definitively null (not found in DB)
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
@@ -326,10 +344,8 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                     <div 
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Reset tempApiKey to empty string for security
                         setTempApiKey('');
-                        // Delay opening the dialog to allow the DropdownMenu to close correctly
-                        // and avoid overlay/focus conflicts that freeze the UI
+                        // Using timeout to ensure dropdown closes and doesn't conflict with dialog focus
                         setTimeout(() => setIsEditingApiKey(true), 100);
                       }}
                       className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key"
@@ -359,8 +375,8 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
       )}
 
       {/* API Key Edit Dialog */}
-      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-        <DialogContent className="max-w-md rounded-3xl">
+      <Dialog open={isEditingApiKey} onOpenChange={(open) => setIsEditingApiKey(open)}>
+        <DialogContent className="max-w-md rounded-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{t.editApiKey}</DialogTitle>
             <DialogDescription>{t.paymentSubtitle}</DialogDescription>
@@ -371,6 +387,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               onChange={(e) => setTempApiKey(e.target.value)}
               placeholder={t.apiKeyPlaceholder}
               className="h-12 rounded-xl"
+              autoFocus
             />
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setIsEditingApiKey(false)}>{t.cancel}</Button>
@@ -480,7 +497,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   </div>
                 </div>
                 <div className="bg-slate-50 px-6 py-2 rounded-full border border-slate-100 flex items-center gap-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{t.strategicPartner}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Đối tác chiến lược</span>
                   <div className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full shadow-sm">
                     <GoogleLogo />
                     <span className="font-google text-sm font-bold">Google</span>
