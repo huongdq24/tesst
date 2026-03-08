@@ -121,6 +121,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     if (isUserLoading) return;
 
     if (user) {
+      // Race condition fix: wait for Firestore confirm (null or data)
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
@@ -146,6 +147,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           }
         }
       } else {
+        // Confirmed null: Initialize new user record
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
@@ -492,11 +494,11 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </h2>
                 <p className="text-slate-500 text-xs md:text-sm font-normal leading-relaxed max-w-lg mx-auto">
                   {lang === 'VI' ? (
-                    <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp cho <span className="text-cyan-500 font-bold">iGen</span> để nhận $300 Credits</>
+                    <>Nhập mã đối tác được <ColoredGoogleText className="font-bold" /> cung cấp để kích hoạt <span className="text-cyan-500 font-bold">iGen AI</span></>
                   ) : lang === 'EN' ? (
-                    <>Enter the partner code provided by <ColoredGoogleText className="font-bold" /> to <span className="text-cyan-500 font-bold">iGen</span> to receive $300 Credits</>
+                    <>Enter the partner code provided by <ColoredGoogleText className="font-bold" /> to activate <span className="text-cyan-500 font-bold">iGen AI</span></>
                   ) : (
-                    <>输入 <ColoredGoogleText className="font-bold" /> 为 <span className="text-cyan-500 font-bold">iGen</span> 提供的合作伙伴代码以领取 $300 Credits</>
+                    <>输入 <ColoredGoogleText className="font-bold" /> 提供的合作伙伴代码以激活 <span className="text-cyan-500 font-bold">iGen AI</span></>
                   )}
                 </p>
               </div>
