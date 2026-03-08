@@ -382,7 +382,7 @@ export default function Home() {
                     {user?.email === ADMIN_EMAIL && userData?.role === 'admin' && (
                       <>
                         <DropdownMenuItem 
-                          onClick={() => setCurrentScreen('ADMIN_PANEL')}
+                          onSelect={() => setCurrentScreen('ADMIN_PANEL')}
                           className="p-3 rounded-xl font-bold gap-3 cursor-pointer text-cyan-600 hover:bg-cyan-50"
                         >
                           <ShieldCheck className="w-4 h-4" /> {t.adminPanel}
@@ -478,7 +478,7 @@ export default function Home() {
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100" /></div>
                 <div className="relative flex justify-center">
                   <span className="bg-white px-4 text-xs font-bold text-slate-600">
-                    {lang === 'VI' ? 'Tiếp tục với ' : 'Continue with '}
+                    {lang === 'VI' ? 'Hoặc đăng nhập với ' : 'Or sign in with '}
                     <ColoredGoogleText />
                   </span>
                 </div>
@@ -493,7 +493,7 @@ export default function Home() {
                 >
                   <GoogleLogo />
                   <span className="text-xs font-bold text-slate-600">
-                    {lang === 'VI' ? 'Tiếp tục với ' : 'Continue with '}
+                    {lang === 'VI' ? 'Hoặc đăng nhập với ' : 'Or sign in with '}
                     <ColoredGoogleText />
                   </span>
                 </Button>
