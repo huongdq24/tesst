@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -127,7 +126,10 @@ export default function Home() {
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   const usersCollectionRef = useMemoFirebase(() => {
-    if (userData?.role === 'admin' || (user && ADMIN_EMAILS.includes(user.email || ''))) return collection(db, 'users');
+    // Admin check for emails directly to ensure initial sync
+    if (user && (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || ''))) {
+      return collection(db, 'users');
+    }
     return null;
   }, [db, userData, user]);
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
