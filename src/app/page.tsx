@@ -150,8 +150,6 @@ export default function Home() {
           });
         }
 
-        // Tự động kích hoạt cho Google User nếu chưa có API Key hoặc chưa Claim
-        // Chúng ta sẽ khởi tạo Credits là 300.00 để khớp với Google Free Trial 100%
         if (user.providerData.some(p => p.providerId === 'google.com') && !userData.hasClaimedCredits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -576,6 +574,7 @@ export default function Home() {
                     <TableHead className="font-bold py-6 pl-8 text-slate-500 uppercase tracking-widest text-[10px]">{t.userEmail}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userRole}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.apiKeyLabel}</TableHead>
+                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userCredits}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userStatus}</TableHead>
                     <TableHead className="font-bold text-right pr-8 text-slate-500 uppercase tracking-widest text-[10px]">Info</TableHead>
                   </TableRow>
@@ -583,7 +582,7 @@ export default function Home() {
                 <TableBody>
                   {isAllUsersLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-60 text-center">
+                      <TableCell colSpan={6} className="h-60 text-center">
                         <div className="w-10 h-10 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
@@ -621,6 +620,12 @@ export default function Home() {
                           </div>
                         </TableCell>
                         <TableCell>
+                          <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                            <Wallet className="w-3.5 h-3.5 text-cyan-500" />
+                            ${u.credits || '300.00'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           {u.hasClaimedCredits ? (
                             <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 w-fit px-3 py-1 rounded-full border border-emerald-100">
                               <Zap className="w-3 h-3 fill-emerald-600" />
@@ -642,7 +647,7 @@ export default function Home() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-40 text-center text-slate-400">
+                      <TableCell colSpan={6} className="h-40 text-center text-slate-400">
                         Không tìm thấy người dùng nào.
                       </TableCell>
                     </TableRow>
@@ -666,7 +671,6 @@ export default function Home() {
 
       {(currentScreen !== 'AUTH' && currentScreen !== 'CREDIT_CLAIM') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} currentCredits={userData?.credits} />}
 
-      {/* API Key Update Dialog */}
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
         <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[200]">
           <DialogHeader>
