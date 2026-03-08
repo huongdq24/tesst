@@ -50,7 +50,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -441,8 +440,11 @@ export default function Home() {
                         <DropdownMenuItem 
                           onSelect={(e) => {
                             e.preventDefault();
-                            setTempApiKey('');
-                            setIsEditingApiKey(true);
+                            // Use a tiny timeout to allow DropdownMenu to release focus before opening Dialog
+                            setTimeout(() => {
+                              setTempApiKey('');
+                              setIsEditingApiKey(true);
+                            }, 50);
                           }}
                           className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
                         >
@@ -465,45 +467,6 @@ export default function Home() {
           </div>
         </header>
       )}
-
-      {/* API Key Update Dialog (Outside Dropdown to prevent pointer event issues) */}
-      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[101]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
-            <DialogDescription>{t.paymentSubtitle}</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase text-slate-400">{t.apiKeyLabel}</Label>
-              <Input 
-                value={tempApiKey}
-                onChange={(e) => setTempApiKey(e.target.value)}
-                className="h-12 bg-slate-50 border-none rounded-xl font-mono"
-                placeholder={t.apiKeyPlaceholder}
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button 
-                type="button" 
-                variant="ghost" 
-                onClick={() => setIsEditingApiKey(false)}
-                className="flex-1 h-12 rounded-xl font-bold"
-              >
-                {t.cancel}
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={!tempApiKey}
-                className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
-              >
-                {t.saveChanges}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         {currentScreen === 'AUTH' && (
@@ -738,6 +701,47 @@ export default function Home() {
       </div>
 
       {(currentScreen !== 'AUTH' && currentScreen !== 'CREDIT_CLAIM') && <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />}
+
+      {/* API Key Update Dialog - Placed at the very end to ensure focus management works correctly */}
+      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
+        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[200]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">{t.editApiKey}</DialogTitle>
+            <DialogDescription>{t.paymentSubtitle}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase text-slate-400">{t.apiKeyLabel}</Label>
+              <Input 
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                className="h-12 bg-slate-50 border-none rounded-xl font-mono focus-visible:ring-cyan-500"
+                placeholder={t.apiKeyPlaceholder}
+                autoFocus
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setIsEditingApiKey(false)}
+                className="flex-1 h-12 rounded-xl font-bold"
+              >
+                {t.cancel}
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!tempApiKey}
+                className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
+              >
+                {t.saveChanges}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
+
