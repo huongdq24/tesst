@@ -57,6 +57,9 @@ export const translations = {
     apiKeyPlaceholder: 'Dán mã tại đây...',
     verifyButton: 'Xác nhận & Kích hoạt Tín dụng',
     paymentSuccess: 'Kích hoạt hạ tầng thành công!',
+    editApiKey: 'Cập nhật Mã iGen',
+    saveChanges: 'Lưu thay đổi',
+    cancel: 'Hủy',
   },
   EN: {
     loginTitle: 'Welcome Back',
@@ -113,6 +116,9 @@ export const translations = {
     apiKeyPlaceholder: 'Paste code here...',
     verifyButton: 'Confirm & Activate Credits',
     paymentSuccess: 'Infrastructure Activation Successful!',
+    editApiKey: 'Update iGen Code',
+    saveChanges: 'Save Changes',
+    cancel: 'Cancel',
   },
   ZH: {
     loginTitle: '欢迎回来',
@@ -169,5 +175,8 @@ export const translations = {
     apiKeyPlaceholder: '在此粘贴代码...',
     verifyButton: '确认并激活信用额度',
     paymentSuccess: '基础设施激活成功！',
+    editApiKey: '更新 iGen 代码',
+    saveChanges: '保存更改',
+    cancel: '取消',
   }
 };

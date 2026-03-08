@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -21,7 +22,8 @@ import {
   Zap,
   Languages,
   Info,
-  ExternalLink
+  ExternalLink,
+  Edit
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -105,6 +107,10 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  
+  // States for Editing API Key
+  const [isEditingApiKey, setIsEditingApiKey] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState('');
 
   const t = translations[lang];
 
@@ -112,16 +118,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   useEffect(() => {
-    // If auth is still checking, wait.
     if (isUserLoading) return;
 
     if (user) {
-      // If we are still loading user data from Firestore, wait.
-      // Crucial: check both isLoading and if the data is undefined (initial hook state).
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
-        // CASE: Admin email - ensure specific key and role
         if (user.email === ADMIN_EMAIL && (!userData.hasClaimedCredits || userData.apiKey !== ADMIN_AI_KEY)) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -134,20 +136,16 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           return;
         }
 
-        // CASE: User already activated
         if (userData.hasClaimedCredits && userData.apiKey) {
           if (['AUTH', 'CREDIT_CLAIM'].includes(currentScreen)) {
             setCurrentScreen('DASHBOARD');
           }
         } else {
-          // CASE: Logged in but not activated
           if (['AUTH', 'DASHBOARD'].includes(currentScreen)) {
             setCurrentScreen('CREDIT_CLAIM');
           }
         }
       } else {
-        // CASE: userData is explicitly NULL (document does not exist)
-        // This only happens after isUserDataLoading is false and userData is still null.
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
         
@@ -168,7 +166,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         }
       }
     } else {
-      // User is logged out
       if (currentScreen !== 'AUTH') setCurrentScreen('AUTH');
     }
   }, [user, isUserLoading, userData, isUserDataLoading, currentScreen, db]);
@@ -235,6 +232,17 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         toast({ title: t.paymentSuccess, description: "iGen AI active." });
       }
     }, 2000);
+  };
+
+  const handleUpdateApiKey = () => {
+    if (!tempApiKey || !user) return;
+    const uRef = doc(db, 'users', user.uid);
+    updateDocumentNonBlocking(uRef, {
+      apiKey: tempApiKey,
+      updatedAt: new Date().toISOString()
+    });
+    setIsEditingApiKey(false);
+    toast({ title: t.paymentSuccess, description: "Mã iGen đã được cập nhật." });
   };
 
   if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) {
@@ -315,8 +323,15 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         {userData?.hasClaimedCredits && userData?.apiKey ? '$300.00' : '$0.00'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
-                      <span className="text-xs font-medium text-slate-600">
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTempApiKey(userData?.apiKey || '');
+                        setIsEditingApiKey(true);
+                      }}
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key"
+                    >
+                      <span className="text-xs font-medium text-slate-600 flex items-center gap-2">
                         {lang === 'VI' ? (
                           <>Mã <span className="text-cyan-500 font-bold">iGen</span></>
                         ) : lang === 'EN' ? (
@@ -324,6 +339,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         ) : (
                           <><span className="text-cyan-500 font-bold">iGen</span> 代码</>
                         )}
+                        <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500 transition-colors" />
                       </span>
                       <span className="text-[10px] font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
                     </div>
@@ -338,6 +354,28 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           </div>
         </header>
       )}
+
+      {/* API Key Edit Dialog */}
+      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
+        <DialogContent className="max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>{t.editApiKey}</DialogTitle>
+            <DialogDescription>{t.paymentSubtitle}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              value={tempApiKey}
+              onChange={(e) => setTempApiKey(e.target.value)}
+              placeholder={t.apiKeyPlaceholder}
+              className="h-12 rounded-xl"
+            />
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setIsEditingApiKey(false)}>{t.cancel}</Button>
+              <Button onClick={handleUpdateApiKey} className="bg-slate-900 text-white rounded-xl px-6">{t.saveChanges}</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         {currentScreen === 'AUTH' && (
@@ -407,7 +445,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         <ol className="list-decimal pl-4 space-y-2">
                           <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
                           <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
-                          <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
+                          <li><b>BỎ CHỌY</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
                           <li>Tải lại trang và thử lại.</li>
                         </ol>
                         <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
