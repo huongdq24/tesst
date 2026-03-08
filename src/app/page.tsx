@@ -455,7 +455,8 @@ export default function Home() {
                           <DropdownMenuItem 
                             onSelect={(e) => {
                               e.preventDefault();
-                              setTempApiKey(userData?.apiKey || '');
+                              // Don't pre-fill with the secret key to follow user request for security
+                              setTempApiKey('');
                               setIsEditingApiKey(true);
                             }}
                             className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
