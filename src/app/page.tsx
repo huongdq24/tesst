@@ -11,18 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Mail, 
   Smartphone, 
-  LogIn, 
   Globe, 
   Wallet, 
-  Sparkles, 
   User as UserIcon, 
   LogOut, 
   ChevronDown, 
-  UserPlus, 
   Zap,
-  Languages,
   Info,
-  ExternalLink,
   Edit
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
@@ -32,7 +27,7 @@ import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/fireb
 import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -340,12 +335,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                       </span>
                     </div>
                     <DropdownMenuItem 
-                      onSelect={() => {
+                      onSelect={(e) => {
+                        e.preventDefault();
                         setTempApiKey('');
-                        // Triggers dialog open after a short delay to allow menu to clear properly
                         setTimeout(() => setIsEditingApiKey(true), 150);
                       }}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 focus:bg-slate-100 focus:text-slate-900 cursor-pointer transition-colors group/key border-none"
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-50 focus:bg-slate-50 cursor-pointer transition-colors group/key border-none"
                     >
                       <span className="text-xs font-medium text-slate-600 flex items-center gap-2">
                         {lang === 'VI' ? (
@@ -470,11 +465,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                           <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
                           <li>Tải lại trang và thử lại.</li>
                         </ol>
-                        <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                          <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                            Lưu ý: Firebase Auth yêu cầu domain <b>firebaseapp.com</b> có thể liên lạc với domain preview này. Safari mặc định chặn việc này.
-                          </p>
-                        </div>
                         <p className="text-xs flex items-center gap-1 font-bold">
                           Hoặc dùng <Mail className="w-3 h-3" /> Email Đăng ký để thay thế.
                         </p>
@@ -593,4 +583,3 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     </main>
   );
 }
-
