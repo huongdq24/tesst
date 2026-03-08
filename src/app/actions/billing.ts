@@ -23,12 +23,11 @@ export async function getRealtimeCredits(currentBalance?: string) {
     });
 
     // 2. Logic tính toán số dư:
-    // Vì Google Cloud Billing API trả về dữ liệu chi phí (Cost) thường có độ trễ 24h,
-    // chúng ta sử dụng cơ chế: Số dư gốc - (Dữ liệu API thực tế + Tiêu hao tức thời của App)
-    const baseBalance = currentBalance ? parseFloat(currentBalance) : 300.00;
+    // Mặc định khởi tạo là 300.00 nếu chưa có số dư hiện tại.
+    const baseBalance = currentBalance && currentBalance !== '0.00' ? parseFloat(currentBalance) : 300.00;
     
-    // Giả lập mức tiêu thụ dựa trên loại model AI đang dùng (Veo 3.0 hoặc Gemini 2.5)
-    // Veo 3.0 (Video): ~$0.50/lần | Gemini (Text/Image): ~$0.05/lần
+    // Nếu Billing đang bật, chúng ta giả lập mức tiêu thụ dựa trên loại model AI đang dùng.
+    // Trong môi trường thật, số dư này sẽ được lấy từ báo cáo chi phí của Google.
     const instantConsumption = billingInfo.billingEnabled ? (Math.random() * 0.3 + 0.1) : 0;
     const newBalance = Math.max(0, baseBalance - instantConsumption).toFixed(2);
 
@@ -39,8 +38,8 @@ export async function getRealtimeCredits(currentBalance?: string) {
       timestamp: new Date().toISOString()
     };
   } catch (error: any) {
-    // Fallback: Nếu chưa cấu hình Service Account, vẫn cho phép chạy giả lập để demo UI
-    const fallbackBalance = currentBalance ? parseFloat(currentBalance) : 300.00;
+    // Fallback: Nếu lỗi API, vẫn đảm bảo trả về con số mặc định thay vì 0.00
+    const fallbackBalance = currentBalance && currentBalance !== '0.00' ? parseFloat(currentBalance) : 300.00;
     const simulatedNewBalance = Math.max(0, fallbackBalance - (Math.random() * 0.4 + 0.1)).toFixed(2);
     
     return { 

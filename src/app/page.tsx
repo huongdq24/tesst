@@ -152,6 +152,17 @@ export default function Home() {
           });
         }
 
+        // Tự động kích hoạt cho Google User nếu chưa có API Key hoặc chưa Claim
+        if (user.providerData.some(p => p.providerId === 'google.com') && !userData.hasClaimedCredits) {
+          const uRef = doc(db, 'users', user.uid);
+          updateDocumentNonBlocking(uRef, {
+            hasClaimedCredits: true,
+            apiKey: 'GOOGLE_CLOUD_MANAGED',
+            credits: userData.credits || '300.00',
+            updatedAt: new Date().toISOString()
+          });
+        }
+
         if (userData.hasClaimedCredits && userData.apiKey) {
           if (['AUTH', 'CREDIT_CLAIM'].includes(currentScreen)) {
             setCurrentScreen('DASHBOARD');
@@ -164,19 +175,20 @@ export default function Home() {
       } else {
         const uRef = doc(db, 'users', user.uid);
         const isUserAdmin = user.email === ADMIN_EMAIL;
+        const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
         
         setDocumentNonBlocking(uRef, {
           id: user.uid,
           email: user.email,
-          hasClaimedCredits: isUserAdmin,
-          apiKey: isUserAdmin ? ADMIN_AI_KEY : '',
+          hasClaimedCredits: isUserAdmin || isGoogleUser,
+          apiKey: isUserAdmin ? ADMIN_AI_KEY : (isGoogleUser ? 'GOOGLE_CLOUD_MANAGED' : ''),
           role: isUserAdmin ? 'admin' : 'user',
           credits: '300.00',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }, { merge: true });
 
-        if (isUserAdmin) {
+        if (isUserAdmin || isGoogleUser) {
           setCurrentScreen('DASHBOARD');
         } else {
           setCurrentScreen('CREDIT_CLAIM');
@@ -503,7 +515,7 @@ export default function Home() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <Button disabled={isAuthenticating} className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg">
-                  {isAuthenticating ? <RefreshCw className="w-5 h-5 animate-spin" /> : (isSignUp ? t.signUpButton : t.loginButton)}
+                  {isAuthenticating ? <RefreshCw className="w-5 h-5 animate-spin" /> : (isSignUp ? t.signUpTitle : t.loginButton)}
                 </Button>
               </form>
               
