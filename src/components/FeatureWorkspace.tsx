@@ -15,11 +15,14 @@ import {
   Sparkles, 
   Clock, 
   History as HistoryIcon,
-  Calendar
+  Calendar,
+  ImageIcon,
+  Video
 } from 'lucide-react';
 import { translations, Language } from '@/lib/i18n';
 import { IGenBranding } from './Branding';
 import { aiVideoWalkthroughGenerator } from '@/ai/flows/ai-video-walkthrough-generator';
+import { aiDesignConceptGenerator } from '@/ai/flows/ai-design-concept-generator';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, doc } from 'firebase/firestore';
@@ -46,7 +49,8 @@ export const FeatureWorkspace = ({
   const [isProMode, setIsProMode] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [resultVideo, setResultVideo] = useState<string | null>(null);
+  const [resultMedia, setResultMedia] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<'IMAGE' | 'VIDEO'>('IMAGE');
   const { toast } = useToast();
   const t = translations[lang];
 
@@ -55,17 +59,19 @@ export const FeatureWorkspace = ({
   const [consistentSync, setConsistentSync] = useState(false);
   const [extendVideo, setExtendVideo] = useState(false);
 
-  // Hydration-safe date for filtering (Exactly 30 days ago)
+  // Hydration-safe date
   const [filterDate, setFilterDate] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set filter date only once on client-side to avoid hydration mismatches
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     setFilterDate(thirtyDaysAgo.toISOString());
-  }, []);
+    
+    // Set default media type based on feature
+    if (featureId === 'videoCreator') setMediaType('VIDEO');
+    else setMediaType('IMAGE');
+  }, [featureId]);
 
-  // Memoized query for history: Only current user's projects for this feature in the last 30 days
   const projectsQuery = useMemoFirebase(() => {
     if (!user || !db || !filterDate) return null;
     return query(
@@ -81,18 +87,32 @@ export const FeatureWorkspace = ({
   const handleGenerate = async () => {
     if (!prompt || !user) return;
     setIsGenerating(true);
-    setResultVideo(null);
+    setResultMedia(null);
     try {
-      const result = await aiVideoWalkthroughGenerator({
-        description: prompt,
-        cinematicPan: cinematicPan,
-        aiVideoExtend: extendVideo,
-        apiKey: userApiKey
-      });
+      let outputUrl = '';
       
-      setResultVideo(result.videoDataUri);
+      // 1. Phân phối luồng AI tương ứng với tính năng
+      if (featureId === 'videoCreator') {
+        const result = await aiVideoWalkthroughGenerator({
+          description: prompt,
+          cinematicPan: cinematicPan,
+          aiVideoExtend: extendVideo,
+          apiKey: userApiKey
+        });
+        outputUrl = result.videoDataUri;
+        setMediaType('VIDEO');
+      } else {
+        // Mặc định sử dụng Logic Engine và Vision cho các tính năng khác
+        const result = await aiDesignConceptGenerator({
+          designPrompt: prompt
+        });
+        outputUrl = result.moodboardImage;
+        setMediaType('IMAGE');
+      }
+      
+      setResultMedia(outputUrl);
 
-      // Save to Firestore history
+      // 2. Lưu lịch sử
       const projectRef = collection(db, 'users', user.uid, 'projects');
       addDocumentNonBlocking(projectRef, {
         userId: user.uid,
@@ -100,14 +120,13 @@ export const FeatureWorkspace = ({
         name: prompt.substring(0, 30) + (prompt.length > 30 ? '...' : ''),
         description: prompt,
         mode: isProMode ? 'PRO_MODE' : 'SPEED_MODE',
-        settings: JSON.stringify({ cinematicPan, consistentSync, extendVideo }),
         status: 'completed',
-        outputUrl: result.videoDataUri,
+        outputUrl: outputUrl,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
 
-      // Automatic Credit Sync after successful generation
+      // 3. TỰ ĐỘNG ĐỒNG BỘ GOOGLE BILLING SAU KHI DÙNG API
       const resultCredits = await getRealtimeCredits(currentCredits);
       if (resultCredits.success && resultCredits.credits) {
         const uRef = doc(db, 'users', user.uid);
@@ -115,13 +134,18 @@ export const FeatureWorkspace = ({
           credits: resultCredits.credits,
           updatedAt: new Date().toISOString()
         });
+        
+        toast({
+          title: "iGen Sync Completed",
+          description: `Số dư còn lại: $${resultCredits.credits}`,
+        });
       }
 
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Generation Failed",
-        description: "The iGen Motion engine encountered an error."
+        description: "The AI engine encountered an error. Please check your API Key."
       });
     } finally {
       setIsGenerating(false);
@@ -143,7 +167,7 @@ export const FeatureWorkspace = ({
           </Button>
           <div>
             <h2 className="text-2xl font-bold">{t[featureId as keyof typeof t] || featureId}</h2>
-            <p className="text-slate-500 text-sm">Powered by <IGenBranding className="text-sm" /> Motion</p>
+            <p className="text-slate-500 text-sm">Powered by <IGenBranding className="text-sm" /> Engine</p>
           </div>
         </div>
 
@@ -160,7 +184,6 @@ export const FeatureWorkspace = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Controls Panel */}
         <div className="lg:col-span-4 space-y-6">
           <div className="glass-card p-6 rounded-2xl">
             <Label className="text-sm font-semibold mb-3 block">{t.promptPlaceholder}</Label>
@@ -175,10 +198,6 @@ export const FeatureWorkspace = ({
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">{t.cinematicPan}</Label>
                 <Switch checked={cinematicPan} onCheckedChange={setCinematicPan} />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">{t.consistentSync}</Label>
-                <Switch checked={consistentSync} onCheckedChange={setConsistentSync} />
               </div>
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">{t.aiVideoExtend}</Label>
@@ -202,11 +221,10 @@ export const FeatureWorkspace = ({
             </Button>
           </div>
 
-          {/* History Panel */}
           <div className="glass-card p-6 rounded-2xl">
             <div className="flex items-center gap-2 mb-4 text-slate-900">
               <HistoryIcon className="w-4 h-4" />
-              <h3 className="text-sm font-bold uppercase tracking-wider">{lang === 'VI' ? 'Lịch sử (30 ngày)' : 'History (30 days)'}</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider">{lang === 'VI' ? 'Thư viện Project' : 'Project Library'}</h3>
             </div>
             
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
@@ -219,16 +237,13 @@ export const FeatureWorkspace = ({
                   <div 
                     key={item.id} 
                     className="p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer group"
-                    onClick={() => setResultVideo(item.outputUrl)}
+                    onClick={() => setResultMedia(item.outputUrl)}
                   >
                     <p className="text-xs font-bold text-slate-900 truncate mb-1 group-hover:text-cyan-600 transition-colors">{item.name}</p>
                     <div className="flex items-center justify-between text-[10px] text-slate-400">
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         <span>{formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: getLocale() })}</span>
-                      </div>
-                      <div className="bg-white px-1.5 py-0.5 rounded border border-slate-100 font-bold uppercase">
-                        {item.mode === 'PRO_MODE' ? 'PRO' : 'FAST'}
                       </div>
                     </div>
                   </div>
@@ -237,7 +252,7 @@ export const FeatureWorkspace = ({
                 <div className="text-center py-8">
                   <Calendar className="w-8 h-8 text-slate-200 mx-auto mb-2" />
                   <p className="text-[10px] text-slate-400 font-medium">
-                    {lang === 'VI' ? 'Chưa có lịch sử trong tháng này' : 'No history in the last 30 days'}
+                    {lang === 'VI' ? 'Chưa có tác phẩm nào' : 'Empty gallery'}
                   </p>
                 </div>
               )}
@@ -245,32 +260,35 @@ export const FeatureWorkspace = ({
           </div>
         </div>
 
-        {/* Preview Panel */}
         <div className="lg:col-span-8">
-          <div className="glass h-[600px] rounded-2xl flex flex-col items-center justify-center relative overflow-hidden bg-slate-900 shadow-2xl">
+          <div className="glass h-[600px] rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden bg-slate-900 shadow-2xl border-4 border-white">
             {isGenerating ? (
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mx-auto" />
-                <p className="text-cyan-400 font-medium animate-pulse">iGen Motion is calculating path...</p>
+                <p className="text-cyan-400 font-medium animate-pulse">iGen Engine is thinking...</p>
               </div>
-            ) : resultVideo ? (
+            ) : resultMedia ? (
               <>
-                <video src={resultVideo} controls autoPlay loop className="w-full h-full object-contain" />
-                <div className="absolute top-4 right-4 flex gap-2">
-                  <Button variant="secondary" className="bg-white/20 backdrop-blur-md text-white hover:bg-white/30 border-none rounded-lg">
-                    <Download className="w-4 h-4 mr-2" /> 4K
+                {mediaType === 'VIDEO' ? (
+                  <video src={resultMedia} controls autoPlay loop className="w-full h-full object-contain" />
+                ) : (
+                  <img src={resultMedia} className="w-full h-full object-contain" alt="AI Generated" />
+                )}
+                <div className="absolute top-6 right-6 flex gap-2">
+                  <Button variant="secondary" className="bg-white/20 backdrop-blur-md text-white hover:bg-white/30 border-none rounded-xl h-11 px-6 font-bold">
+                    <Download className="w-4 h-4 mr-2" /> Download
                   </Button>
                 </div>
               </>
             ) : (
-              <div className="text-center space-y-4 opacity-40">
-                <Play className="w-20 h-20 mx-auto text-slate-400" />
-                <p className="text-slate-400 font-medium italic">Preview will appear here</p>
+              <div className="text-center space-y-4 opacity-30">
+                {mediaType === 'VIDEO' ? <Video className="w-20 h-20 mx-auto text-white" /> : <ImageIcon className="w-20 h-20 mx-auto text-white" />}
+                <p className="text-white font-medium italic">Sẵn sàng khởi tạo ý tưởng</p>
               </div>
             )}
-            <div className="absolute bottom-4 left-4">
-              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[10px] text-white/80 font-bold tracking-widest uppercase">
-                iGen Motion V3.1
+            <div className="absolute bottom-6 left-6">
+              <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10 text-[10px] text-white font-bold tracking-widest uppercase">
+                iGen AI Logic Engine v2.5
               </div>
             </div>
           </div>
