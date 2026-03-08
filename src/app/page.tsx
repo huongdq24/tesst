@@ -20,15 +20,19 @@ import {
   Info,
   Edit,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  Users,
+  ShieldCheck,
+  LayoutDashboard,
+  Search
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
-import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc } from 'firebase/firestore';
+import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import {
   DropdownMenu,
@@ -47,13 +51,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getRealtimeCredits } from '@/app/actions/billing';
 
-type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
+type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL' | 'ADMIN_PANEL';
 
 const ADMIN_EMAIL = 'igen-architect@admin.com';
-const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || '';
+const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || 'ADMIN_SYSTEM_KEY';
 
 // Link to Google Cloud Billing Console
 const GOOGLE_BILLING_URL = "https://console.cloud.google.com/billing/017D0B-3695DA-8D7FB7/credits/all?authuser=3&chat=true&hl=en-US&organizationId=501548273108&project=project-5306ce34-5626-488a-913";
@@ -110,7 +123,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-  // CRITICAL FIX: Ensure body interaction is restored when dialog closes
+  // Admin specific data
+  const usersCollectionRef = useMemoFirebase(() => {
+    if (userData?.role === 'admin') return collection(db, 'users');
+    return null;
+  }, [db, userData]);
+  const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
+  const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
     if (!isEditingApiKey) {
       const timer = setTimeout(() => {
@@ -128,16 +148,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
       if (isUserDataLoading || userData === undefined) return;
 
       if (userData) {
-        if (user.email === ADMIN_EMAIL && (!userData.hasClaimedCredits || userData.apiKey !== ADMIN_AI_KEY)) {
+        if (user.email === ADMIN_EMAIL && userData.role !== 'admin') {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
-            apiKey: ADMIN_AI_KEY,
             role: 'admin',
+            apiKey: ADMIN_AI_KEY,
             hasClaimedCredits: true,
             updatedAt: new Date().toISOString()
           });
-          setCurrentScreen('DASHBOARD');
-          return;
         }
 
         if (userData.hasClaimedCredits && userData.apiKey) {
@@ -275,6 +293,11 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
   const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
 
+  const filteredUsers = allUsers?.filter(u => 
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.role?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <main className="min-h-screen relative overflow-hidden bg-slate-50">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
@@ -284,7 +307,30 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
       {currentScreen !== 'AUTH' && (
         <header className="fixed top-0 left-0 w-full z-50 glass h-20 px-8 flex items-center justify-between border-b border-slate-200/50">
-          <IGenBranding className="text-2xl" withTagline={true} />
+          <div className="flex items-center gap-8">
+            <IGenBranding className="text-2xl" withTagline={true} />
+            
+            {userData?.role === 'admin' && (
+              <div className="hidden lg:flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                <Button 
+                  variant={currentScreen === 'DASHBOARD' ? 'default' : 'ghost'} 
+                  onClick={() => setCurrentScreen('DASHBOARD')}
+                  className={cn("h-10 px-4 gap-2 rounded-lg font-bold", currentScreen === 'DASHBOARD' && "bg-slate-900 text-white shadow-md")}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  {t.rendering}
+                </Button>
+                <Button 
+                  variant={currentScreen === 'ADMIN_PANEL' ? 'default' : 'ghost'} 
+                  onClick={() => setCurrentScreen('ADMIN_PANEL')}
+                  className={cn("h-10 px-4 gap-2 rounded-lg font-bold", currentScreen === 'ADMIN_PANEL' && "bg-slate-900 text-white shadow-md")}
+                >
+                  <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                  {t.adminPanel}
+                </Button>
+              </div>
+            )}
+          </div>
           
           <div className="flex items-center gap-4 md:gap-6">
             {(userData?.hasClaimedCredits && userData?.apiKey) && (
@@ -347,7 +393,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2 shadow-2xl border-slate-100">
                   <DropdownMenuLabel className="p-3">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.roleUser}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{userData?.role === 'admin' ? t.roleAdmin : t.roleUser}</p>
                     <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -360,7 +406,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         className="w-full justify-start text-[10px] h-8 gap-2 text-slate-500 hover:text-cyan-600"
                       >
                         <RefreshCw className={cn("w-3 h-3", isRefreshingCredits && "animate-spin")} />
-                        Sync with Google Cloud
+                        {t.syncCloud}
                       </Button>
                       <a 
                         href={GOOGLE_BILLING_URL}
@@ -441,16 +487,18 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         {currentScreen === 'AUTH' && (
           <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative text-center">
-              <IGenBranding className="text-3xl mb-4" />
+            <div className="glass w-full max-w-md p-10 rounded-[2.5rem] relative text-center">
+              <h1 className="text-3xl font-bold tracking-tight mb-4">
+                <span className="text-cyan-500">iGen</span> - Trợ lý AI cho Kiến trúc sư
+              </h1>
               
               {/* Language Switcher Section */}
-              <div className="flex items-center justify-center gap-4 mb-10 text-xs font-bold text-slate-400">
-                <button onClick={() => setLang('VI')} className={cn("hover:text-cyan-500 transition-colors", lang === 'VI' && "text-cyan-600")}>VI</button>
+              <div className="flex items-center justify-center gap-4 mb-8 text-xs font-bold text-slate-400 bg-slate-50/50 w-fit mx-auto px-4 py-2 rounded-full">
+                <button onClick={() => setLang('VI')} className={cn("hover:text-cyan-500 transition-colors px-2", lang === 'VI' && "text-cyan-600 bg-white shadow-sm rounded-full py-0.5")}>VI</button>
                 <div className="w-px h-3 bg-slate-200" />
-                <button onClick={() => setLang('EN')} className={cn("hover:text-cyan-500 transition-colors", lang === 'EN' && "text-cyan-600")}>EN</button>
+                <button onClick={() => setLang('EN')} className={cn("hover:text-cyan-500 transition-colors px-2", lang === 'EN' && "text-cyan-600 bg-white shadow-sm rounded-full py-0.5")}>EN</button>
                 <div className="w-px h-3 bg-slate-200" />
-                <button onClick={() => setLang('ZH')} className={cn("hover:text-cyan-500 transition-colors", lang === 'ZH' && "text-cyan-600")}>ZH</button>
+                <button onClick={() => setLang('ZH')} className={cn("hover:text-cyan-500 transition-colors px-2", lang === 'ZH' && "text-cyan-600 bg-white shadow-sm rounded-full py-0.5")}>ZH</button>
               </div>
 
               <form onSubmit={handleAuth} className="space-y-4">
@@ -488,11 +536,24 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
             <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center">
               <h2 className="text-3xl font-bold mb-6">Kích hoạt iGen AI</h2>
               <Input 
-                className="h-14 mb-6 text-center text-xl font-mono"
+                className="h-14 mb-4 text-center text-xl font-mono"
                 value={apiKey}
                 placeholder="Nhập mã đối tác của bạn..."
                 onChange={(e) => setApiKey(e.target.value)}
               />
+              
+              <div className="mb-8 p-4 bg-blue-50/50 rounded-2xl text-left flex gap-4">
+                <div className="bg-blue-100 p-2 h-fit rounded-lg"><Info className="w-5 h-5 text-blue-600" /></div>
+                <div>
+                  <p className="text-sm font-bold text-blue-900 mb-1">Quy tắc credits từ Google:</p>
+                  <ul className="text-xs text-blue-800/80 space-y-1 list-disc pl-4">
+                    <li>Free trial $300 áp dụng cho tài khoản Gmail mới đăng ký Google Cloud.</li>
+                    <li>Credits dùng chung cho mọi Project trong tài khoản Gmail đó.</li>
+                    <li>Tài khoản cần có thẻ Visa/Mastercard để định danh (không bị trừ tiền).</li>
+                  </ul>
+                </div>
+              </div>
+
               <Button 
                 onClick={handleClaimAndVerify}
                 className="h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl"
@@ -509,6 +570,100 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
               lang={lang} 
               onOpenFeature={(id) => { setSelectedFeature(id); setCurrentScreen('FEATURE_DETAIL'); }} 
             />
+          </div>
+        )}
+
+        {currentScreen === 'ADMIN_PANEL' && (
+          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+              <div>
+                <h2 className="text-3xl font-bold flex items-center gap-3">
+                  <ShieldCheck className="w-8 h-8 text-cyan-500" />
+                  {t.adminPanel}
+                </h2>
+                <p className="text-slate-500">{t.userList} • {allUsers?.length || 0} {t.totalUsers}</p>
+              </div>
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input 
+                  placeholder="Tìm kiếm user..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 h-11 bg-white border-none rounded-xl shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="glass-card rounded-[2rem] overflow-hidden border-none shadow-xl">
+              <Table>
+                <TableHeader className="bg-slate-50/50">
+                  <TableRow className="hover:bg-transparent border-slate-100">
+                    <TableHead className="font-bold py-6 pl-8">{t.userEmail}</TableHead>
+                    <TableHead className="font-bold">{t.userRole}</TableHead>
+                    <TableHead className="font-bold">{t.apiKeyLabel}</TableHead>
+                    <TableHead className="font-bold">{t.userStatus}</TableHead>
+                    <TableHead className="font-bold text-right pr-8">ID</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isAllUsersLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-60 text-center">
+                        <div className="w-8 h-8 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredUsers?.length ? (
+                    filteredUsers.map((u) => (
+                      <TableRow key={u.id} className="hover:bg-slate-50/50 border-slate-100 transition-colors">
+                        <TableCell className="py-6 pl-8">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-8 h-8 border border-white shadow-sm">
+                              <AvatarFallback className="bg-slate-200 text-slate-600 text-[10px] font-bold">
+                                {u.email?.[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium text-slate-900">{u.email}</span>
+                            {u.email === user?.email && <Badge variant="secondary" className="text-[10px] h-4">You</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className={cn("rounded-lg px-2", u.role === 'admin' && "bg-slate-900")}>
+                            {u.role === 'admin' ? t.roleAdmin : t.roleUser}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <code className="text-xs font-mono bg-slate-100 px-2 py-1 rounded-md text-slate-600">
+                            {u.apiKey ? maskApiKey(u.apiKey) : '---'}
+                          </code>
+                        </TableCell>
+                        <TableCell>
+                          {u.hasClaimedCredits ? (
+                            <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs">
+                              <Zap className="w-3 h-3 fill-emerald-600" />
+                              {t.active}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-slate-400 font-medium text-xs">
+                              <Info className="w-3 h-3" />
+                              {t.inactive}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right pr-8 text-[10px] font-mono text-slate-400">
+                          {u.id.substring(0, 8)}...
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-40 text-center text-slate-400">
+                        Không tìm thấy người dùng nào.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
 
