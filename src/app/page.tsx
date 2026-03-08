@@ -151,12 +151,13 @@ export default function Home() {
         }
 
         // Tự động kích hoạt cho Google User nếu chưa có API Key hoặc chưa Claim
+        // Chúng ta sẽ khởi tạo Credits là 300.00 để khớp với Google Free Trial 100%
         if (user.providerData.some(p => p.providerId === 'google.com') && !userData.hasClaimedCredits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
             hasClaimedCredits: true,
             apiKey: 'GOOGLE_CLOUD_MANAGED',
-            credits: userData.credits || '300.00',
+            credits: '300.00',
             updatedAt: new Date().toISOString()
           });
         }
@@ -334,7 +335,7 @@ export default function Home() {
                   >
                     <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
                     <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                      ${userData?.credits || '0.00'}
+                      ${userData?.credits || '300.00'}
                       <ExternalLink className="w-3 h-3 text-slate-300" />
                     </span>
                   </a>
@@ -394,18 +395,12 @@ export default function Home() {
 
                     <div className="p-2 space-y-1">
                       <div className="flex flex-col gap-1">
-                        <a 
-                          href={GOOGLE_BILLING_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-cyan-50 transition-colors group/item"
-                        >
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
                           <span className="text-xs font-medium text-slate-600">Credits</span>
-                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
-                            ${userData?.credits || '0.00'}
-                            <ExternalLink className="w-3 h-3" />
+                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                            ${userData?.credits || '300.00'}
                           </span>
-                        </a>
+                        </div>
                         
                         <DropdownMenuItem 
                           onSelect={() => {
