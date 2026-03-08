@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -529,9 +530,8 @@ export default function Home() {
                   {t.adminPanel}
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-slate-500 text-sm font-medium">Tổng số người dùng:</span>
-                  <Badge variant="secondary" className="bg-cyan-50 text-cyan-600 border-cyan-100 font-bold px-2 py-0">
-                    {allUsers?.length || 0}
+                  <Badge variant="secondary" className="bg-cyan-50 text-cyan-600 border-cyan-100 font-bold px-3 py-1 rounded-full text-xs">
+                    {allUsers?.length || 0} {lang === 'VI' ? 'Tổng số người dùng' : 'Total Users'}
                   </Badge>
                 </div>
               </div>
