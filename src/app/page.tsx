@@ -93,9 +93,6 @@ const GoogleLogo = () => (
 );
 
 export default function Home(props: { params: Promise<any>; searchParams: Promise<any> }) {
-  const unwrappedParams = React.use(props.params);
-  const unwrappedSearchParams = React.use(props.searchParams);
-
   const { user, isUserLoading, userError } = useUser();
   const auth = useAuth();
   const db = useFirestore();
@@ -520,6 +517,16 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   {isAuthenticating ? "..." : (isSignUp ? t.signUpButton : t.loginButton)}
                 </Button>
               </form>
+              
+              <div className="mt-4 text-sm text-slate-500">
+                <button 
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="hover:text-cyan-600 font-medium transition-colors"
+                >
+                  {isSignUp ? t.hasAccount : t.noAccount}
+                </button>
+              </div>
+
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">Google Login</span></div>
@@ -532,7 +539,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         )}
 
         {currentScreen === 'CREDIT_CLAIM' && (
-          <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="flex items-center justify-center min-[80vh]">
             <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center">
               <h2 className="text-3xl font-bold mb-6">Kích hoạt iGen AI</h2>
               <Input 
