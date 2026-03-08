@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -48,6 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { getRealtimeCredits } from '@/app/actions/billing';
 
 type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL';
 
@@ -111,7 +111,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   
-  // Real-time credits mock state (Would be fetched via Google Billing API)
+  // Real-time credits state
   const [realtimeCredits, setRealtimeCredits] = useState<string>('300.00');
   const [isRefreshingCredits, setIsRefreshingCredits] = useState(false);
 
@@ -173,17 +173,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     }
   }, [user, isUserLoading, userData, isUserDataLoading, currentScreen, db]);
 
-  useEffect(() => {
-    if (userError) {
-        toast({
-            variant: "destructive",
-            title: t.authError,
-            description: `${userError.name}: ${userError.message}`
-        });
-        setIsAuthenticating(false);
-    }
-  }, [userError, t.authError, toast]);
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userEmail || !password) return;
@@ -191,7 +180,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     try {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, userEmail, password);
-        toast({ title: t.signUpTitle, description: "Account created successfully. Welcome to iGen!" });
+        toast({ title: t.signUpTitle, description: "Account created successfully." });
       } else {
         await initiateEmailSignIn(auth, userEmail, password);
       }
@@ -207,14 +196,35 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     try {
       await initiateGoogleSignIn(auth);
     } catch (error: any) {
-      console.error("Google Login Error:", error);
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",
-        description: `Code: ${error.code} - ${error.message}`
+        description: error.message
       });
     } finally {
       setIsAuthenticating(false);
+    }
+  };
+
+  const refreshCredits = async () => {
+    setIsRefreshingCredits(true);
+    try {
+      const result = await getRealtimeCredits();
+      if (result.success && result.credits) {
+        setRealtimeCredits(result.credits);
+        toast({
+          title: "Đồng bộ thành công",
+          description: `Số dư hiện tại: $${result.credits} (Cập nhật từ Google Cloud API)`
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi đồng bộ",
+        description: "Không thể kết nối với Google Cloud Billing API."
+      });
+    } finally {
+      setIsRefreshingCredits(false);
     }
   };
 
@@ -235,30 +245,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         toast({ title: t.paymentSuccess, description: "iGen AI active." });
       }
     }, 2000);
-  };
-
-  const handleUpdateApiKey = () => {
-    if (!tempApiKey || !user) return;
-    const uRef = doc(db, 'users', user.uid);
-    updateDocumentNonBlocking(uRef, {
-      apiKey: tempApiKey,
-      updatedAt: new Date().toISOString()
-    });
-    setIsEditingApiKey(false);
-    toast({ title: t.paymentSuccess, description: "Mã iGen đã được cập nhật." });
-  };
-
-  const refreshCredits = () => {
-    setIsRefreshingCredits(true);
-    // In a real app, this would call a Cloud Function that queries Google Cloud Billing API
-    // for the currently logged-in user's billing account.
-    setTimeout(() => {
-      setIsRefreshingCredits(false);
-      toast({
-        title: "Đang đồng bộ...",
-        description: "Số dư đang được cập nhật trực tiếp từ Google Cloud Console."
-      });
-    }, 1500);
   };
 
   if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) {
@@ -285,18 +271,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
           <div className="flex items-center gap-4 md:gap-6">
             {(userData?.hasClaimedCredits && userData?.apiKey) && (
               <div className="hidden sm:flex items-center gap-2">
-                <a 
-                  href={GOOGLE_BILLING_URL} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-white text-slate-900 px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group animate-in slide-in-from-right-4"
-                >
-                  <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-bold tracking-tight text-slate-900 flex items-center gap-1">
-                    ${realtimeCredits}
-                    <ExternalLink className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </span>
-                </a>
                 <Button 
                   variant="ghost" 
                   size="icon" 
@@ -306,6 +280,18 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 >
                   <RefreshCw className={cn("w-4 h-4", isRefreshingCredits && "animate-spin")} />
                 </Button>
+                <a 
+                  href={GOOGLE_BILLING_URL} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-white text-slate-900 px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group animate-in slide-in-from-right-4"
+                >
+                  <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-bold tracking-tight text-slate-900 flex items-center gap-1">
+                    ${realtimeCredits}
+                    <ExternalLink className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </span>
+                </a>
               </div>
             )}
 
@@ -317,10 +303,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40 rounded-2xl p-2 shadow-2xl border-slate-100">
-                  <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    {lang === 'VI' ? 'Ngôn ngữ' : lang === 'EN' ? 'Language' : '语言'}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setLang('VI')} className={cn("rounded-xl cursor-pointer p-3", lang === 'VI' && "bg-slate-50 font-bold text-cyan-600")}>
                     Tiếng Việt
                   </DropdownMenuItem>
@@ -352,42 +334,33 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <div className="p-2 space-y-1">
-                    <a 
-                      href={GOOGLE_BILLING_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-cyan-50 transition-colors group/item"
-                    >
-                      <span className="text-xs font-medium text-slate-600">Credits (Real-time)</span>
-                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
-                        ${realtimeCredits}
-                        <ExternalLink className="w-3 h-3 opacity-0 group-hover/item:opacity-100" />
-                      </span>
-                    </a>
-                    <DropdownMenuItem 
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setTempApiKey(userData?.apiKey || '');
-                        setIsEditingApiKey(true);
-                      }}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 cursor-pointer transition-colors group/key data-[highlighted]:bg-slate-100 data-[highlighted]:text-slate-900"
-                    >
-                      <span className="text-xs font-medium text-slate-600 flex items-center gap-2">
-                        {lang === 'VI' ? (
-                          <>Mã <span className="text-cyan-500 font-bold">iGen</span></>
-                        ) : lang === 'EN' ? (
-                          <><span className="text-cyan-500 font-bold">iGen</span> Code</>
-                        ) : (
-                          <><span className="text-cyan-500 font-bold">iGen</span> 代码</>
-                        )}
-                        <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500 transition-colors" />
-                      </span>
-                      <span className="text-[10px] font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
-                    </DropdownMenuItem>
+                    <div className="flex flex-col gap-1">
+                      <Button 
+                        variant="ghost" 
+                        onClick={refreshCredits}
+                        disabled={isRefreshingCredits}
+                        className="w-full justify-start text-[10px] h-8 gap-2 text-slate-500 hover:text-cyan-600"
+                      >
+                        <RefreshCw className={cn("w-3 h-3", isRefreshingCredits && "animate-spin")} />
+                        Sync with Google Cloud
+                      </Button>
+                      <a 
+                        href={GOOGLE_BILLING_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-cyan-50 transition-colors group/item"
+                      >
+                        <span className="text-xs font-medium text-slate-600">Credits (Real-time)</span>
+                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1 group-hover/item:text-cyan-600">
+                          ${realtimeCredits}
+                          <ExternalLink className="w-3 h-3 opacity-0 group-hover/item:opacity-100" />
+                        </span>
+                      </a>
+                    </div>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => auth.signOut()} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
-                    <LogOut className="w-4 h-4" /> {lang === 'VI' ? 'Đăng xuất' : lang === 'EN' ? 'Logout' : '登出'}
+                    <LogOut className="w-4 h-4" /> Đăng xuất
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -396,45 +369,11 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         </header>
       )}
 
-      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-        <DialogContent className="max-w-md rounded-3xl">
-          <DialogHeader>
-            <DialogTitle>{t.editApiKey}</DialogTitle>
-            <DialogDescription>
-              {t.paymentSubtitle}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Input
-              value={tempApiKey}
-              onChange={(e) => setTempApiKey(e.target.value)}
-              placeholder={t.apiKeyPlaceholder}
-              className="h-12 rounded-xl"
-            />
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setIsEditingApiKey(false)}>{t.cancel}</Button>
-              <Button onClick={handleUpdateApiKey} className="bg-slate-900 text-white rounded-xl px-6">{t.saveChanges}</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         {currentScreen === 'AUTH' && (
           <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative">
-              <div className="mt-4 text-center mb-10">
-                <h1 className="text-3xl font-bold tracking-tight mb-2">
-                  <span className="text-cyan-500">iGen</span> - Trợ lý AI cho Kiến trúc sư
-                </h1>
-                <div className="flex justify-center gap-4 text-xs font-bold text-slate-400 mt-4">
-                  <button onClick={() => setLang('VI')} className={cn("hover:text-cyan-500 transition-colors", lang === 'VI' && "text-cyan-600")}>VI</button>
-                  <span className="text-slate-200">|</span>
-                  <button onClick={() => setLang('EN')} className={cn("hover:text-cyan-500 transition-colors", lang === 'EN' && "text-cyan-600")}>EN</button>
-                  <span className="text-slate-200">|</span>
-                  <button onClick={() => setLang('ZH')} className={cn("hover:text-cyan-500 transition-colors", lang === 'ZH' && "text-cyan-600")}>ZH</button>
-                </div>
-              </div>
+            <div className="glass w-full max-w-md p-8 rounded-[2.5rem] relative text-center">
+              <IGenBranding className="text-3xl mb-10" />
               <form onSubmit={handleAuth} className="space-y-4">
                 <Input 
                   type="email" 
@@ -451,151 +390,42 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <Button disabled={isAuthenticating} className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg">
-                  {isAuthenticating ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (isSignUp ? t.signUpButton : t.loginButton)}
+                  {isAuthenticating ? "..." : (isSignUp ? t.signUpButton : t.loginButton)}
                 </Button>
               </form>
-              <div className="mt-6 text-center">
-                <button onClick={() => setIsSignUp(!isSignUp)} className="text-xs font-bold text-cyan-600 hover:underline">
-                  {isSignUp ? t.hasAccount : t.noAccount}
-                </button>
-              </div>
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">{t.orDivider}</span></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">Google Login</span></div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button disabled={isAuthenticating} onClick={handleGoogleLogin} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold">
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    <GoogleLogo />
-                  </div>
-                  Gmail
-                </Button>
-                <Button onClick={() => toast({ title: "Coming Soon" })} variant="outline" className="h-12 rounded-xl border-slate-200 gap-2 font-semibold">
-                  <Smartphone className="w-4 h-4" /> Phone
-                </Button>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="link" className="text-xs text-slate-400 gap-2 hover:text-cyan-600">
-                      <Info className="w-3.5 h-3.5" /> Khắc phục lỗi đăng nhập
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md rounded-3xl">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        <Smartphone className="w-5 h-5 text-cyan-500" /> Khắc phục lỗi đăng nhập
-                      </DialogTitle>
-                      <DialogDescription>
-                        <div className="pt-4 text-slate-600 text-left space-y-4">
-                          <p className="font-bold text-slate-900">Nếu bạn dùng Safari trên Mac/iPhone:</p>
-                          <ol className="list-decimal pl-4 space-y-2">
-                            <li>Vào <b>Cài đặt Safari</b> (Settings).</li>
-                            <li>Chọn tab <b>Bảo mật</b> (Privacy).</li>
-                            <li><b>BỎ CHỌN</b> mục "Ngăn chặn theo dõi chéo trang" (Prevent Cross-Site Tracking).</li>
-                          </ol>
-                          <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                            Lưu ý: Firebase Auth yêu cầu domain firebaseapp.com có thể liên lạc với domain preview này. Safari mặc định chặn việc này.
-                          </p>
-                          <div className="text-sm font-bold text-cyan-600 bg-cyan-50 p-3 rounded-xl">
-                            Mẹo: Gắn Domain riêng cho Web App sẽ khắc phục triệt để lỗi này.
-                          </div>
-                        </div>
-                      </DialogDescription>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
-              </div>
+              <Button disabled={isAuthenticating} onClick={handleGoogleLogin} variant="outline" className="w-full h-12 rounded-xl border-slate-200 gap-2 font-semibold">
+                <GoogleLogo /> Gmail (Sync Billing)
+              </Button>
             </div>
           </div>
         )}
 
         {currentScreen === 'CREDIT_CLAIM' && (
-          <div className="flex items-center justify-center min-h-[80vh] animate-in zoom-in-95 duration-500">
-            <div className="glass w-full max-w-2xl p-10 md:p-16 rounded-[3rem] text-center relative">
-              <div className="flex flex-col items-center gap-6 mb-12 p-8 bg-white/80 backdrop-blur-2xl rounded-[3rem] border-2 border-white shadow-2xl shadow-cyan-500/10 max-w-xl mx-auto transition-all duration-700 hover:scale-[1.02] hover:shadow-cyan-500/20">
-                <div className="flex items-center justify-center gap-8">
-                  <IGenBranding className="text-5xl" />
-                  <div className="h-12 w-[1.5px] bg-slate-200" />
-                  <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-100 flex items-center justify-center">
-                    <GoogleLogo />
-                  </div>
-                </div>
-                <div className="bg-slate-50 px-6 py-2 rounded-full border border-slate-100 flex items-center gap-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Đối tác chiến lược</span>
-                  <div className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-full shadow-sm">
-                    <GoogleLogo />
-                    <span className="font-google text-sm font-bold">Google</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 mb-10">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
-                  <span className="font-google block">
-                    {lang === 'VI' ? (
-                      <>Chương trình hợp tác cùng <ColoredGoogleText /></>
-                    ) : lang === 'EN' ? (
-                      <>Collaboration program with <ColoredGoogleText /></>
-                    ) : (
-                      <>与 <ColoredGoogleText /> 的合作项目</>
-                    )}
-                  </span>
-                </h2>
-                <p className="text-slate-500 text-xs md:text-sm font-normal leading-relaxed max-w-lg mx-auto">
-                  {lang === 'VI' ? (
-                    <>Vui lòng nhập Mã đối tác của bạn để kích hoạt <span className="text-cyan-500 font-bold">iGen AI</span></>
-                  ) : lang === 'EN' ? (
-                    <>Please enter your Partner Code to activate <span className="text-cyan-500 font-bold">iGen AI</span></>
-                  ) : (
-                    <>请输入您的合作伙伴代码以激活 <span className="text-cyan-500 font-bold">iGen AI</span></>
-                  )}
-                </p>
-              </div>
-              
-              <div className="space-y-4 max-w-sm mx-auto mb-10">
-                <div className="relative">
-                  <Zap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 z-10" />
-                  <Input 
-                    className="h-14 pl-10 bg-white/60 border-slate-200 rounded-xl focus-visible:ring-cyan-500 shadow-sm text-lg font-mono relative z-0"
-                    value={apiKey}
-                    placeholder={t.apiKeyPlaceholder}
-                    onChange={(e) => setApiKey(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 max-w-md mx-auto">
-                <Button 
-                  onClick={handleClaimAndVerify}
-                  className={cn(
-                    "h-16 px-8 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl transition-all hover:scale-105 active:scale-95 orb-glow flex items-center gap-3",
-                    isVerifying ? "opacity-60 cursor-not-allowed" : ""
-                  )}
-                >
-                  {isVerifying ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
-                  ) : (
-                    <>
-                      <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center p-1.5 shadow-sm">
-                        <GoogleLogo />
-                      </div>
-                      <span>{t.claimButton}</span>
-                    </>
-                  )}
-                </Button>
-              </div>
+          <div className="flex items-center justify-center min-h-[80vh]">
+            <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center">
+              <h2 className="text-3xl font-bold mb-6">Kích hoạt iGen AI</h2>
+              <Input 
+                className="h-14 mb-6 text-center text-xl font-mono"
+                value={apiKey}
+                placeholder="Nhập mã đối tác của bạn..."
+                onChange={(e) => setApiKey(e.target.value)}
+              />
+              <Button 
+                onClick={handleClaimAndVerify}
+                className="h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl"
+              >
+                {isVerifying ? "Đang xác thực..." : "Kích hoạt & Đồng bộ Google Billing"}
+              </Button>
             </div>
           </div>
         )}
 
         {currentScreen === 'DASHBOARD' && (
           <div className="max-w-7xl mx-auto">
-            <div className="mb-12">
-              <h2 className="text-4xl font-bold tracking-tight text-slate-900">{t.dashboardTitle}</h2>
-              <p className="text-slate-500 mt-2 text-lg">{t.dashboardSubtitle}</p>
-            </div>
             <DashboardGrid 
               lang={lang} 
               onOpenFeature={(id) => { setSelectedFeature(id); setCurrentScreen('FEATURE_DETAIL'); }} 

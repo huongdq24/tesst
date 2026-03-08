@@ -23,9 +23,13 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
   return signInWithEmailAndPassword(authInstance, email, password).then(() => {});
 }
 
-/** Initiate Google sign-in. Returns a promise to allow error handling in UI. */
+/** Initiate Google sign-in with Billing read-only scope. */
 export function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
   const provider = new GoogleAuthProvider();
+  
+  // Add scope to read billing information
+  provider.addScope('https://www.googleapis.com/auth/cloud-billing.readonly');
+  
   // Ensure "Identity Toolkit API" and "Google People API" are enabled in Google Cloud Console
   return signInWithPopup(authInstance, provider)
     .then(() => {})
