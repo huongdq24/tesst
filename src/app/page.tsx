@@ -119,6 +119,7 @@ export default function Home() {
   
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
 
   const t = translations[lang];
 
@@ -132,7 +133,7 @@ export default function Home() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // EFFECT ĐỒNG BỘ CREDITS THẬT TỪ GOOGLE CLOUD BILLING API
+  // EFFECT ĐỒNG BỘ CREDITS THẬT TỪ GOOGLE CLOUD BILLING API CHO USER HIỆN TẠI
   useEffect(() => {
     const syncBilling = async () => {
       if (user && userData && userData.hasClaimedCredits) {
@@ -260,6 +261,36 @@ export default function Home() {
       title: t.paymentSuccess,
       description: "API Key updated successfully."
     });
+  };
+
+  const handleSyncAllCredits = async () => {
+    if (!allUsers || isSyncingAll) return;
+    setIsSyncingAll(true);
+    try {
+      const result = await getRealtimeCredits();
+      if (result.success) {
+        // Cập nhật tất cả user trong danh sách lên con số thật từ API
+        allUsers.forEach(u => {
+          const uRef = doc(db, 'users', u.id);
+          updateDocumentNonBlocking(uRef, {
+            credits: result.credits,
+            updatedAt: new Date().toISOString()
+          });
+        });
+        toast({
+          title: t.syncCloud,
+          description: `Đã đồng bộ hóa số dư $${result.credits} cho tất cả người dùng.`
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Sync Failed",
+        description: "Không thể kết nối với Google Cloud Billing API."
+      });
+    } finally {
+      setIsSyncingAll(false);
+    }
   };
 
   if (isUserLoading || (user && (isUserDataLoading || userData === undefined))) {
@@ -552,7 +583,16 @@ export default function Home() {
                   </Badge>
                 </div>
               </div>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
+                <Button 
+                  variant="outline" 
+                  onClick={handleSyncAllCredits}
+                  disabled={isSyncingAll}
+                  className="h-11 rounded-xl border-cyan-200 text-cyan-600 hover:bg-cyan-50 font-bold gap-2"
+                >
+                  <RefreshCw className={cn("w-4 h-4", isSyncingAll && "animate-spin")} />
+                  {t.syncCloud}
+                </Button>
                 <div className="relative w-full md:w-80">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input 
