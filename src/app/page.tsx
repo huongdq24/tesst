@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +18,10 @@ import {
   LayoutDashboard,
   Search,
   Calendar,
-  Key
+  Key,
+  Globe,
+  Edit,
+  Info
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
