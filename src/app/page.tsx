@@ -275,8 +275,8 @@ export default function Home() {
     
     setIsEditingApiKey(false);
     toast({
-      title: t.paymentSuccess,
-      description: <div className="flex items-center gap-1"><IGenCodeBranded /> updated successfully.</div>
+      title: <div className="flex items-center gap-1"><IGenCodeBranded /> updated successfully.</div>,
+      description: <div className="flex items-center gap-1"><IGenCodeBranded /> has been updated for your account.</div>
     });
   };
 
@@ -502,7 +502,7 @@ export default function Home() {
         {currentScreen === 'CREDIT_CLAIM' && (
           <div className="flex items-center justify-center min-h-[80vh]">
             <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center shadow-2xl">
-              <h2 className="text-3xl font-bold mb-6">Kích hoạt iGen AI</h2>
+              <h2 className="text-3xl font-bold mb-6">Kích hoạt <IGenCodeBranded /> AI</h2>
               <Input 
                 className="h-14 mb-4 text-center text-xl font-mono border-2 border-slate-100 focus:border-cyan-500 transition-colors"
                 value={apiKey}
@@ -537,7 +537,7 @@ export default function Home() {
                         credits: '300.00',
                         updatedAt: new Date().toISOString()
                       });
-                      toast({ title: t.paymentSuccess, description: "iGen AI active." });
+                      toast({ title: <IGenCodeBranded />, description: "iGen AI active." });
                     }
                   }, 2000);
                 }}
