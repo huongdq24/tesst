@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Globe, Wallet, ChevronDown, LogOut } from 'lucide-react';
+import { RefreshCw, Globe, Wallet, ChevronDown, LogOut, Edit } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -110,6 +111,8 @@ export default function CreditClaimPage() {
     }, 2000);
   };
 
+  const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
+
   if (isUserLoading || isUserDataLoading) return null;
 
   return (
@@ -170,6 +173,25 @@ export default function CreditClaimPage() {
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{userData?.role === 'admin' ? t.roleAdmin : t.roleUser}</p>
                     <p className="text-sm font-bold truncate text-slate-900">{user?.email}</p>
                   </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  <div className="p-2 space-y-1">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                        <span className="text-xs font-medium text-slate-600">Credits</span>
+                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                          ${userData?.credits || '0.00'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight"><IGenCodeBranded /></span>
+                          <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => { auth.signOut(); router.push('/login'); }} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
                     <LogOut className="w-4 h-4" /> Đăng xuất
