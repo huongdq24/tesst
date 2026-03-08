@@ -24,7 +24,9 @@ import {
   Users,
   ShieldCheck,
   LayoutDashboard,
-  Search
+  Search,
+  Calendar,
+  Key
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -68,7 +70,6 @@ type Screen = 'AUTH' | 'CREDIT_CLAIM' | 'DASHBOARD' | 'FEATURE_DETAIL' | 'ADMIN_
 const ADMIN_EMAIL = 'igen-architect@admin.com';
 const ADMIN_AI_KEY = process.env.NEXT_PUBLIC_ADMIN_AI_KEY || 'ADMIN_SYSTEM_KEY';
 
-// Link to Google Cloud Billing Console
 const GOOGLE_BILLING_URL = "https://console.cloud.google.com/billing/017D0B-3695DA-8D7FB7/credits/all?authuser=3&chat=true&hl=en-US&organizationId=501548273108&project=project-5306ce34-5626-488a-913";
 
 const GoogleLogo = () => (
@@ -103,8 +104,8 @@ const ColoredGoogleText = () => (
   </span>
 );
 
-export default function Home(props: { params: Promise<any>; searchParams: Promise<any> }) {
-  const { user, isUserLoading, userError } = useUser();
+export default function Home() {
+  const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
@@ -122,7 +123,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
   
-  // Real-time credits state
   const [realtimeCredits, setRealtimeCredits] = useState<string>('300.00');
   const [isRefreshingCredits, setIsRefreshingCredits] = useState(false);
 
@@ -131,7 +131,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-  // Admin specific data
   const usersCollectionRef = useMemoFirebase(() => {
     if (userData?.role === 'admin') return collection(db, 'users');
     return null;
@@ -319,11 +318,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
             <IGenBranding className="text-2xl" withTagline={true} />
             
             {userData?.role === 'admin' && (
-              <div className="hidden lg:flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+              <div className="hidden lg:flex items-center gap-2 bg-slate-100 p-1 rounded-xl shadow-inner">
                 <Button 
-                  variant={currentScreen === 'DASHBOARD' ? 'default' : 'ghost'} 
+                  variant={currentScreen === 'DASHBOARD' || currentScreen === 'FEATURE_DETAIL' ? 'default' : 'ghost'} 
                   onClick={() => setCurrentScreen('DASHBOARD')}
-                  className={cn("h-10 px-4 gap-2 rounded-lg font-bold", currentScreen === 'DASHBOARD' && "bg-slate-900 text-white shadow-md")}
+                  className={cn(
+                    "h-10 px-4 gap-2 rounded-lg font-bold transition-all", 
+                    (currentScreen === 'DASHBOARD' || currentScreen === 'FEATURE_DETAIL') ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
+                  )}
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   {t.rendering}
@@ -331,7 +333,10 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <Button 
                   variant={currentScreen === 'ADMIN_PANEL' ? 'default' : 'ghost'} 
                   onClick={() => setCurrentScreen('ADMIN_PANEL')}
-                  className={cn("h-10 px-4 gap-2 rounded-lg font-bold", currentScreen === 'ADMIN_PANEL' && "bg-slate-900 text-white shadow-md")}
+                  className={cn(
+                    "h-10 px-4 gap-2 rounded-lg font-bold transition-all", 
+                    currentScreen === 'ADMIN_PANEL' ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-900"
+                  )}
                 >
                   <ShieldCheck className="w-4 h-4 text-cyan-400" />
                   {t.adminPanel}
@@ -429,7 +434,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         </span>
                       </a>
                       
-                      {/* API Key Update Feature */}
                       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
                         <DropdownMenuItem 
                           onSelect={(e) => {
@@ -495,13 +499,12 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
       <div className={`w-full h-full ${currentScreen !== 'AUTH' ? 'pt-28 px-4 md:px-8 pb-12' : ''}`}>
         {currentScreen === 'AUTH' && (
           <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="glass w-full max-w-md p-10 rounded-[2.5rem] relative text-center">
+            <div className="glass w-full max-w-md p-10 rounded-[2.5rem] relative text-center shadow-2xl">
               <h1 className="text-3xl font-bold tracking-tight mb-4">
                 <span className="text-cyan-500">iGen</span> - Trợ lý AI cho Kiến trúc sư
               </h1>
               
-              {/* Language Switcher Section */}
-              <div className="flex items-center justify-center gap-4 mb-8 text-xs font-bold text-slate-400 bg-slate-50/50 w-fit mx-auto px-4 py-2 rounded-full">
+              <div className="flex items-center justify-center gap-4 mb-8 text-xs font-bold text-slate-400 bg-slate-50/50 w-fit mx-auto px-4 py-2 rounded-full border border-slate-100">
                 <button onClick={() => setLang('VI')} className={cn("hover:text-cyan-500 transition-colors px-2", lang === 'VI' && "text-cyan-600 bg-white shadow-sm rounded-full py-0.5")}>VI</button>
                 <div className="w-px h-3 bg-slate-200" />
                 <button onClick={() => setLang('EN')} className={cn("hover:text-cyan-500 transition-colors px-2", lang === 'EN' && "text-cyan-600 bg-white shadow-sm rounded-full py-0.5")}>EN</button>
@@ -525,7 +528,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <Button disabled={isAuthenticating} className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg">
-                  {isAuthenticating ? "..." : (isSignUp ? t.signUpButton : t.loginButton)}
+                  {isAuthenticating ? <RefreshCw className="w-5 h-5 animate-spin" /> : (isSignUp ? t.signUpButton : t.loginButton)}
                 </Button>
               </form>
               
@@ -538,7 +541,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </button>
               </div>
 
-              <div className="mt-8">
+              <div className="relative mt-10 mb-6">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100" /></div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t.orDivider}</span>
+                </div>
+              </div>
+
+              <div className="mt-4">
                 <Button 
                   disabled={isAuthenticating} 
                   onClick={handleGoogleLogin} 
@@ -547,7 +557,7 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 >
                   <GoogleLogo />
                   <span className="text-xs font-bold text-slate-600">
-                    {lang === 'VI' ? 'Đăng nhập với ' : 'Continue with '}
+                    {lang === 'VI' ? 'Tiếp tục với ' : 'Continue with '}
                     <ColoredGoogleText />
                   </span>
                 </Button>
@@ -558,17 +568,17 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
         {currentScreen === 'CREDIT_CLAIM' && (
           <div className="flex items-center justify-center min-[80vh]">
-            <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center">
+            <div className="glass w-full max-w-2xl p-10 rounded-[3rem] text-center shadow-2xl">
               <h2 className="text-3xl font-bold mb-6">Kích hoạt iGen AI</h2>
               <Input 
-                className="h-14 mb-4 text-center text-xl font-mono"
+                className="h-14 mb-4 text-center text-xl font-mono border-2 border-slate-100 focus:border-cyan-500 transition-colors"
                 value={apiKey}
                 placeholder="Nhập mã đối tác của bạn..."
                 onChange={(e) => setApiKey(e.target.value)}
               />
               
-              <div className="mb-8 p-4 bg-blue-50/50 rounded-2xl text-left flex gap-4">
-                <div className="bg-blue-100 p-2 h-fit rounded-lg"><Info className="w-5 h-5 text-blue-600" /></div>
+              <div className="mb-8 p-6 bg-blue-50/50 rounded-2xl text-left flex gap-4 border border-blue-100">
+                <div className="bg-blue-100 p-3 h-fit rounded-xl shadow-sm"><Info className="w-6 h-6 text-blue-600" /></div>
                 <div>
                   <p className="text-sm font-bold text-blue-900 mb-1">Quy tắc credits từ Google:</p>
                   <ul className="text-xs text-blue-800/80 space-y-1 list-disc pl-4">
@@ -581,9 +591,9 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
 
               <Button 
                 onClick={handleClaimAndVerify}
-                className="h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl"
+                className="h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-transform"
               >
-                {isVerifying ? "Đang xác thực..." : "Kích hoạt & Đồng bộ Google Billing"}
+                {isVerifying ? <RefreshCw className="w-6 h-6 animate-spin" /> : "Kích hoạt & Đồng bộ Google Billing"}
               </Button>
             </div>
           </div>
@@ -608,33 +618,38 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 </h2>
                 <p className="text-slate-500">{t.userList} • {allUsers?.length || 0} {t.totalUsers}</p>
               </div>
-              <div className="relative w-full md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input 
-                  placeholder="Tìm kiếm user..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-11 bg-white border-none rounded-xl shadow-sm"
-                />
+              <div className="flex gap-4">
+                <div className="relative w-full md:w-80">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input 
+                    placeholder="Tìm kiếm user..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-11 bg-white border-none rounded-xl shadow-sm focus:ring-2 ring-cyan-500/20"
+                  />
+                </div>
+                <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl bg-white shadow-sm text-slate-400 hover:text-cyan-500">
+                  <RefreshCw className="w-5 h-5" />
+                </Button>
               </div>
             </div>
 
-            <div className="glass-card rounded-[2rem] overflow-hidden border-none shadow-xl">
+            <div className="glass-card rounded-[2rem] overflow-hidden border-none shadow-2xl">
               <Table>
                 <TableHeader className="bg-slate-50/50">
                   <TableRow className="hover:bg-transparent border-slate-100">
-                    <TableHead className="font-bold py-6 pl-8">{t.userEmail}</TableHead>
-                    <TableHead className="font-bold">{t.userRole}</TableHead>
-                    <TableHead className="font-bold">{t.apiKeyLabel}</TableHead>
-                    <TableHead className="font-bold">{t.userStatus}</TableHead>
-                    <TableHead className="font-bold text-right pr-8">ID</TableHead>
+                    <TableHead className="font-bold py-6 pl-8 text-slate-500 uppercase tracking-widest text-[10px]">{t.userEmail}</TableHead>
+                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userRole}</TableHead>
+                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.apiKeyLabel}</TableHead>
+                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userStatus}</TableHead>
+                    <TableHead className="font-bold text-right pr-8 text-slate-500 uppercase tracking-widest text-[10px]">Info</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isAllUsersLoading ? (
                     <TableRow>
                       <TableCell colSpan={5} className="h-60 text-center">
-                        <div className="w-8 h-8 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mx-auto" />
+                        <div className="w-10 h-10 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
                   ) : filteredUsers?.length ? (
@@ -642,40 +657,51 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                       <TableRow key={u.id} className="hover:bg-slate-50/50 border-slate-100 transition-colors">
                         <TableCell className="py-6 pl-8">
                           <div className="flex items-center gap-3">
-                            <Avatar className="w-8 h-8 border border-white shadow-sm">
-                              <AvatarFallback className="bg-slate-200 text-slate-600 text-[10px] font-bold">
+                            <Avatar className="w-10 h-10 border border-white shadow-sm">
+                              <AvatarFallback className="bg-gradient-to-tr from-slate-100 to-slate-200 text-slate-600 text-xs font-bold">
                                 {u.email?.[0]?.toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="font-medium text-slate-900">{u.email}</span>
-                            {u.email === user?.email && <Badge variant="secondary" className="text-[10px] h-4">You</Badge>}
+                            <div className="flex flex-col">
+                              <span className="font-bold text-slate-900">{u.email}</span>
+                              <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '---'}
+                              </span>
+                            </div>
+                            {u.email === user?.email && <Badge variant="secondary" className="text-[10px] h-4 bg-cyan-50 text-cyan-600 border-cyan-100">You</Badge>}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className={cn("rounded-lg px-2", u.role === 'admin' && "bg-slate-900")}>
+                          <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className={cn("rounded-lg px-2", u.role === 'admin' ? "bg-slate-900" : "bg-slate-100 text-slate-600 border-none")}>
                             {u.role === 'admin' ? t.roleAdmin : t.roleUser}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <code className="text-xs font-mono bg-slate-100 px-2 py-1 rounded-md text-slate-600">
-                            {u.apiKey ? maskApiKey(u.apiKey) : '---'}
-                          </code>
+                          <div className="flex items-center gap-2 group">
+                            <code className="text-[11px] font-mono bg-slate-100 px-2 py-1 rounded-md text-slate-600 border border-slate-200">
+                              {u.apiKey ? maskApiKey(u.apiKey) : '---'}
+                            </code>
+                            {u.apiKey && <Key className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {u.hasClaimedCredits ? (
-                            <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs">
+                            <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 w-fit px-3 py-1 rounded-full border border-emerald-100">
                               <Zap className="w-3 h-3 fill-emerald-600" />
                               {t.active}
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2 text-slate-400 font-medium text-xs">
+                            <div className="flex items-center gap-2 text-slate-400 font-medium text-xs bg-slate-50 w-fit px-3 py-1 rounded-full border border-slate-200">
                               <Info className="w-3 h-3" />
                               {t.inactive}
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="text-right pr-8 text-[10px] font-mono text-slate-400">
-                          {u.id.substring(0, 8)}...
+                        <TableCell className="text-right pr-8">
+                           <div className="flex flex-col items-end">
+                             <span className="text-[10px] font-mono text-slate-400">UID: {u.id.substring(0, 12)}...</span>
+                           </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -706,3 +732,4 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
     </main>
   );
 }
+

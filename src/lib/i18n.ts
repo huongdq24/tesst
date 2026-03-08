@@ -187,7 +187,7 @@ export const translations = {
     emailInUse: '此电子邮件已被使用。',
     weakPassword: '密码太弱。',
     paymentTitle: '输入 iGen 合作伙伴代码',
-    paymentSubtitle: '请输入您的合作伙伴代码以激活 iGen AI。',
+    paymentSubtitle: '请输入您的合作伙伴代码以激活 iGen AI',
     officialLink: '在 Google AI Studio 获取代码',
     apiKeyLabel: 'iGen 代码',
     apiKeyPlaceholder: '在此粘贴代码...',
