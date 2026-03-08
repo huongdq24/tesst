@@ -1,37 +1,45 @@
 
 # iGen AI - Trợ lý Kiến trúc sư
 
-Ứng dụng hỗ trợ thiết kế kiến trúc bằng trí tuệ nhân tạo.
+Ứng dụng hỗ trợ thiết kế kiến trúc bằng trí tuệ nhân tạo, tích hợp đồng bộ dữ liệu Google Cloud Billing.
+
+---
+
+## 🚀 Lộ trình triển khai cho hàng nghìn người dùng (Production)
+
+Để ứng dụng có thể hoạt động ổn định và chuyên nghiệp cho người dùng đại chúng, bạn cần thực hiện quy trình xác minh của Google theo các bước sau:
+
+### Bước 1: Chuẩn bị Hạ tầng & Pháp lý (Bắt buộc)
+1. **Sở hữu Domain:** Mua một tên miền chính thức (ví dụ: `architect-igen.ai`).
+2. **Hosting:** Triển khai ứng dụng lên Production (Firebase App Hosting hoặc Vercel) trỏ về Domain đã mua.
+3. **Trang Chính sách (Privacy Policy):** Tạo một trang web (ví dụ: `architect-igen.ai/privacy`) chứa nội dung cam kết bảo mật thông tin Billing của người dùng.
+4. **Google Search Console:** Thêm Domain của bạn vào [Search Console](https://search-console.google.com/) và xác minh quyền sở hữu.
+
+### Bước 2: Cấu hình OAuth Consent Screen (Trang xác thực)
+Truy cập [Google Cloud Console - OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent):
+1. **User Type:** Chuyển từ "Testing" sang **"External"**.
+2. **App Information:** Tải lên Logo chính thức và điền link Privacy Policy.
+3. **Authorized Domains:** Thêm tên miền chính thức của bạn vào đây.
+4. **Scopes:** Đảm bảo đã thêm `https://www.googleapis.com/auth/cloud-billing.readonly`.
+
+### Bước 3: Gửi yêu cầu Xác minh (Submit for Verification)
+Đây là bước tốn thời gian nhất (3-7 ngày). Bạn cần chuẩn bị:
+1. **Video Demo:** Quay màn hình quy trình đăng nhập Google từ đầu đến khi hiện số dư Credits. Tải lên YouTube (Unlisted).
+2. **Giải trình:** Viết một đoạn văn ngắn (Tiếng Anh) giải thích: *"Ứng dụng của tôi giúp kiến trúc sư quản lý ngân sách AI của họ trên Google Cloud một cách trực quan bằng cách hiển thị số dư thực tế ngay trong ứng dụng thiết kế."*
+
+---
 
 ## 📊 Quản lý Dự án (Dành cho Chủ sở hữu)
 
-Để xem danh sách người dùng và các API Key đã được lưu trữ, bạn hãy truy cập các đường dẫn sau trong Firebase Console:
+Dành cho bạn để quản lý người dùng hiện tại:
 
-- **Danh sách Tài khoản (Gmail/Email):** [Firebase Auth Users](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/authentication/users)
+- **Danh sách Tài khoản:** [Firebase Auth Users](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/authentication/users)
 - **Dữ liệu & API Keys:** [Firestore Database - Users Collection](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/firestore/data/~2Fusers)
 
-**Lưu ý:** Chỉ có bạn (chủ sở hữu dự án trên Google Cloud) mới có quyền truy cập vào các trang quản trị này. Dữ liệu của người dùng được bảo vệ an toàn bằng Firebase Security Rules.
+## 🛠 Hướng dẫn cho giai đoạn Thử nghiệm (Testing)
 
-## 🛠 Hướng dẫn Khắc phục lỗi Đăng nhập Gmail (Firebase Auth)
-
-### 1. Cách sử dụng Billing API mà KHÔNG cần Verification (Xác minh)
-Nếu bạn chưa có logo hoặc domain chính thức, bạn vẫn có thể sử dụng tính năng đồng bộ số dư bằng cách:
-- Truy cập [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent?project=project-5306ce34-5626-488a-913).
-- Đảm bảo **Publishing status** là **Testing** (KHÔNG nhấn Publish).
-- Tại mục **Test users**, nhấn **ADD USERS** và thêm các địa chỉ Gmail sẽ sử dụng ứng dụng.
-- **Khi đăng nhập:** Nếu thấy cảnh báo "Google hasn't verified this app", hãy nhấn **Advanced** -> **Go to [App Name] (unsafe)** để tiếp tục.
-
-### 2. Thiết lập Email Hỗ trợ Dự án (BẮT BUỘC)
-Google OAuth sẽ KHÔNG hoạt động nếu thiếu thông tin này.
-- Truy cập: [Firebase Console - Project Settings](https://console.firebase.google.com/project/project-5306ce34-5626-488a-913/settings/general)
-- Tại mục **Support email**, chọn địa chỉ email của bạn.
-- Nhấn **Save**.
-
-### 3. Kích hoạt Identity Toolkit API & Google People API
-- **Link 1:** [Kích hoạt Identity Toolkit API](https://console.cloud.google.com/apis/library/identitytoolkit.googleapis.com?project=project-5306ce34-5626-488a-913)
-- **Link 2:** [Kích hoạt Google People API](https://console.cloud.google.com/apis/library/people.googleapis.com?project=project-5306ce34-5626-488a-913)
-- Nhấn nút **ENABLE** cho cả hai.
-
-### 4. Cấu hình cho Safari (Giải pháp tạm thời)
-- Vào **Safari Settings** -> **Privacy**.
-- **BỎ CHỌN** mục: `Prevent Cross-Site Tracking` (Ngăn chặn theo dõi chéo trang).
+Nếu bạn chưa có Domain/Logo và muốn dùng ngay cho nhóm nhỏ:
+1. Truy cập [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent).
+2. Đảm bảo trạng thái là **Testing**.
+3. Tại mục **Test users**, nhấn **ADD USERS** và thêm Gmail của người dùng.
+4. **Khi đăng nhập:** Nhấn **Advanced** -> **Go to [App Name] (unsafe)** để bỏ qua cảnh báo của Google.
