@@ -120,11 +120,14 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
   // CRITICAL FIX: Ensure app doesn't freeze when dialog closes
   useEffect(() => {
     if (!isEditingApiKey) {
-      // Forcefully restore pointer events and overflow
-      const timer = setTimeout(() => {
+      const forceRestore = () => {
         document.body.style.pointerEvents = 'auto';
         document.body.style.overflow = 'auto';
-      }, 100);
+      };
+      
+      // Run immediately and after a short delay to override radix side effects
+      forceRestore();
+      const timer = setTimeout(forceRestore, 150);
       return () => clearTimeout(timer);
     }
   }, [isEditingApiKey]);
@@ -336,12 +339,10 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                         {userData?.hasClaimedCredits && userData?.apiKey ? '$300.00' : '$0.00'}
                       </span>
                     </div>
-                    {/* FIXED: Use DropdownMenuItem to ensure clean menu closure before opening dialog */}
                     <DropdownMenuItem 
-                      onSelect={(e) => {
-                        e.preventDefault();
+                      onSelect={() => {
                         setTempApiKey('');
-                        // Triggers dialog open after a short delay to allow menu to clear
+                        // Triggers dialog open after a short delay to allow menu to clear properly
                         setTimeout(() => setIsEditingApiKey(true), 150);
                       }}
                       className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key border-none"
@@ -375,13 +376,6 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
         open={isEditingApiKey} 
         onOpenChange={(open) => {
           setIsEditingApiKey(open);
-          if (!open) {
-            // Force restoration of interaction when closing
-            setTimeout(() => {
-              document.body.style.pointerEvents = 'auto';
-              document.body.style.overflow = 'auto';
-            }, 0);
-          }
         }}
       >
         <DialogContent className="max-w-md rounded-3xl" onOpenAutoFocus={(e) => e.preventDefault()}>
