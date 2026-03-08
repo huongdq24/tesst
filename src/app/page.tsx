@@ -537,7 +537,7 @@ export default function Home() {
                     }
                   }, 2000);
                 }}
-                className="h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-transform flex items-center gap-3"
+                className="mx-auto h-16 px-10 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-transform flex items-center gap-3"
               >
                 {isVerifying ? <RefreshCw className="w-6 h-6 animate-spin" /> : (
                   <>
