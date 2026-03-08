@@ -531,9 +531,17 @@ export default function Home(props: { params: Promise<any>; searchParams: Promis
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-bold">{t.orDivider}</span></div>
               </div>
-              <Button disabled={isAuthenticating} onClick={handleGoogleLogin} variant="outline" className="w-full h-12 rounded-xl border-slate-200 gap-2 font-semibold">
-                <GoogleLogo /> Gmail (Sync Billing)
-              </Button>
+              
+              <div className="flex justify-center">
+                <Button 
+                  disabled={isAuthenticating} 
+                  onClick={handleGoogleLogin} 
+                  variant="outline" 
+                  className="w-14 h-14 rounded-2xl border-slate-200 p-0 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all flex items-center justify-center"
+                >
+                  <GoogleLogo />
+                </Button>
+              </div>
             </div>
           </div>
         )}
