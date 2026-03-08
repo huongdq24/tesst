@@ -141,6 +141,7 @@ export default function CreditClaimPage() {
 
   if (isUserLoading || isUserDataLoading) return null;
 
+  // Hiển thị $0.00 nếu chưa kích hoạt
   const displayCredits = (userData?.hasClaimedCredits && userData?.apiKey) ? (userData?.credits || '0.00') : '0.00';
 
   return (
@@ -245,7 +246,7 @@ export default function CreditClaimPage() {
         <div className="glass-card inline-flex flex-col items-center gap-4 px-10 py-8 rounded-[3rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
           <div className="flex items-center gap-6 text-3xl">
             <IGenBranding className="text-3xl" />
-            <span className="text-slate-200 font-thin text-4xl">|</span>
+            <X className="w-6 h-6 text-slate-300" />
             <div className="flex items-center">
               <GoogleLogo />
             </div>
@@ -334,3 +335,4 @@ export default function CreditClaimPage() {
     </main>
   );
 }
+
