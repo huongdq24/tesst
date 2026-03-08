@@ -20,6 +20,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Language, translations } from '@/lib/i18n';
@@ -74,6 +81,8 @@ export default function CreditClaimPage() {
   const [lang, setLang] = useState<Language>('VI');
   const [apiKey, setApiKey] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isEditingApiKey, setIsEditingApiKey] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState('');
 
   const t = translations[lang];
 
@@ -111,9 +120,29 @@ export default function CreditClaimPage() {
     }, 2000);
   };
 
+  const handleUpdateApiKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tempApiKey || !user) return;
+    
+    const uRef = doc(db, 'users', user.uid);
+    updateDocumentNonBlocking(uRef, {
+      apiKey: tempApiKey,
+      updatedAt: new Date().toISOString()
+    });
+    
+    setIsEditingApiKey(false);
+    toast({
+      title: <div className="flex items-center gap-1"><IGenCodeBranded /> updated.</div>,
+      description: "Settings have been updated."
+    });
+  };
+
   const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
 
   if (isUserLoading || isUserDataLoading) return null;
+
+  // Đảm bảo số dư hiển thị là 0.00 nếu chưa kích hoạt
+  const displayCredits = userData?.hasClaimedCredits ? (userData?.credits || '300.00') : '0.00';
 
   return (
     <main className="min-h-screen relative overflow-hidden bg-slate-50 flex flex-col items-center pt-28 p-4">
@@ -131,7 +160,7 @@ export default function CreditClaimPage() {
               <div className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group">
                 <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                  ${userData?.credits || '0.00'}
+                  ${displayCredits}
                 </span>
               </div>
             </div>
@@ -180,16 +209,26 @@ export default function CreditClaimPage() {
                       <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
                         <span className="text-xs font-medium text-slate-600">Credits</span>
                         <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                          ${userData?.credits || '0.00'}
+                          ${displayCredits}
                         </span>
                       </div>
                       
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                      <DropdownMenuItem 
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setTimeout(() => {
+                            setTempApiKey('');
+                            setIsEditingApiKey(true);
+                          }, 100);
+                        }}
+                        className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors group/key focus:bg-slate-100"
+                      >
                         <div className="flex flex-col">
                           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight"><IGenCodeBranded /></span>
                           <span className="text-xs font-mono font-bold text-cyan-600">{maskApiKey(userData?.apiKey)}</span>
                         </div>
-                      </div>
+                        <Edit className="w-3 h-3 text-slate-300 group-hover/key:text-cyan-500" />
+                      </DropdownMenuItem>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
@@ -229,6 +268,47 @@ export default function CreditClaimPage() {
           )}
         </Button>
       </div>
+
+      <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
+        <DialogContent className="rounded-[2rem] sm:max-w-md border-none shadow-2xl z-[160]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <IGenCodeBranded /> settings
+            </DialogTitle>
+            <DialogDescription>{t.paymentSubtitle}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase text-slate-400"><IGenCodeBranded /></Label>
+              <Input 
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                className="h-12 bg-slate-50 border-none rounded-xl font-mono focus-visible:ring-cyan-500"
+                placeholder={t.apiKeyPlaceholder}
+                autoFocus
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setIsEditingApiKey(false)}
+                className="flex-1 h-12 rounded-xl font-bold"
+              >
+                {t.cancel}
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!tempApiKey}
+                className="flex-1 h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
+              >
+                {t.saveChanges}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
