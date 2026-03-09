@@ -137,8 +137,10 @@ export default function CreditClaimPage() {
               <RefreshCw className="animate-spin" />
             ) : (
               <>
-                <GoogleLogo className="w-5 h-5" />
-                Xác nhận mã và nhận $300 Credits
+                <div className="bg-white p-1.5 rounded-full shadow-md flex items-center justify-center">
+                  <GoogleLogo className="w-5 h-5" />
+                </div>
+                <span>Xác nhận mã và nhận $300 Credits</span>
               </>
             )}
           </Button>
