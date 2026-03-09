@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -68,7 +69,7 @@ const IGenCodeBranded = () => (
   </span>
 );
 
-const DEFAULT_PROJECT_ID = 'gen-lang-client-0683922819';
+const DEFAULT_PROJECT_ID = 'project-5306ce34-5626-488a-913';
 
 export default function CreditClaimPage() {
   const { user, isUserLoading } = useUser();
@@ -102,12 +103,10 @@ export default function CreditClaimPage() {
     if (isVerifying || !apiKey || !user) return;
     setIsVerifying(true);
     
-    // Giả lập xác thực mã và đồng bộ hóa lần đầu
     setTimeout(() => {
       setIsVerifying(false);
       const uRef = doc(db, 'users', user.uid);
       
-      // Khởi tạo credits là 0.00 để chờ đồng bộ thực tế từ Billing API
       updateDocumentNonBlocking(uRef, {
         hasClaimedCredits: true,
         apiKey: apiKey,

@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -56,7 +57,8 @@ import { cn } from "@/lib/utils";
 import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
-const DEFAULT_PROJECT_ID = 'gen-lang-client-0683922819';
+// Project ID thực tế từ Firebase Config và Link của người dùng
+const DEFAULT_PROJECT_ID = 'project-5306ce34-5626-488a-913';
 
 const IGenCodeBranded = () => (
   <span className="font-toyota font-bold">
@@ -85,9 +87,7 @@ export default function HomePage() {
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-  // Lấy toàn bộ user để Admin có thể quản lý và đồng bộ chéo
   const usersCollectionRef = useMemoFirebase(() => {
-    // Chỉ Admin mới được phép query toàn bộ collection users
     if (user && (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || ''))) {
       return collection(db, 'users');
     }
@@ -95,14 +95,10 @@ export default function HomePage() {
   }, [db, userData, user]);
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
-  /**
-   * Cơ chế đồng bộ Credits:
-   * Nếu là Admin, sau khi lấy dữ liệu từ Billing API, sẽ cập nhật cho chính mình 
-   * và TẤT CẢ các user khác đang dùng chung Project ID đó để đảm bảo tính đồng nhất.
-   */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
+    // Luôn ưu tiên dùng DEFAULT_PROJECT_ID thực tế nếu projectID trong user chưa chuẩn
     const pId = userData.projectId || DEFAULT_PROJECT_ID;
     syncLock.current = true;
     setIsSyncing(true);
@@ -123,7 +119,7 @@ export default function HomePage() {
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
-            if (u.projectId === pId && u.credits !== result.credits) {
+            if (u.credits !== result.credits) {
               const otherURef = doc(db, 'users', u.id);
               updateDocumentNonBlocking(otherURef, {
                 credits: result.credits,
@@ -141,7 +137,6 @@ export default function HomePage() {
     }
   }, [user, userData?.credits, userData?.role, userData?.projectId, userData?.hasClaimedCredits, db, allUsers]);
 
-  // Tự động sync khi vào Home
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && !syncLock.current) {
       performBillingSync();

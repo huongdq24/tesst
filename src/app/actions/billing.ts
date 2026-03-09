@@ -1,15 +1,12 @@
+
 'use server';
 
 import { CloudBillingClient } from '@google-cloud/billing';
 
-/**
- * Khởi tạo Billing Client. 
- */
 const billingClient = new CloudBillingClient();
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
- * Cơ chế: Truy vấn thông tin Billing của Project, sau đó truy xuất thông tin Credits liên kết.
  */
 export async function getRealtimeCredits(projectId: string) {
   if (!projectId) {
@@ -22,7 +19,7 @@ export async function getRealtimeCredits(projectId: string) {
       name: `projects/${projectId}`,
     });
 
-    console.log("--- GOOGLE BILLING API RAW RESPONSE ---");
+    console.log("--- DEBUG: GOOGLE BILLING API RAW RESPONSE ---");
     console.log(JSON.stringify(billingInfo, null, 2));
 
     let displayCredits = '0.00';
@@ -30,32 +27,30 @@ export async function getRealtimeCredits(projectId: string) {
 
     /**
      * PHÂN TÍCH DỮ LIỆU CREDITS THỰC TẾ:
-     * Google Cloud Billing API trả về mảng 'credits' cho các gói Promotional/Free Trial.
+     * Logic này xử lý mảng 'credits' từ JSON trả về để bóc tách số dư Free Trial.
      */
     const rawData = billingInfo as any;
     
-    // Nếu API trả về mảng credits trực tiếp hoặc thông qua billingAccount
+    // Kiểm tra mảng credits trong rawData hoặc từ API (nếu được hỗ trợ trả về trực tiếp)
     if (rawData.credits && Array.isArray(rawData.credits)) {
       const activeCredit = rawData.credits.find((c: any) => 
-        c.displayName === "Free Trial" || c.remainingAmount
+        c.displayName === "Free Trial" || (c.remainingAmount && parseFloat(c.remainingAmount.value) > 0)
       );
 
       if (activeCredit && activeCredit.remainingAmount) {
         const val = parseFloat(activeCredit.remainingAmount.value);
         currency = activeCredit.remainingAmount.currencyCode;
 
-        // Quy đổi hiển thị
         if (currency === 'VND') {
-          // Quy đổi xấp xỉ sang USD (tỷ giá ~25.000) để giữ icon '$' trong UI
-          // Hoặc bạn có thể sửa UI để hiển thị 'đ'
+          // Quy đổi sang USD để hiển thị đồng bộ với dấu '$' trong UI. 
+          // Tỷ giá thực tế thường dao động ~25,400. 
           displayCredits = (val / 25000).toFixed(2); 
         } else {
           displayCredits = val.toFixed(2);
         }
       }
     } else if (billingInfo.billingEnabled) {
-      // Nếu không tìm thấy mảng credits nhưng Billing vẫn bật, chúng ta giữ 0.00
-      // vì có thể đây là tài khoản trả sau (Invoiced) không có credit khuyến mãi.
+      // Nếu không có mảng credits nhưng Billing đang bật, mặc định 0.00 (Free Tier hết credit)
       displayCredits = '0.00';
     }
 
