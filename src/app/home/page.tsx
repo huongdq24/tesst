@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -164,7 +165,8 @@ export default function HomePage() {
     performBillingSync();
   };
 
-  const getBillingUrl = (accountId: string) => `https://console.cloud.google.com/billing/${accountId}/credits/all?authuser=3&organizationId=0`;
+  /** Link động không hardcode authuser để tránh dẫn sai tài khoản */
+  const getBillingUrl = (accountId: string) => `https://console.cloud.google.com/billing/${accountId}/credits/all`;
 
   if (isUserLoading || isUserDataLoading || !user) return null;
 
