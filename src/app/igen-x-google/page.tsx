@@ -97,7 +97,6 @@ export default function CreditClaimPage() {
       router.push('/login');
     } else {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      // Nếu là User thường và đã có Key -> Chuyển về Home. Admin được ở lại.
       if (!isAdmin && userData?.hasClaimedCredits && userData?.apiKey) {
         router.push('/home');
       }
@@ -251,16 +250,16 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
-        <div className="glass-card inline-flex flex-col items-center gap-10 px-12 py-10 rounded-[4rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
-          <div className="flex items-center gap-10">
-            <IGenBranding className="text-5xl md:text-6xl" />
-            <X className="w-10 h-10 text-slate-300" />
-            <div className="flex items-center scale-[1.8]">
-              <GoogleLogo className="w-10 h-10" />
+        <div className="glass-card inline-flex flex-col items-center gap-6 px-10 py-6 rounded-[2.5rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
+          <div className="flex items-center gap-8">
+            <IGenBranding className="text-4xl md:text-5xl" />
+            <X className="w-8 h-8 text-slate-300" />
+            <div className="flex items-center scale-[1.5]">
+              <GoogleLogo className="w-8 h-8" />
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border border-slate-200 rounded-full px-4 py-1.5 bg-slate-50/50">
+            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] border border-slate-200 rounded-full px-4 py-1.5 bg-slate-50/50">
               <span>Đối tác chiến lược của</span>
               <ColoredGoogleText />
             </div>
