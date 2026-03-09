@@ -6,49 +6,58 @@ import { firebaseConfig } from '@/firebase/config';
 const billingClient = new CloudBillingClient();
 
 /**
- * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * Cơ chế DISCOVERY: Quét toàn bộ Billing Accounts mà Service Account có quyền truy cập.
+ * Truy xuất số dư Credits.
+ * Hỗ trợ 2 chế độ:
+ * 1. Dùng accessToken (OAuth): Truy xuất số dư của chính tài khoản vừa đăng nhập.
+ * 2. Dùng Service Account: Truy xuất số dư từ các dự án SA có quyền (Dùng cho Admin/Master Sync).
  */
-export async function getRealtimeCredits(targetProjectId?: string) {
+export async function getRealtimeCredits(accessToken?: string) {
   try {
-    // 1. Lấy danh sách tất cả Billing Accounts mà SA có quyền truy cập (Billing Account Viewer)
-    const [billingAccounts] = await billingClient.listBillingAccounts();
-    
     let totalCreditsUSD = 0;
     let foundAnyCredit = false;
 
-    // 2. Nếu danh sách trống, thử tìm thông tin từ Project hiện tại làm điểm bắt đầu
-    let accountsToScan = [...billingAccounts];
-    if (accountsToScan.length === 0) {
-      try {
-        const currentProjectId = targetProjectId || firebaseConfig.projectId;
-        const [projectBillingInfo] = await billingClient.getProjectBillingInfo({
-          name: `projects/${currentProjectId}`,
-        });
-        if (projectBillingInfo.billingAccountName) {
-          const [directAccount] = await billingClient.getBillingAccount({
-            name: projectBillingInfo.billingAccountName,
+    if (accessToken) {
+      // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Cho người dùng mới)
+      const response = await fetch('https://cloudbilling.googleapis.com/v1/billingAccounts', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const accounts = data.billingAccounts || [];
+        
+        for (const account of accounts) {
+          // Gọi API để lấy thông tin chi tiết bao gồm credits
+          const detailRes = await fetch(`https://cloudbilling.googleapis.com/v1/${account.name}`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
           });
-          accountsToScan.push(directAccount);
+          if (detailRes.ok) {
+            const detail = await detailRes.json();
+            const credits = detail.credits || [];
+            if (Array.isArray(credits)) {
+              foundAnyCredit = true;
+              credits.forEach((c: any) => {
+                const amount = c.remainingAmount || c.amount;
+                if (amount) {
+                  const val = parseFloat(amount.value || '0');
+                  const currency = amount.currencyCode || 'VND';
+                  totalCreditsUSD += (currency === 'VND' ? val / 25000 : val);
+                }
+              });
+            }
+          }
         }
-      } catch (e) {
-        console.warn("Could not find billing account via project link.");
       }
     }
 
-    // 3. Duyệt qua từng Billing Account để bóc tách mảng credits (Nơi lưu $300 Free Trial)
-    for (const account of accountsToScan) {
-      if (!account.name) continue;
-
-      try {
-        const [accountInfo] = await billingClient.getBillingAccount({
-          name: account.name,
-        });
-
-        // Bóc tách dữ liệu thô từ mảng credits (Trường này chứa thông tin khuyến mãi của Google)
+    // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Duy trì cho Admin/Discovery)
+    if (!foundAnyCredit) {
+      const [billingAccounts] = await billingClient.listBillingAccounts();
+      for (const account of billingAccounts) {
+        if (!account.name) continue;
+        const [accountInfo] = await billingClient.getBillingAccount({ name: account.name });
         const rawData = accountInfo as any;
         const credits = rawData.credits || [];
-
         if (Array.isArray(credits) && credits.length > 0) {
           foundAnyCredit = true;
           credits.forEach((c: any) => {
@@ -56,18 +65,10 @@ export async function getRealtimeCredits(targetProjectId?: string) {
             if (amount) {
               const val = parseFloat(amount.value || '0');
               const currency = amount.currencyCode || 'VND';
-
-              // Quy đổi VND sang USD nếu cần (tỉ giá xấp xỉ 25.000)
-              if (currency === 'VND') {
-                totalCreditsUSD += (val / 25000);
-              } else {
-                totalCreditsUSD += val;
-              }
+              totalCreditsUSD += (currency === 'VND' ? val / 25000 : val);
             }
           });
         }
-      } catch (accErr) {
-        console.warn(`Error reading account ${account.name}:`, accErr);
       }
     }
 
@@ -78,34 +79,25 @@ export async function getRealtimeCredits(targetProjectId?: string) {
       timestamp: new Date().toISOString()
     };
   } catch (error: any) {
-    console.error("Billing API Discovery Error:", error.message);
+    console.error("Billing API Error:", error.message);
     return { success: false, credits: '0.00', error: error.message };
   }
 }
 
-/**
- * Khám phá các dự án liên kết với Billing Account để hiển thị trong Admin Panel.
- */
 export async function listAllBillingProjects() {
   try {
     const [accounts] = await billingClient.listBillingAccounts();
     let allProjects: any[] = [];
-    
     for (const account of accounts) {
       try {
-        const [projects] = await billingClient.listProjectBillingInfo({
-          name: account.name,
-        });
+        const [projects] = await billingClient.listProjectBillingInfo({ name: account.name });
         allProjects = [...allProjects, ...projects.map(p => ({
           projectId: p.name?.split('/').pop(),
           billingEnabled: p.billingEnabled,
           accountName: account.displayName || account.name
         }))];
-      } catch (err) {
-        console.warn(`Could not list projects for account.`);
-      }
+      } catch (err) { /* silent */ }
     }
-
     return { success: true, projects: allProjects };
   } catch (error: any) {
     return { success: false, error: error.message };
