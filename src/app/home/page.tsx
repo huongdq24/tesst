@@ -21,7 +21,7 @@ import {
   Key,
   Globe,
   Edit,
-  CloudSync
+  Cloud
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -96,7 +96,7 @@ export default function HomePage() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
   /**
-   * Đồng bộ số dư thực tế từ Google Cloud Billing.
+   * Đồng bộ số dư thực tế từ Google Cloud Billing API.
    * Nếu là Admin, sẽ tự động quét và cập nhật cho tất cả User trong hệ thống.
    */
   const performBillingSync = useCallback(async (forceAll: boolean = false) => {
@@ -123,7 +123,6 @@ export default function HomePage() {
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
-            // Cập nhật nếu số dư cũ khác số dư mới nhất từ Google Cloud
             if (u.credits !== latestCredits) {
               const otherURef = doc(db, 'users', u.id);
               updateDocumentNonBlocking(otherURef, {
@@ -149,14 +148,12 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers, toast]);
 
-  // Tự động đồng bộ khi vào trang Home
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && !syncLock.current && allUsers !== undefined) {
       performBillingSync();
     }
   }, [user, userData?.hasClaimedCredits, isUserDataLoading, allUsers, performBillingSync]);
 
-  // Chuyển hướng nếu chưa đăng nhập hoặc chưa kích hoạt credits
   useEffect(() => {
     if (isUserLoading || isUserDataLoading) return;
     if (!user) {
@@ -365,7 +362,7 @@ export default function HomePage() {
                   disabled={isSyncing}
                   className="bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-xl h-11 px-6 shadow-sm font-bold flex items-center gap-2"
                 >
-                  <CloudSync className={cn("w-4 h-4 text-cyan-500", isSyncing && "animate-spin")} />
+                  <RefreshCw className={cn("w-4 h-4 text-cyan-500", isSyncing && "animate-spin")} />
                   {t.syncCloud || 'Đồng bộ Google Cloud'}
                 </Button>
                 <div className="relative w-full md:w-80">
