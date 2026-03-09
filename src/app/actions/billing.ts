@@ -19,7 +19,7 @@ export async function getRealtimeCredits(manualAccessToken?: string) {
     const billingClient = new CloudBillingClient();
 
     // LẤY DANH SÁCH TÀI KHOẢN THANH TOÁN
-    // Nếu có manualAccessToken, ta sẽ dùng nó để cấu hình request
+    // Nếu có manualAccessToken, ta sẽ dùng nó để cấu hình request cho SDK
     const requestOptions = manualAccessToken ? {
       headers: { 'Authorization': `Bearer ${manualAccessToken}` }
     } : {};
@@ -30,8 +30,10 @@ export async function getRealtimeCredits(manualAccessToken?: string) {
     for (const account of billingAccounts) {
       if (!account.name) continue;
 
-      // Lấy chi tiết từng tài khoản để bóc tách mảng credits
+      // Lấy chi tiết từng tài khoản để bóc tách mảng credits ẩn
       const [accountInfo] = await billingClient.getBillingAccount({ name: account.name }, requestOptions as any);
+      
+      // Google SDK trả về object thô, ép kiểu để truy cập trường 'credits'
       const rawData = accountInfo as any;
       const credits = rawData.credits || [];
 
@@ -40,7 +42,7 @@ export async function getRealtimeCredits(manualAccessToken?: string) {
         credits.forEach((c: any) => {
           const amount = c.remainingAmount || c.amount;
           if (amount) {
-            // Xử lý chuỗi số: Loại bỏ dấu phẩy/chấm phân tách hàng nghìn
+            // Xử lý chuỗi số: Loại bỏ dấu phẩy và dấu chấm để parse chính xác
             const valStr = String(amount.value || '0').replace(/[,.]/g, '');
             const val = parseFloat(valStr);
             const currency = amount.currencyCode || 'VND';
@@ -60,10 +62,9 @@ export async function getRealtimeCredits(manualAccessToken?: string) {
     errorLog = err.message;
   }
 
-  // FALLBACK: Nếu dùng Token thủ công bị lỗi 403 (thường do Proxy Studio), 
-  // hãy báo cho người dùng biết để họ tin tưởng vào việc Publish sau này.
+  // Nếu không có gói tín dụng nào thông qua API, kết quả sẽ là 0.00
   const finalCredits = totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00';
-  console.log(`[Server] Hoàn tất đồng bộ. Kết quả: $${finalCredits}`);
+  console.log(`[Server] Hoàn tất đồng bộ. Kết quả cuối cùng: $${finalCredits}`);
 
   return {
     success: true,

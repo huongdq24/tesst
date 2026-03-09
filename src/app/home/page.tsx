@@ -93,11 +93,10 @@ export default function HomePage() {
     syncLock.current = true;
     setIsSyncing(true);
     
+    console.log("[Client] Đang bắt đầu yêu cầu đồng bộ số dư...");
+    
     try {
-      // Ưu tiên dùng Access Token thủ công vừa nhập, nếu không lấy từ Session
       const oauthToken = tempAccessToken || sessionStorage.getItem('google_access_token') || undefined;
-      console.log("[Client] Đang gửi yêu cầu đồng bộ với Token:", oauthToken ? "Có" : "Không");
-      
       const result = await getRealtimeCredits(oauthToken);
       
       if (result.success) {
@@ -108,7 +107,7 @@ export default function HomePage() {
           updatedAt: new Date().toISOString()
         });
         
-        // Admin Master Sync: Ép số dư cho toàn bộ hệ thống
+        // Admin Master Sync: Cập nhật cho toàn hệ thống nếu là Admin
         const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers) {
           allUsers.forEach(u => {

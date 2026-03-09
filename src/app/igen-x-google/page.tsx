@@ -11,7 +11,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { IGenBranding } from '@/components/Branding';
-import { Avatar, AvatarFallback, AvatarImage } from "@/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
@@ -53,6 +53,8 @@ export default function CreditClaimPage() {
     if (isVerifying || !apiKey || !user) return;
     setIsVerifying(true);
     
+    console.log("[Client] Đang bắt đầu kích hoạt với mã iGen...");
+    
     try {
       const oauthToken = manualToken || sessionStorage.getItem('google_access_token') || undefined;
       const result = await getRealtimeCredits(oauthToken);
@@ -73,7 +75,7 @@ export default function CreditClaimPage() {
       toast({ title: "Kích hoạt thành công", description: `Chào mừng bạn. Số dư hiện tại: $${latestCredits}` });
       router.push('/home');
     } catch (err) {
-      console.error(err);
+      console.error("[Client] Lỗi kích hoạt:", err);
       toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối với Google Billing." });
     } finally {
       setIsVerifying(false);
