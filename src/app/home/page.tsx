@@ -43,7 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/avatar";
 import {
   Table,
   TableBody,
@@ -57,7 +57,6 @@ import { cn } from "@/lib/utils";
 import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
-// Project ID thực tế từ Firebase Config và Link của người dùng
 const DEFAULT_PROJECT_ID = 'project-5306ce34-5626-488a-913';
 
 const IGenCodeBranded = () => (
@@ -98,13 +97,11 @@ export default function HomePage() {
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
-    // Luôn ưu tiên dùng DEFAULT_PROJECT_ID thực tế nếu projectID trong user chưa chuẩn
-    const pId = userData.projectId || DEFAULT_PROJECT_ID;
     syncLock.current = true;
     setIsSyncing(true);
     
     try {
-      const result = await getRealtimeCredits(pId);
+      const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
       if (result.success && result.credits) {
         // Cập nhật cho chính User hiện tại
         if (userData.credits !== result.credits) {
@@ -115,7 +112,7 @@ export default function HomePage() {
           });
         }
         
-        // Nếu là Admin, thực hiện đồng bộ cho toàn bộ các User khác dùng chung Project ID
+        // Nếu là Admin, thực hiện đồng bộ cho toàn bộ các User khác
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
@@ -135,7 +132,7 @@ export default function HomePage() {
       setIsSyncing(false);
       syncLock.current = false;
     }
-  }, [user, userData?.credits, userData?.role, userData?.projectId, userData?.hasClaimedCredits, db, allUsers]);
+  }, [user, userData?.credits, userData?.role, userData?.hasClaimedCredits, db, allUsers]);
 
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && !syncLock.current) {

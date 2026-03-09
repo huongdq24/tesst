@@ -28,7 +28,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
 
     /**
      * PHÂN TÍCH DỮ LIỆU CREDITS THỰC TẾ:
-     * Dựa trên JSON output của Cloud Billing API, số dư nằm trong mảng 'credits'.
+     * Dựa trên JSON thực tế, số dư nằm trong mảng 'credits'.
      */
     const rawData = billingInfo as any;
     
@@ -43,15 +43,12 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
         currency = activeCredit.remainingAmount.currencyCode;
 
         if (currency === 'VND') {
-          // Quy đổi sang USD (Tỷ giá tạm tính 25.000) để hiển thị đồng bộ với ký hiệu '$' trên UI.
+          // Quy đổi sang USD (Tỷ giá 25.000) để hiển thị đồng bộ trên UI.
           displayCredits = (val / 25000).toFixed(2); 
         } else {
           displayCredits = val.toFixed(2);
         }
       }
-    } else if (billingInfo.billingEnabled) {
-      // Nếu không có mảng credits nhưng Billing đang bật, đây là tài khoản trả sau (Postpaid)
-      displayCredits = '0.00';
     }
 
     return {
