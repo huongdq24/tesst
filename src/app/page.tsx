@@ -1,9 +1,12 @@
+
 "use client"
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
+
+const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
 
 export default function RootPage() {
   const { user, isUserLoading } = useUser();
@@ -16,12 +19,21 @@ export default function RootPage() {
     if (isUserLoading) return;
 
     if (!user) {
+      // 1. Chưa đăng nhập -> Luôn vào Login
       router.push('/login');
     } else {
       if (isUserDataLoading || userData === undefined) return;
-      if (userData?.hasClaimedCredits && userData?.apiKey) {
+      
+      const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+
+      if (isAdmin) {
+        // Đặc quyền Admin: Mặc định vào Home nhưng không chặn vào các trang khác
+        router.push('/home');
+      } else if (userData?.hasClaimedCredits && userData?.apiKey) {
+        // User đã có key -> Vào Home
         router.push('/home');
       } else {
+        // User chưa có key -> Vào trang kích hoạt
         router.push('/igen-x-google');
       }
     }

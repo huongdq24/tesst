@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -7,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { RefreshCw, Globe } from 'lucide-react';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
 import { IGenBranding } from '@/components/Branding';
 import {
   DropdownMenu,
@@ -18,6 +20,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+
+const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
@@ -54,6 +58,7 @@ const ColoredGoogleText = () => (
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const db = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -65,11 +70,22 @@ export default function LoginPage() {
 
   const t = translations[lang];
 
+  const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
+  const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
+
   useEffect(() => {
-    if (user && !isUserLoading) {
-      router.push('/');
+    if (user && !isUserLoading && !isUserDataLoading && userData) {
+      const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+      // Chỉ tự động chuyển hướng nếu KHÔNG phải Admin
+      if (!isAdmin) {
+        if (userData?.hasClaimedCredits && userData?.apiKey) {
+          router.push('/home');
+        } else {
+          router.push('/igen-x-google');
+        }
+      }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, userData, isUserDataLoading, router]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();

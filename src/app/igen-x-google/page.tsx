@@ -31,6 +31,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Language, translations } from '@/lib/i18n';
 
+const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
+
 const GoogleLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className}>
     <path
@@ -93,8 +95,12 @@ export default function CreditClaimPage() {
     if (isUserLoading || isUserDataLoading) return;
     if (!user) {
       router.push('/login');
-    } else if (userData?.hasClaimedCredits && userData?.apiKey) {
-      router.push('/home');
+    } else {
+      const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+      // Nếu là User thường và đã có Key -> Chuyển về Home. Admin được ở lại.
+      if (!isAdmin && userData?.hasClaimedCredits && userData?.apiKey) {
+        router.push('/home');
+      }
     }
   }, [user, isUserLoading, userData, isUserDataLoading, router]);
 
@@ -111,7 +117,7 @@ export default function CreditClaimPage() {
         hasClaimedCredits: true,
         apiKey: apiKey,
         projectId: DEFAULT_PROJECT_ID,
-        credits: '0.00', 
+        credits: userData?.credits || '0.00', 
         updatedAt: new Date().toISOString()
       });
       
@@ -144,7 +150,7 @@ export default function CreditClaimPage() {
 
   if (isUserLoading || isUserDataLoading) return null;
 
-  const displayCredits = (userData?.hasClaimedCredits && userData?.apiKey) ? (userData?.credits || '0.00') : '0.00';
+  const displayCredits = userData?.credits || '0.00';
 
   return (
     <main className="min-h-screen relative overflow-hidden bg-slate-50 flex flex-col items-center pt-28 p-4">
