@@ -1,3 +1,4 @@
+
 'use server';
 
 import { CloudBillingClient } from '@google-cloud/billing';
@@ -24,19 +25,27 @@ export async function getRealtimeCredits(projectId: string) {
     });
 
     /**
+     * LOG DỮ LIỆU THÔ ĐỂ KIỂM TRA (DẠNG JSON)
+     * Bạn có thể xem kết quả này trong Terminal chạy Backend.
+     */
+    console.log("--- GOOGLE BILLING API RAW RESPONSE ---");
+    console.log(JSON.stringify(billingInfo, null, 2));
+    console.log("---------------------------------------");
+
+    /**
      * GIẢI THÍCH KỸ THUẬT:
      * Google Cloud Billing API trả về trạng thái billingEnabled.
-     * API này không trả về số dư tiền mặt còn lại (ví dụ: $245.50).
-     * Để lấy số dư thực tế, cần tích hợp Cloud Billing Budgets API.
-     * Hiện tại, nếu Billing được bật, chúng tôi trả về '0.00' cho tài khoản Free Tier.
+     * Nếu tài khoản là Free Tier và Billing đã bật, chúng tôi mặc định hiện 0.00 
+     * để tránh giả mạo con số $300.00 như trước đây.
      */
     if (billingInfo.billingEnabled) {
       return {
         success: true,
-        credits: '0.00', // Đã chuyển từ 300.00 thành 0.00 để phản ánh đúng thực tế Free Tier
+        credits: '0.00', 
         billingEnabled: true,
         billingAccount: billingInfo.billingAccountName,
         projectId: projectId,
+        raw: billingInfo, // Trả về raw data để debug nếu cần
         timestamp: new Date().toISOString()
       };
     }

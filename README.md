@@ -7,24 +7,38 @@
 
 ## 📊 Cơ chế quản lý Credits (Tín dụng)
 
-Hiện tại, số dư credits được hiển thị dựa trên trạng thái **Google Cloud Billing API**. 
+Hiện tại, số dư credits được hiển thị dựa trên trạng thái thực tế từ **Google Cloud Billing API**. 
 
-- **Chế độ Thử nghiệm:** Hệ thống mặc định hiển thị `$0.00` cho các tài khoản Free Tier để đảm bảo tính trung thực.
-- **Cơ chế đồng bộ:** Ứng dụng truy vấn trạng thái thanh toán của dự án thông qua Server Actions. Khi bạn đăng nhập bằng Google, ứng dụng yêu cầu quyền `cloud-billing.readonly` để chuẩn bị cho việc kết nối sâu hơn trong tương lai.
+### Cấu trúc phản hồi JSON từ API
+Khi gọi `getProjectBillingInfo`, Google trả về dữ liệu dưới dạng JSON như sau:
 
-## 🚀 Lộ trình lên Production (Xác minh Google)
+```json
+{
+  "name": "projects/PROJECT_ID/billingInfo",
+  "projectId": "PROJECT_ID",
+  "billingAccountName": "billingAccounts/XXXXXX-XXXXXX-XXXXXX",
+  "billingEnabled": true
+}
+```
 
-Để hiển thị số dư thực tế từ tài khoản Gmail của từng người dùng, bạn cần thực hiện:
-
-1. **Xác minh Ứng dụng:** Gửi ứng dụng lên Google Cloud Console để xác minh quyền sử dụng scope `cloud-billing.readonly`.
-2. **Cấu hình Domain:** Phải có domain chính thức và trang Privacy Policy.
-3. **Budget API:** Tích hợp thêm Cloud Billing Budgets API để lấy con số chi tiêu thực tế.
-
----
+- **billingEnabled**: Xác định dự án có đang hoạt động thanh toán hay không.
+- **Lưu ý**: API này mặc định không trả về con số dư lẻ (ví dụ: $123.45). Ứng dụng hiện tại hiển thị `$0.00` cho tài khoản Free Tier nếu `billingEnabled` là `true`.
 
 ## 🛠 Hướng dẫn cho Nhà phát triển
 
-Nếu bạn muốn kiểm tra với Project ID cá nhân:
+### Kiểm tra dữ liệu thô (Raw Data)
+Để xem kết quả JSON thực tế từ Google, bạn có thể kiểm tra Log của Terminal khi chạy ứng dụng. Server Action trong `src/app/actions/billing.ts` đã được cấu hình để log kết quả trả về.
+
+### Thay đổi Project ID
 1. Mở file `src/app/home/page.tsx`.
 2. Thay đổi giá trị `DEFAULT_PROJECT_ID` thành ID dự án Google Cloud của bạn.
-3. Đảm bảo tài khoản chạy backend (Service Account) có quyền `Billing Account Viewer`.
+3. Đảm bảo Service Account chạy ứng dụng có quyền `Billing Account Viewer`.
+
+---
+
+## 🚀 Lộ trình lên Production (Xác minh Google)
+
+Để hiển thị số dư thực tế (ví dụ: lấy con số $300 dùng thử), bạn cần:
+1. **Cloud Billing Budgets API**: Tích hợp thêm API này để lấy dữ liệu ngân sách và chi tiêu thực tế.
+2. **Xác minh Ứng dụng**: Gửi ứng dụng lên Google Cloud Console để xác minh quyền sử dụng scope `cloud-billing.readonly`.
+3. **Domain & Chính sách**: Yêu cầu domain chính thức và trang Privacy Policy.
