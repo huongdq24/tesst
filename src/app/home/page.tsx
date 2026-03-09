@@ -43,7 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
