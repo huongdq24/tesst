@@ -79,13 +79,11 @@ export default function LoginPage() {
     if (user && !isUserLoading && !isUserDataLoading) {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
       
-      // Nếu là Admin vừa đăng nhập xong (thông qua nút bấm) thì phải chuyển hướng
       if (hasAttemptedLogin.current) {
         router.push('/home');
         return;
       }
 
-      // Đối với User thường: Luôn chuyển hướng nếu đã đủ điều kiện
       if (!isAdmin) {
         if (userData?.hasClaimedCredits && userData?.apiKey) {
           router.push('/home');
@@ -101,7 +99,7 @@ export default function LoginPage() {
     if (!userEmail || !password) return;
     
     setIsAuthenticating(true);
-    hasAttemptedLogin.current = true; // Đánh dấu là đang thực hiện đăng nhập
+    hasAttemptedLogin.current = true;
 
     try {
       if (isSignUp) {
@@ -110,7 +108,6 @@ export default function LoginPage() {
       } else {
         await initiateEmailSignIn(auth, userEmail, password);
       }
-      // Sau khi thành công, useEffect sẽ nhận diện hasAttemptedLogin và chuyển hướng
     } catch (error: any) {
         setIsAuthenticating(false);
         hasAttemptedLogin.current = false;
