@@ -44,7 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/avatar";
 import {
   Table,
   TableBody,
@@ -80,6 +80,7 @@ export default function HomePage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
   const syncLock = useRef(false);
 
   const t = translations[lang];
@@ -97,21 +98,22 @@ export default function HomePage() {
 
   /**
    * Đồng bộ số dư thực tế từ Google Cloud Billing API.
-   * Nếu là Admin, sẽ tự động quét và cập nhật cho tất cả User trong hệ thống.
+   * Cơ chế: Tự động cập nhật cho User hiện tại và "đẩy" số dư mới cho toàn bộ User nếu là Admin.
    */
-  const performBillingSync = useCallback(async (forceAll: boolean = false) => {
+  const performBillingSync = useCallback(async (isManual: boolean = false) => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
     syncLock.current = true;
-    setIsSyncing(true);
+    if (isManual) setIsSyncing(true);
     
     try {
       const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
       if (result.success && result.credits) {
-        const latestCredits = result.credits;
+        const latestCredits = String(result.credits);
+        const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         
         // 1. Cập nhật cho User hiện tại
-        if (userData.credits !== latestCredits) {
+        if (String(userData.credits || '0.00') !== latestCredits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
             credits: latestCredits,
@@ -119,11 +121,10 @@ export default function HomePage() {
           });
         }
         
-        // 2. Nếu là Admin, cập nhật cho toàn bộ User khác (Global Sync)
-        const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+        // 2. Nếu là Admin, cập nhật cưỡng bức cho toàn bộ User khác để đảm bảo đồng bộ
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
-            if (u.credits !== latestCredits) {
+            if (String(u.credits || '0.00') !== latestCredits) {
               const otherURef = doc(db, 'users', u.id);
               updateDocumentNonBlocking(otherURef, {
                 credits: latestCredits,
@@ -132,13 +133,14 @@ export default function HomePage() {
             }
           });
           
-          if (forceAll) {
+          if (isManual) {
             toast({
               title: "Global Sync Complete",
-              description: `Tất cả ${allUsers.length} tài khoản đã được đồng bộ với Google Cloud.`
+              description: `Đã đồng bộ số dư $${latestCredits} cho tất cả ${allUsers.length} tài khoản.`
             });
           }
         }
+        setLastSynced(new Date().toLocaleTimeString());
       }
     } catch (error) {
       console.error("Sync Error:", error);
@@ -148,9 +150,16 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers, toast]);
 
+  // Khởi chạy đồng bộ lần đầu và thiết lập Auto-Sync mỗi 60 giây
   useEffect(() => {
-    if (user && userData?.hasClaimedCredits && !isUserDataLoading && !syncLock.current && allUsers !== undefined) {
+    if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
+      
+      const interval = setInterval(() => {
+        performBillingSync();
+      }, 60000); // Tự động cập nhật mỗi phút
+      
+      return () => clearInterval(interval);
     }
   }, [user, userData?.hasClaimedCredits, isUserDataLoading, allUsers, performBillingSync]);
 
@@ -344,15 +353,15 @@ export default function HomePage() {
                   <ShieldCheck className="w-8 h-8 text-cyan-500" />
                   {t.adminPanel}
                 </h2>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-3 mt-1">
                   <Badge variant="secondary" className="bg-cyan-50 text-cyan-600 border-cyan-100 font-bold px-3 py-1 rounded-full text-xs">
-                    {allUsers?.length || 0} {lang === 'VI' ? 'Tổng số người dùng' : 'Total Users'}
+                    {allUsers?.length || 0} {lang === 'VI' ? 'Người dùng' : 'Users'}
                   </Badge>
-                  {isSyncing && (
-                    <div className="flex items-center gap-2 text-[10px] text-cyan-500 font-bold animate-pulse">
-                      <RefreshCw className="w-3 h-3 animate-spin" />
-                      Đang đồng bộ dữ liệu thực tế...
-                    </div>
+                  {lastSynced && (
+                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                      <RefreshCw className={cn("w-3 h-3", isSyncing && "animate-spin")} />
+                      Auto-synced: {lastSynced}
+                    </span>
                   )}
                 </div>
               </div>
@@ -384,7 +393,7 @@ export default function HomePage() {
                     <TableHead className="font-bold py-6 pl-8 text-slate-500 uppercase tracking-widest text-[10px]">{t.userEmail}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userRole}</TableHead>
                     <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]"><IGenCodeBranded /></TableHead>
-                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px]">{t.userCredits}</TableHead>
+                    <TableHead className="font-bold text-slate-500 uppercase tracking-widest text-[10px] text-right pr-8">{t.userCredits}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -407,7 +416,7 @@ export default function HomePage() {
                             <div className="flex flex-col">
                               <span className="font-bold text-slate-900">{u.email}</span>
                               <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                <Search className="w-3 h-3" />
+                                <Calendar className="w-3 h-3" />
                                 {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '---'}
                               </span>
                             </div>
@@ -426,8 +435,8 @@ export default function HomePage() {
                             </code>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                        <TableCell className="text-right pr-8">
+                          <div className="flex items-center justify-end gap-1.5 font-bold text-slate-900">
                             <Wallet className="w-3.5 h-3.5 text-cyan-500" />
                             ${u.credits || '0.00'}
                           </div>

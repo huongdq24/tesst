@@ -20,22 +20,20 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
       name: `projects/${projectId}`,
     });
 
-    console.log("--- DEBUG: GOOGLE BILLING API RAW RESPONSE ---");
-    console.log(JSON.stringify(billingInfo, null, 2));
-
     let displayCredits = '0.00';
     let currency = 'USD';
 
     /**
      * PHÂN TÍCH DỮ LIỆU CREDITS:
      * Google trả về mảng 'credits' chứa các gói khuyến mãi/dùng thử.
+     * Cấu trúc JSON thực tế: { "credits": [ { "remainingAmount": { "value": "7835100", "currencyCode": "VND" } } ] }
      */
     const rawData = billingInfo as any;
     
     if (rawData.credits && Array.isArray(rawData.credits) && rawData.credits.length > 0) {
-      // Tìm gói Free Trial hoặc gói có số dư còn lại (remainingAmount)
+      // Tìm gói có số dư còn lại (remainingAmount)
       const activeCredit = rawData.credits.find((c: any) => 
-        c.displayName === "Free Trial" || (c.remainingAmount && parseFloat(c.remainingAmount.value) > 0)
+        c.remainingAmount && parseFloat(c.remainingAmount.value) >= 0
       );
 
       if (activeCredit && activeCredit.remainingAmount) {
