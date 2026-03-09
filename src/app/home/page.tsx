@@ -20,7 +20,8 @@ import {
   Calendar,
   Key,
   Globe,
-  Edit
+  Edit,
+  CloudSync
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -94,7 +95,11 @@ export default function HomePage() {
   }, [db, userData, user]);
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
-  const performBillingSync = useCallback(async () => {
+  /**
+   * Đồng bộ số dư thực tế từ Google Cloud Billing.
+   * Nếu là Admin, sẽ tự động quét và cập nhật cho tất cả User trong hệ thống.
+   */
+  const performBillingSync = useCallback(async (forceAll: boolean = false) => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
     syncLock.current = true;
@@ -103,25 +108,37 @@ export default function HomePage() {
     try {
       const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
       if (result.success && result.credits) {
-        if (userData.credits !== result.credits) {
+        const latestCredits = result.credits;
+        
+        // 1. Cập nhật cho User hiện tại
+        if (userData.credits !== latestCredits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
-            credits: result.credits,
+            credits: latestCredits,
             updatedAt: new Date().toISOString()
           });
         }
         
+        // 2. Nếu là Admin, cập nhật cho toàn bộ User khác (Global Sync)
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
-            if (u.credits !== result.credits) {
+            // Cập nhật nếu số dư cũ khác số dư mới nhất từ Google Cloud
+            if (u.credits !== latestCredits) {
               const otherURef = doc(db, 'users', u.id);
               updateDocumentNonBlocking(otherURef, {
-                credits: result.credits,
+                credits: latestCredits,
                 updatedAt: new Date().toISOString()
               });
             }
           });
+          
+          if (forceAll) {
+            toast({
+              title: "Global Sync Complete",
+              description: `Tất cả ${allUsers.length} tài khoản đã được đồng bộ với Google Cloud.`
+            });
+          }
         }
       }
     } catch (error) {
@@ -130,14 +147,16 @@ export default function HomePage() {
       setIsSyncing(false);
       syncLock.current = false;
     }
-  }, [user, userData?.credits, userData?.role, userData?.hasClaimedCredits, db, allUsers]);
+  }, [user, userData, db, allUsers, toast]);
 
+  // Tự động đồng bộ khi vào trang Home
   useEffect(() => {
-    if (user && userData?.hasClaimedCredits && !isUserDataLoading && !syncLock.current) {
+    if (user && userData?.hasClaimedCredits && !isUserDataLoading && !syncLock.current && allUsers !== undefined) {
       performBillingSync();
     }
-  }, [user, userData?.hasClaimedCredits, isUserDataLoading, !!allUsers, performBillingSync]);
+  }, [user, userData?.hasClaimedCredits, isUserDataLoading, allUsers, performBillingSync]);
 
+  // Chuyển hướng nếu chưa đăng nhập hoặc chưa kích hoạt credits
   useEffect(() => {
     if (isUserLoading || isUserDataLoading) return;
     if (!user) {
@@ -335,12 +354,20 @@ export default function HomePage() {
                   {isSyncing && (
                     <div className="flex items-center gap-2 text-[10px] text-cyan-500 font-bold animate-pulse">
                       <RefreshCw className="w-3 h-3 animate-spin" />
-                      Auto-syncing...
+                      Đang đồng bộ dữ liệu thực tế...
                     </div>
                   )}
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
+                <Button 
+                  onClick={() => performBillingSync(true)} 
+                  disabled={isSyncing}
+                  className="bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-xl h-11 px-6 shadow-sm font-bold flex items-center gap-2"
+                >
+                  <CloudSync className={cn("w-4 h-4 text-cyan-500", isSyncing && "animate-spin")} />
+                  {t.syncCloud || 'Đồng bộ Google Cloud'}
+                </Button>
                 <div className="relative w-full md:w-80">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input 
