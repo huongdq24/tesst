@@ -7,7 +7,7 @@ import { IGenBranding } from '@/components/Branding';
 import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Fixed missing Label import
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Wallet, 
