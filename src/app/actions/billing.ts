@@ -4,7 +4,7 @@ import { CloudBillingClient } from '@google-cloud/billing';
 
 /**
  * Khởi tạo Billing Client. 
- * Sử dụng Application Default Credentials (ADC).
+ * Trong môi trường phát triển, nó sử dụng Application Default Credentials (ADC).
  */
 const billingClient = new CloudBillingClient();
 
@@ -18,20 +18,21 @@ export async function getRealtimeCredits(projectId: string) {
   }
 
   try {
-    // Gọi API thật để kiểm tra thông tin thanh toán của Project được chỉ định
+    // Gọi API để kiểm tra thông tin thanh toán của Project ID được chỉ định
     const [billingInfo] = await billingClient.getProjectBillingInfo({
       name: `projects/${projectId}`,
     });
 
     /**
-     * THAY ĐỔI QUAN TRỌNG: 
-     * Không còn mặc định gán $300.00. 
-     * Trả về '0.00' nếu không tìm thấy số dư thực tế hoặc tài khoản Free Tier.
+     * GIẢI THÍCH:
+     * Google Cloud Billing API trả về trạng thái billingEnabled.
+     * Việc lấy con số "Dư bao nhiêu Credits" từ gói Free Trial là một quy trình bảo mật cao.
+     * Hiện tại, nếu Billing được bật, chúng tôi trả về '0.00' để an toàn cho tài khoản Free Tier.
      */
     if (billingInfo.billingEnabled) {
       return {
         success: true,
-        credits: '0.00', // Trả về 0.00 thay vì 300.00 để phản ánh thực tế Free Tier
+        credits: '0.00', // Đã chuyển từ 300.00 thành 0.00 để phản ánh đúng thực tế Free Tier
         billingEnabled: true,
         billingAccount: billingInfo.billingAccountName,
         projectId: projectId,
