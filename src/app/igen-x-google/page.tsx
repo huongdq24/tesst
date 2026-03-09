@@ -141,7 +141,14 @@ export default function CreditClaimPage() {
             type="submit"
             className="w-full h-16 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3"
           >
-            {isVerifying ? <RefreshCw className="animate-spin" /> : "Đồng bộ & Kích hoạt Tín dụng"}
+            {isVerifying ? (
+              <RefreshCw className="animate-spin" />
+            ) : (
+              <>
+                <GoogleLogo className="w-5 h-5" />
+                Xác nhận mã và nhận $300 Credits
+              </>
+            )}
           </Button>
           
           <p className="text-[10px] text-slate-400 italic">Số dư sẽ tự động đồng bộ vĩnh viễn thông qua hạ tầng Google Service Account.</p>
