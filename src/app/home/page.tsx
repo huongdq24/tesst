@@ -87,44 +87,41 @@ export default function HomePage() {
   const { data: allUsers } = useCollection(usersCollectionRef);
 
   const performBillingSync = useCallback(async () => {
-    if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
+    if (!user || syncLock.current) return;
     
     syncLock.current = true;
     setIsSyncing(true);
-    console.log("[Client] Khởi động đồng bộ Credits cho:", user.email);
     
     try {
       const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
-      console.log("[Client] Access Token hiện có:", oauthToken ? "CÓ" : "KHÔNG");
-      
       const result = await getRealtimeCredits(oauthToken);
-      console.log("[Client] Kết quả từ Billing API:", result);
       
-      const latestCredits = result.success ? String(result.credits) : (userData?.credits || '0.00');
-      const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      
-      const selfRef = doc(db, 'users', user.uid);
-      updateDocumentNonBlocking(selfRef, {
-        credits: latestCredits,
-        updatedAt: new Date().toISOString()
-      });
-      
-      if (isAdminUser && allUsers) {
-        console.log("[Client] Admin Master Sync: Đang cập nhật cho toàn bộ hệ thống...");
-        allUsers.forEach(u => {
-          updateDocumentNonBlocking(doc(db, 'users', u.id), {
-            credits: latestCredits,
-            updatedAt: new Date().toISOString()
-          });
+      if (result.success) {
+        const latestCredits = String(result.credits);
+        const selfRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(selfRef, {
+          credits: latestCredits,
+          updatedAt: new Date().toISOString()
         });
+        
+        // Admin Master Sync
+        const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+        if (isAdminUser && allUsers) {
+          allUsers.forEach(u => {
+            updateDocumentNonBlocking(doc(db, 'users', u.id), {
+              credits: latestCredits,
+              updatedAt: new Date().toISOString()
+            });
+          });
+        }
       }
-      
-      if (isAdminUser) {
+
+      if (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
         const projResult = await listAllBillingProjects();
         if (projResult.success) setBillingProjects(projResult.projects || []);
       }
     } catch (error) {
-      console.error("[Client] Sync Error:", error);
+      console.error("[Client] Sync error:", error);
     } finally {
       setIsSyncing(false);
       syncLock.current = false;
@@ -156,7 +153,7 @@ export default function HomePage() {
       updatedAt: new Date().toISOString() 
     });
     setIsEditingApiKey(false);
-    toast({ title: "Đã cập nhật", description: "Thông tin mã iGen đã được lưu." });
+    toast({ title: "Đã cập nhật", description: "Mã iGen đã được lưu thành công." });
     performBillingSync();
   };
 
@@ -204,7 +201,7 @@ export default function HomePage() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => { auth.signOut(); sessionStorage.removeItem('google_access_token'); router.push('/login'); }} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
-                  <LogOut className="w-4 h-4" /> {t.logoutButton || 'Đăng xuất'}
+                  <LogOut className="w-4 h-4" /> Đăng xuất
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
