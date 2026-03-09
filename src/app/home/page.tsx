@@ -90,7 +90,7 @@ export default function HomePage() {
   const { data: allUsers } = useCollection(usersCollectionRef);
 
   /**
-   * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt khi vào trang hoặc hành động AI.
+   * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt khi vào trang hoặc hành động quan trọng.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;

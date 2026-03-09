@@ -7,17 +7,17 @@ const billingClient = new CloudBillingClient();
 
 /**
  * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * Cơ chế DEEP DISCOVERY: Quét sâu vào toàn bộ Billing Accounts và Project liên kết.
+ * Cơ chế DISCOVERY: Quét toàn bộ Billing Accounts mà Service Account có quyền truy cập.
  */
 export async function getRealtimeCredits(targetProjectId?: string) {
   try {
-    // 1. Lấy danh sách tất cả Billing Accounts mà SA có quyền truy cập
+    // 1. Lấy danh sách tất cả Billing Accounts mà SA có quyền truy cập (Billing Account Viewer)
     const [billingAccounts] = await billingClient.listBillingAccounts();
     
     let totalCreditsUSD = 0;
     let foundAnyCredit = false;
 
-    // 2. Nếu không tìm thấy Account qua list, thử lấy từ Project hiện tại
+    // 2. Nếu danh sách trống, thử tìm thông tin từ Project hiện tại làm điểm bắt đầu
     let accountsToScan = [...billingAccounts];
     if (accountsToScan.length === 0) {
       try {
@@ -36,7 +36,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
       }
     }
 
-    // 3. Duyệt qua từng Billing Account để bóc tách mảng credits (Free Trial)
+    // 3. Duyệt qua từng Billing Account để bóc tách mảng credits (Nơi lưu $300 Free Trial)
     for (const account of accountsToScan) {
       if (!account.name) continue;
 
@@ -45,7 +45,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
           name: account.name,
         });
 
-        // Bóc tách dữ liệu thô từ mảng credits (Đây là nơi Google lưu $300 Free Trial)
+        // Bóc tách dữ liệu thô từ mảng credits (Trường này chứa thông tin khuyến mãi của Google)
         const rawData = accountInfo as any;
         const credits = rawData.credits || [];
 
