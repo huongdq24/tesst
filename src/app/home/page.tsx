@@ -21,7 +21,8 @@ import {
   Key,
   Globe,
   Edit,
-  Cloud
+  Cloud,
+  CheckCircle2
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -97,14 +98,14 @@ export default function HomePage() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
   /**
-   * Đồng bộ số dư thực tế từ Google Cloud Billing API.
-   * Cơ chế: Tự động cập nhật cho User hiện tại và "đẩy" số dư mới cho toàn bộ User nếu là Admin.
+   * TỰ ĐỘNG ĐỒNG BỘ: 
+   * Dùng Service Account lấy số dư thực tế và "ép" cập nhật cho toàn bộ Database nếu là Admin.
    */
-  const performBillingSync = useCallback(async (isManual: boolean = false) => {
+  const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
     syncLock.current = true;
-    if (isManual) setIsSyncing(true);
+    setIsSyncing(true);
     
     try {
       const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
@@ -112,7 +113,7 @@ export default function HomePage() {
         const latestCredits = String(result.credits);
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         
-        // 1. Cập nhật cho User hiện tại
+        // 1. Cập nhật cho chính Admin đang xem
         if (String(userData.credits || '0.00') !== latestCredits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -121,7 +122,7 @@ export default function HomePage() {
           });
         }
         
-        // 2. Nếu là Admin, cập nhật cưỡng bức cho toàn bộ User khác để đảm bảo đồng bộ
+        // 2. Ép đồng bộ cho toàn bộ User khác (Chỉ Admin làm được việc này)
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
             if (String(u.credits || '0.00') !== latestCredits) {
@@ -132,32 +133,25 @@ export default function HomePage() {
               });
             }
           });
-          
-          if (isManual) {
-            toast({
-              title: "Global Sync Complete",
-              description: `Đã đồng bộ số dư $${latestCredits} cho tất cả ${allUsers.length} tài khoản.`
-            });
-          }
         }
         setLastSynced(new Date().toLocaleTimeString());
       }
     } catch (error) {
-      console.error("Sync Error:", error);
+      console.error("Auto-Sync Error:", error);
     } finally {
       setIsSyncing(false);
       syncLock.current = false;
     }
-  }, [user, userData, db, allUsers, toast]);
+  }, [user, userData, db, allUsers]);
 
-  // Khởi chạy đồng bộ lần đầu và thiết lập Auto-Sync mỗi 60 giây
+  // Kích hoạt cơ chế Auto-Sync mỗi 60 giây
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
       
       const interval = setInterval(() => {
         performBillingSync();
-      }, 60000); // Tự động cập nhật mỗi phút
+      }, 60000); 
       
       return () => clearInterval(interval);
     }
@@ -357,23 +351,16 @@ export default function HomePage() {
                   <Badge variant="secondary" className="bg-cyan-50 text-cyan-600 border-cyan-100 font-bold px-3 py-1 rounded-full text-xs">
                     {allUsers?.length || 0} {lang === 'VI' ? 'Người dùng' : 'Users'}
                   </Badge>
-                  {lastSynced && (
-                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
-                      <RefreshCw className={cn("w-3 h-3", isSyncing && "animate-spin")} />
-                      Auto-synced: {lastSynced}
+                  <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                    <span className="text-[10px] text-slate-600 font-bold">
+                      {lang === 'VI' ? 'Tự động đồng bộ' : 'Auto-synced'}: {lastSynced || '...'}
                     </span>
-                  )}
+                    {isSyncing && <RefreshCw className="w-3 h-3 animate-spin text-cyan-500 ml-1" />}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
-                <Button 
-                  onClick={() => performBillingSync(true)} 
-                  disabled={isSyncing}
-                  className="bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-xl h-11 px-6 shadow-sm font-bold flex items-center gap-2"
-                >
-                  <RefreshCw className={cn("w-4 h-4 text-cyan-500", isSyncing && "animate-spin")} />
-                  {t.syncCloud || 'Đồng bộ Google Cloud'}
-                </Button>
                 <div className="relative w-full md:w-80">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input 
