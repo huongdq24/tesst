@@ -103,7 +103,6 @@ export default function HomePage() {
     try {
       const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
       if (result.success && result.credits) {
-        // Cập nhật cho chính User hiện tại
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -112,7 +111,6 @@ export default function HomePage() {
           });
         }
         
-        // Nếu là Admin, thực hiện đồng bộ cho toàn bộ các User khác dùng chung Project này
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
@@ -385,7 +383,7 @@ export default function HomePage() {
                             <div className="flex flex-col">
                               <span className="font-bold text-slate-900">{u.email}</span>
                               <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
+                                <Search className="w-3 h-3" />
                                 {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '---'}
                               </span>
                             </div>
