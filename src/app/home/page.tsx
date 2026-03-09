@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -86,7 +85,9 @@ export default function HomePage() {
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
+  // Lấy toàn bộ user để Admin có thể quản lý và đồng bộ chéo
   const usersCollectionRef = useMemoFirebase(() => {
+    // Chỉ Admin mới được phép query toàn bộ collection users
     if (user && (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || ''))) {
       return collection(db, 'users');
     }
@@ -94,6 +95,11 @@ export default function HomePage() {
   }, [db, userData, user]);
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
+  /**
+   * Cơ chế đồng bộ Credits:
+   * Nếu là Admin, sau khi lấy dữ liệu từ Billing API, sẽ cập nhật cho chính mình 
+   * và TẤT CẢ các user khác đang dùng chung Project ID đó để đảm bảo tính đồng nhất.
+   */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
@@ -104,6 +110,7 @@ export default function HomePage() {
     try {
       const result = await getRealtimeCredits(pId);
       if (result.success && result.credits) {
+        // Cập nhật cho chính User hiện tại
         if (userData.credits !== result.credits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -112,6 +119,7 @@ export default function HomePage() {
           });
         }
         
+        // Nếu là Admin, thực hiện đồng bộ cho toàn bộ các User khác dùng chung Project ID
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
@@ -133,6 +141,7 @@ export default function HomePage() {
     }
   }, [user, userData?.credits, userData?.role, userData?.projectId, userData?.hasClaimedCredits, db, allUsers]);
 
+  // Tự động sync khi vào Home
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && !syncLock.current) {
       performBillingSync();

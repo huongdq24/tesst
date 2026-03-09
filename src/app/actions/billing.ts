@@ -24,10 +24,11 @@ export async function getRealtimeCredits(projectId: string) {
     });
 
     /**
-     * GIẢI THÍCH:
+     * GIẢI THÍCH KỸ THUẬT:
      * Google Cloud Billing API trả về trạng thái billingEnabled.
-     * Việc lấy con số "Dư bao nhiêu Credits" từ gói Free Trial là một quy trình bảo mật cao.
-     * Hiện tại, nếu Billing được bật, chúng tôi trả về '0.00' để an toàn cho tài khoản Free Tier.
+     * API này không trả về số dư tiền mặt còn lại (ví dụ: $245.50).
+     * Để lấy số dư thực tế, cần tích hợp Cloud Billing Budgets API.
+     * Hiện tại, nếu Billing được bật, chúng tôi trả về '0.00' cho tài khoản Free Tier.
      */
     if (billingInfo.billingEnabled) {
       return {
