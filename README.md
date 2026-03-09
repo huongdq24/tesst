@@ -35,16 +35,16 @@ Khi tài khoản có gói dùng thử hoặc tín dụng khuyến mãi, Google t
 
 Để Web App hiển thị con số thật, bạn cần cấp quyền cho **Service Account** của ứng dụng:
 
-### Bước 1: Tìm email Service Account
-1. Truy cập trang [IAM & Admin](https://console.cloud.google.com/iam-admin/iam) trong Google Cloud Console.
-2. Tìm email của Service Account được Firebase tạo tự động (thường có tên `firebase-app-hosting-backend` hoặc tương tự).
+### Bước 1: Sử dụng Service Account của Firebase
+Dựa trên cấu hình IAM của bạn, Service Account chính xác đang được sử dụng là:
+`firebase-adminsdk-fbsvc@project-5306ce34-5626-488a-913.iam.gserviceaccount.com`
 
 ### Bước 2: Gán quyền Billing
-1. Truy cập trang **Billing** trong Google Cloud Console.
+1. Truy cập trang **Billing** trong Google Cloud Console: https://console.cloud.google.com/billing
 2. Chọn Billing Account của bạn.
-3. Ở tab **Account Management**, nhấn **Add Principal**.
-4. Dán email Service Account ở Bước 1 vào.
-5. Gán vai trò (Role): **Billing Account Viewer**.
+3. Ở tab **Account Management** (Quản lý tài khoản), nhấn **Add Principal** (Thêm thành viên).
+4. Dán email Service Account ở Bước 1 vào: `firebase-adminsdk-fbsvc@project-5306ce34-5626-488a-913.iam.gserviceaccount.com`
+5. Gán vai trò (Role): **Billing Account Viewer** (Người xem tài khoản thanh toán).
 
 ---
 
