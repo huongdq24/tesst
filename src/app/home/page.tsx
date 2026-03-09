@@ -18,7 +18,9 @@ import {
   Search,
   Layers,
   Settings,
-  Key
+  Key,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -66,6 +68,7 @@ export default function HomePage() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,7 +90,7 @@ export default function HomePage() {
   const { data: allUsers } = useCollection(usersCollectionRef);
 
   /**
-   * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt khi vào trang (Login Event).
+   * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt khi vào trang hoặc hành động AI.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -96,7 +99,8 @@ export default function HomePage() {
     setIsSyncing(true);
     
     try {
-      const result = await getRealtimeCredits(firebaseConfig.projectId);
+      // Gọi Discovery Sync: Quét toàn bộ Credits mà SA có quyền
+      const result = await getRealtimeCredits();
       const latestCredits = result.success ? String(result.credits) : '0.00';
       const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
       
@@ -107,7 +111,7 @@ export default function HomePage() {
         updatedAt: new Date().toISOString()
       });
       
-      // 2. ADMIN MASTER SYNC: Ép đồng bộ cho toàn bộ User khác
+      // 2. ADMIN MASTER SYNC: Ép đồng bộ cho toàn bộ User khác dựa trên Discovery
       if (isAdminUser && allUsers && allUsers.length > 0) {
         allUsers.forEach(u => {
           const targetRef = doc(db, 'users', u.id);
@@ -157,7 +161,9 @@ export default function HomePage() {
     const uRef = doc(db, 'users', user.uid);
     updateDocumentNonBlocking(uRef, { apiKey: tempApiKey, updatedAt: new Date().toISOString() });
     setIsEditingApiKey(false);
-    toast({ title: "Đã cập nhật", description: "Cài đặt đã được lưu." });
+    toast({ title: "Đã cập nhật", description: "Cài đặt iGen Code đã được lưu." });
+    // Kích hoạt đồng bộ lại sau khi đổi Key
+    performBillingSync();
   };
 
   const filteredUsers = allUsers?.filter(u => 
@@ -190,7 +196,7 @@ export default function HomePage() {
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="flex items-center gap-2 bg-white px-4 py-1.5 rounded-full shadow-lg border border-slate-100 group">
+            <div className="flex items-center gap-2 bg-white px-4 py-1.5 rounded-full shadow-lg border border-slate-100 group cursor-pointer" onClick={performBillingSync}>
               <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
               <span className="text-xs font-bold text-slate-900">${userData?.credits || '0.00'}</span>
               {isSyncing && <RefreshCw className="w-3 h-3 animate-spin text-cyan-400 ml-1" />}
@@ -219,7 +225,7 @@ export default function HomePage() {
                   onClick={() => { setTempApiKey(userData?.apiKey || ''); setIsEditingApiKey(true); }} 
                   className="p-3 rounded-xl gap-3 cursor-pointer"
                 >
-                  <Settings className="w-4 h-4 text-slate-400" /> {t.editApiKey}
+                  <Settings className="w-4 h-4 text-slate-400" /> Cài đặt mã iGen
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />
@@ -317,14 +323,17 @@ export default function HomePage() {
         <DialogContent className="rounded-[2.5rem] border-none shadow-2xl z-[160] p-8 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Settings className="w-6 h-6 text-cyan-500" /> {t.editApiKey}
+              <Settings className="w-6 h-6 text-cyan-500" /> Cài đặt mã iGen
             </DialogTitle>
           </DialogHeader>
           
           <div className="mt-6 space-y-6">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
               <p className="text-xs font-bold text-slate-400 uppercase mb-1">Số dư hiện tại</p>
-              <p className="text-2xl font-bold text-slate-900">${userData?.credits || '0.00'}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-2xl font-bold text-slate-900">${userData?.credits || '0.00'}</p>
+                {isSyncing && <RefreshCw className="w-4 h-4 animate-spin text-cyan-500" />}
+              </div>
             </div>
 
             <form onSubmit={handleUpdateApiKey} className="space-y-4">
@@ -332,12 +341,24 @@ export default function HomePage() {
                 <Label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
                   <Key className="w-3 h-3" /> {t.apiKeyLabel}
                 </Label>
-                <Input 
-                  value={tempApiKey} 
-                  onChange={(e) => setTempApiKey(e.target.value)} 
-                  className="h-14 bg-white border-2 border-slate-100 focus:border-cyan-500 rounded-2xl px-4 font-mono" 
-                  placeholder={t.apiKeyPlaceholder} 
-                />
+                <div className="relative">
+                  <Input 
+                    type={showApiKey ? 'text' : 'password'}
+                    value={tempApiKey} 
+                    onChange={(e) => setTempApiKey(e.target.value)} 
+                    className="h-14 bg-white border-2 border-slate-100 focus:border-cyan-500 rounded-2xl px-4 pr-12 font-mono" 
+                    placeholder={t.apiKeyPlaceholder} 
+                  />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 p-0 rounded-xl"
+                  >
+                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-slate-400 italic mt-1">Mã iGen được sử dụng để xác thực các dịch vụ AI chuyên sâu.</p>
               </div>
               
               <div className="flex gap-3 pt-4">
@@ -345,7 +366,7 @@ export default function HomePage() {
                   {t.cancel}
                 </Button>
                 <Button type="submit" className="flex-1 h-14 bg-slate-900 text-white rounded-2xl shadow-lg font-bold hover:bg-slate-800 transition-all">
-                  {t.saveChanges}
+                  Lưu thay đổi
                 </Button>
               </div>
             </form>
