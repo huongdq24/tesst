@@ -7,8 +7,9 @@ const billingClient = new CloudBillingClient();
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
+ * Yêu cầu: Service Account chạy App phải có quyền 'Billing Account Viewer'.
  */
-export async function getRealtimeCredits(projectId: string) {
+export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5626-488a-913') {
   if (!projectId) {
     return { success: false, credits: '0.00', error: 'Project ID is required' };
   }
@@ -28,11 +29,12 @@ export async function getRealtimeCredits(projectId: string) {
     /**
      * PHÂN TÍCH DỮ LIỆU CREDITS THỰC TẾ:
      * Logic này xử lý mảng 'credits' từ JSON trả về để bóc tách số dư Free Trial.
+     * Google trả về credits trong mảng nếu tài khoản có khuyến mãi hoặc dùng thử.
      */
     const rawData = billingInfo as any;
     
-    // Kiểm tra mảng credits trong rawData hoặc từ API (nếu được hỗ trợ trả về trực tiếp)
     if (rawData.credits && Array.isArray(rawData.credits)) {
+      // Tìm gói Free Trial hoặc gói có số dư lớn hơn 0
       const activeCredit = rawData.credits.find((c: any) => 
         c.displayName === "Free Trial" || (c.remainingAmount && parseFloat(c.remainingAmount.value) > 0)
       );
@@ -42,15 +44,14 @@ export async function getRealtimeCredits(projectId: string) {
         currency = activeCredit.remainingAmount.currencyCode;
 
         if (currency === 'VND') {
-          // Quy đổi sang USD để hiển thị đồng bộ với dấu '$' trong UI. 
-          // Tỷ giá thực tế thường dao động ~25,400. 
+          // Quy đổi sang USD (Tỷ giá giả định 25.000) để hiển thị đồng bộ với ký hiệu '$' trên UI.
           displayCredits = (val / 25000).toFixed(2); 
         } else {
           displayCredits = val.toFixed(2);
         }
       }
     } else if (billingInfo.billingEnabled) {
-      // Nếu không có mảng credits nhưng Billing đang bật, mặc định 0.00 (Free Tier hết credit)
+      // Nếu không có mảng credits nhưng Billing đang bật, có thể là tài khoản thanh toán trả sau (Postpaid)
       displayCredits = '0.00';
     }
 
