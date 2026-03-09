@@ -120,7 +120,9 @@ export default function CreditClaimPage() {
         </div>
 
         <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
-        <p className="text-sm text-slate-500 mb-8">Nhập mã định danh iGen của bạn để liên kết và đồng bộ Credits vĩnh viễn.</p>
+        <p className="text-sm text-slate-500 mb-8">
+          Nhập mã đối tác của <span className="text-cyan-500 font-bold">iGen</span> do <ColoredGoogleText /> cung cấp để nhận $300 Credits
+        </p>
         
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="space-y-2 text-left">
