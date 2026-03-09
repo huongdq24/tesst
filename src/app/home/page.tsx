@@ -7,7 +7,7 @@ import { IGenBranding } from '@/components/Branding';
 import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/label"; // Fixed: Added missing Label import
 import { useToast } from "@/hooks/use-toast";
 import { 
   Wallet, 
@@ -109,7 +109,7 @@ export default function HomePage() {
         updatedAt: new Date().toISOString()
       });
       
-      // ADMIN MASTER PUSH: Ép đồng bộ cho toàn hệ thống
+      // ADMIN MASTER PUSH: Ép đồng bộ cho toàn hệ thống để con số $300 nhất quán
       if (isAdminUser && allUsers) {
         allUsers.forEach(u => {
           updateDocumentNonBlocking(doc(db, 'users', u.id), {
@@ -156,7 +156,7 @@ export default function HomePage() {
       updatedAt: new Date().toISOString() 
     });
     setIsEditingApiKey(false);
-    toast({ title: "Đã cập nhật", description: "Thông tin đã được lưu." });
+    toast({ title: "Đã cập nhật", description: "Thông tin mã iGen đã được lưu." });
     performBillingSync();
   };
 
@@ -177,7 +177,7 @@ export default function HomePage() {
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="flex items-center gap-2 bg-white px-4 py-1.5 rounded-full shadow-lg border border-slate-100 cursor-pointer" onClick={performBillingSync}>
+            <div className="flex items-center gap-2 bg-white px-4 py-1.5 rounded-full shadow-lg border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors" onClick={performBillingSync}>
               <Wallet className="w-4 h-4 text-cyan-500" />
               <span className="text-xs font-bold text-slate-900">${userData?.credits || '0.00'}</span>
               {isSyncing && <RefreshCw className="w-3 h-3 animate-spin text-cyan-400 ml-1" />}
@@ -186,7 +186,7 @@ export default function HomePage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-3 cursor-pointer group">
-                  <Avatar className="w-10 h-10 border-2 border-white shadow-md group-hover:border-cyan-400">
+                  <Avatar className="w-10 h-10 border-2 border-white shadow-md group-hover:border-cyan-400 transition-all">
                     <AvatarImage src={user?.photoURL || undefined} referrerPolicy="no-referrer" />
                     <AvatarFallback className="bg-cyan-500 text-white font-bold">{user?.email?.[0]?.toUpperCase()}</AvatarFallback>
                   </Avatar>
@@ -200,11 +200,11 @@ export default function HomePage() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => { setTempApiKey(userData?.apiKey || ''); setIsEditingApiKey(true); }} className="p-3 rounded-xl gap-3 cursor-pointer">
-                  <Settings className="w-4 h-4 text-slate-400" /> Cài đặt mã iGen
+                  <Settings className="w-4 h-4 text-slate-400" /> {t.editApiKey}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => { auth.signOut(); sessionStorage.removeItem('google_access_token'); router.push('/login'); }} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
-                  <LogOut className="w-4 h-4" /> Đăng xuất
+                  <LogOut className="w-4 h-4" /> {t.logoutButton || 'Đăng xuất'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -220,7 +220,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold flex items-center gap-3"><ShieldCheck className="w-8 h-8 text-cyan-500" /> {t.adminPanel}</h2>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <div className="lg:col-span-8">
-                <div className="glass-card rounded-[2rem] overflow-hidden bg-white shadow-2xl">
+                <div className="glass-card rounded-[2rem] overflow-hidden bg-white shadow-2xl border border-slate-100">
                   <Table>
                     <TableHeader className="bg-slate-50/50"><TableRow><TableHead className="py-6 pl-8">EMAIL</TableHead><TableHead>VAI TRÒ</TableHead><TableHead className="text-right pr-8">SỐ DƯ CREDITS</TableHead></TableRow></TableHeader>
                     <TableBody>
@@ -236,7 +236,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="lg:col-span-4">
-                <div className="glass-card rounded-[2rem] p-6 bg-white shadow-2xl">
+                <div className="glass-card rounded-[2rem] p-6 bg-white shadow-2xl border border-slate-100">
                   <h3 className="text-lg font-bold flex items-center gap-2 mb-6"><Layers className="w-5 h-5 text-cyan-500" /> Billing Discovery</h3>
                   <div className="space-y-4">
                     {billingProjects.map((p, idx) => (
@@ -258,8 +258,8 @@ export default function HomePage() {
       <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />
 
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-        <DialogContent className="rounded-[2.5rem] p-8 max-w-md">
-          <DialogHeader><DialogTitle className="text-2xl font-bold flex items-center gap-2"><Settings className="w-6 h-6 text-cyan-500" /> Cài đặt mã iGen</DialogTitle></DialogHeader>
+        <DialogContent className="rounded-[2.5rem] p-8 max-w-md border-none shadow-2xl">
+          <DialogHeader><DialogTitle className="text-2xl font-bold flex items-center gap-2"><Settings className="w-6 h-6 text-cyan-500" /> {t.editApiKey}</DialogTitle></DialogHeader>
           <div className="mt-6 space-y-6">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
               <p className="text-xs font-bold text-slate-400 uppercase mb-1">Số dư thực tế</p>
@@ -268,18 +268,29 @@ export default function HomePage() {
             <form onSubmit={handleUpdateApiKey} className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                  <Key className="w-3 h-3" /> Mã đối tác iGen
+                  <Key className="w-3 h-3" /> {t.apiKeyLabel}
                 </Label>
                 <div className="relative">
-                  <Input type={showApiKey ? 'text' : 'password'} value={tempApiKey} onChange={(e) => setTempApiKey(e.target.value)} className="h-14 rounded-2xl pr-12 font-mono" />
-                  <Button type="button" variant="ghost" onClick={() => setShowApiKey(!showApiKey)} className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 p-0 rounded-xl">
-                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <Input 
+                    type={showApiKey ? 'text' : 'password'} 
+                    value={tempApiKey} 
+                    onChange={(e) => setTempApiKey(e.target.value)} 
+                    className="h-14 rounded-2xl pr-12 font-mono bg-slate-50 border-none focus-visible:ring-cyan-500" 
+                    placeholder={t.apiKeyPlaceholder}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    onClick={() => setShowApiKey(!showApiKey)} 
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 p-0 rounded-xl hover:bg-slate-200"
+                  >
+                    {showApiKey ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
                   </Button>
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
-                <Button type="button" variant="ghost" onClick={() => setIsEditingApiKey(false)} className="flex-1 h-14 rounded-2xl font-bold">{t.cancel}</Button>
-                <Button type="submit" className="flex-1 h-14 bg-slate-900 text-white rounded-2xl font-bold shadow-lg">Lưu thay đổi</Button>
+                <Button type="button" variant="ghost" onClick={() => setIsEditingApiKey(false)} className="flex-1 h-14 rounded-2xl font-bold text-slate-500">{t.cancel}</Button>
+                <Button type="submit" className="flex-1 h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold shadow-lg transition-all">{t.saveChanges}</Button>
               </div>
             </form>
           </div>
