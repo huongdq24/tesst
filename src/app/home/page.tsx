@@ -73,7 +73,7 @@ export default function HomePage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [billingSummary, setBillingSummary] = useState<any[]>([]);
-  const [dynamicBillingId, setDynamicBillingId] = useState<string>('017D0B-3695DA-8D7FB7');
+  const [dynamicBillingId, setDynamicBillingId] = useState<string>('');
   const syncLock = useRef(false);
 
   const t = translations[lang];
@@ -96,6 +96,7 @@ export default function HomePage() {
     setIsSyncing(true);
     
     try {
+      console.log("[Client] Đang yêu cầu đồng bộ số dư qua Service Account...");
       const result = await getRealtimeCredits();
       
       if (result.success) {
@@ -125,6 +126,8 @@ export default function HomePage() {
         if (result.foundCredits) {
           toast({ title: "Đồng bộ thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
         }
+      } else {
+        console.error("[Client] Lỗi Server Action:", result.error);
       }
     } catch (error: any) {
       console.error("[Client] Sync error:", error);
@@ -165,8 +168,7 @@ export default function HomePage() {
     performBillingSync();
   };
 
-  /** Link động không hardcode authuser để tránh dẫn sai tài khoản */
-  const getBillingUrl = (accountId: string) => `https://console.cloud.google.com/billing/${accountId}/credits/all`;
+  const getBillingUrl = (accountId: string) => accountId ? `https://console.cloud.google.com/billing/${accountId}/credits/all` : 'https://console.cloud.google.com/billing';
 
   if (isUserLoading || isUserDataLoading || !user) return null;
 

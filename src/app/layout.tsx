@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import type {Metadata} from 'next';
 import './globals.css';
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
  * Note: Next.js 15 uses Promises for params/searchParams. 
  * We explicitly structure the props to avoid enumeration errors.
  */
-export default function RootLayout(props: {
+export default function RootLayout({
+  children,
+}: {
   children: React.ReactNode;
 }) {
   return (
@@ -26,7 +29,7 @@ export default function RootLayout(props: {
       </head>
       <body className="font-body antialiased bg-slate-50 min-h-screen">
         <FirebaseClientProvider>
-          {props.children}
+          {children}
           <Toaster />
         </FirebaseClientProvider>
       </body>

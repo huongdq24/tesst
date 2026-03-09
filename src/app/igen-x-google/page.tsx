@@ -26,6 +26,17 @@ const GoogleLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
   </svg>
 );
 
+const ColoredGoogleText = () => (
+  <span className="font-bold">
+    <span className="text-[#4285F4]">G</span>
+    <span className="text-[#EA4335]">o</span>
+    <span className="text-[#FBBC05]">o</span>
+    <span className="text-[#4285F4]">g</span>
+    <span className="text-[#34A853]">l</span>
+    <span className="text-[#EA4335]">e</span>
+  </span>
+);
+
 export default function CreditClaimPage() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
@@ -54,7 +65,9 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
+      console.log("[Client] Đang yêu cầu đồng bộ số dư qua Service Account...");
       const result = await getRealtimeCredits();
+      
       const latestCredits = result.success ? String(result.credits) : '0.00';
       
       const uRef = doc(db, 'users', user.uid);
@@ -68,7 +81,7 @@ export default function CreditClaimPage() {
       if (result.success && result.foundCredits) {
         toast({ title: "Kích hoạt thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
       } else {
-        toast({ title: "Đã liên kết", description: "Tài khoản iGen đã sẵn sàng. Số dư sẽ được cập nhật khi hệ thống xác thực hoàn tất." });
+        toast({ title: "Đã liên kết", description: "Tài khoản iGen đã sẵn sàng. Số dư sẽ được cập nhật tự động qua Service Account." });
       }
       
       router.push('/home');
@@ -104,7 +117,7 @@ export default function CreditClaimPage() {
             <GoogleLogo className="w-8 h-8" />
           </div>
           <div className="px-4 py-1 bg-slate-50/50 rounded-full border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            Service Account Infrastructure
+            Đối tác chiến lược của <ColoredGoogleText />
           </div>
         </div>
 
