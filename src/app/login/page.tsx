@@ -19,7 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
@@ -84,12 +83,8 @@ export default function LoginPage() {
         return;
       }
 
-      // If already logged in, skip login unless specifically returning
-      if (user && !hasAttemptedLogin.current) {
-        if (isAdmin) {
-          // Admin has the right to be on login page, but usually we push to home
-          // unless they want to stay here. Let's redirect if it's initial visit.
-        } else if (userData?.hasClaimedCredits && userData?.apiKey) {
+      if (user && !hasAttemptedLogin.current && !isAdmin) {
+        if (userData?.hasClaimedCredits && userData?.apiKey) {
           router.push('/home');
         } else {
           router.push('/igen-x-google');
@@ -174,7 +169,7 @@ export default function LoginPage() {
 
       <div className="glass w-full max-w-md p-10 rounded-[2.5rem] relative text-center shadow-2xl z-10">
         <h1 className="text-3xl font-bold tracking-tight mb-4">
-          <span className="text-cyan-500 font-toyota">iGen</span> - Trợ lý AI cho Kiến trúc sư
+          <span className="text-cyan-500">iGen</span> - Trợ lý AI cho Kiến trúc sư
         </h1>
         
         <form onSubmit={handleAuth} className="space-y-4 pt-4">

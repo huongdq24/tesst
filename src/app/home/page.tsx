@@ -62,7 +62,7 @@ const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
 const DEFAULT_PROJECT_ID = 'project-5306ce34-5626-488a-913';
 
 const IGenCodeBranded = () => (
-  <span className="font-toyota font-bold">
+  <span className="font-bold">
     <span className="text-cyan-500">iGen</span> Code
   </span>
 );
@@ -134,7 +134,6 @@ export default function HomePage() {
         setLastSynced(new Date().toLocaleTimeString());
       }
 
-      // If Admin, also list projects
       if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
         const projResult = await listAllBillingProjects();
         if (projResult.success) {

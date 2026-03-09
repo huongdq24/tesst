@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from 'react';
@@ -36,8 +37,8 @@ export const VoiceAssistantOrb = ({
       setIsListening(false);
       setIsProcessing(true);
       try {
-        const query = lang === 'VI' ? 'Thiết kế một biệt thự hiện đại' : lang === 'EN' ? 'Design a modern villa' : '设计一座现代别墅';
-        const result = await voiceArchitecturalAssistant({ query, apiKey: userApiKey });
+        const queryText = lang === 'VI' ? 'Thiết kế một biệt thự hiện đại' : 'Design a modern villa';
+        const result = await voiceArchitecturalAssistant({ query: queryText, apiKey: userApiKey });
         
         if (result.responseAudio) {
           const audio = new Audio(result.responseAudio);
@@ -49,7 +50,7 @@ export const VoiceAssistantOrb = ({
           description: result.responseText,
         });
 
-        // ĐỒNG BỘ THỰC TẾ TỪ GOOGLE CLOUD BILLING API
+        // ĐỒNG BỘ THỰC TẾ TỪ GOOGLE CLOUD BILLING API NGAY LẬP TỨC
         const resultCredits = await getRealtimeCredits();
         if (resultCredits.success && resultCredits.credits) {
           const uRef = doc(db, 'users', user.uid);
@@ -91,7 +92,7 @@ export const VoiceAssistantOrb = ({
             </button>
           </TooltipTrigger>
           <TooltipContent side="left" className="bg-white text-slate-900 border-none shadow-xl font-medium">
-            {lang === 'VI' ? 'Chạm để nói chuyện với iGen...' : lang === 'EN' ? 'Tap to speak to iGen...' : '点击与 iGen 对话...'}
+            {lang === 'VI' ? 'Chạm để nói chuyện với iGen...' : 'Tap to speak to iGen...'}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

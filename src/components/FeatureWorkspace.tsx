@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -123,7 +124,7 @@ export const FeatureWorkspace = ({
         updatedAt: new Date().toISOString()
       });
 
-      // ĐỒNG BỘ THỰC TẾ TỪ GOOGLE CLOUD BILLING API
+      // ĐỒNG BỘ THỰC TẾ TỪ GOOGLE CLOUD BILLING API NGAY SAU KHI XONG
       const resultCredits = await getRealtimeCredits();
       if (resultCredits.success && resultCredits.credits) {
         const uRef = doc(db, 'users', user.uid);
@@ -146,7 +147,6 @@ export const FeatureWorkspace = ({
 
   const getLocale = () => {
     if (lang === 'VI') return vi;
-    if (lang === 'ZH') return zhCN;
     return enUS;
   };
 
