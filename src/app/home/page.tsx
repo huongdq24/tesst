@@ -6,7 +6,7 @@ import { IGenBranding } from '@/components/Branding';
 import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // FIXED: Missing import
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Wallet, 
@@ -15,7 +15,6 @@ import {
   RefreshCw,
   ShieldCheck,
   LayoutDashboard,
-  Search,
   Layers,
   Settings,
   Key,
@@ -28,7 +27,6 @@ import { FeatureWorkspace } from '@/components/FeatureWorkspace';
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc, collection } from 'firebase/firestore';
-import { firebaseConfig } from '@/firebase/config';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +70,6 @@ export default function HomePage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [billingProjects, setBillingProjects] = useState<any[]>([]);
   const syncLock = useRef(false);
 
@@ -90,7 +87,7 @@ export default function HomePage() {
   const { data: allUsers } = useCollection(usersCollectionRef);
 
   /**
-   * Đồng bộ Credits dựa trên Access Token hoặc Service Account.
+   * Đồng bộ Credits dựa trên Access Token của người dùng hoặc Service Account.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -99,10 +96,9 @@ export default function HomePage() {
     setIsSyncing(true);
     
     try {
-      // Lấy Token từ sessionStorage nếu vừa đăng nhập (để quét tài khoản mới)
       const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
-      
       const result = await getRealtimeCredits(oauthToken);
+      
       const latestCredits = result.success ? String(result.credits) : (userData?.credits || '0.00');
       const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
       
@@ -113,7 +109,7 @@ export default function HomePage() {
         updatedAt: new Date().toISOString()
       });
       
-      // ADMIN MASTER PUSH
+      // ADMIN MASTER PUSH: Ép đồng bộ cho toàn hệ thống
       if (isAdminUser && allUsers) {
         allUsers.forEach(u => {
           updateDocumentNonBlocking(doc(db, 'users', u.id), {
@@ -123,7 +119,6 @@ export default function HomePage() {
         });
       }
       
-      setLastSynced(new Date().toLocaleTimeString());
       if (isAdminUser) {
         const projResult = await listAllBillingProjects();
         if (projResult.success) setBillingProjects(projResult.projects || []);
@@ -161,7 +156,7 @@ export default function HomePage() {
       updatedAt: new Date().toISOString() 
     });
     setIsEditingApiKey(false);
-    toast({ title: "Đã cập nhật", description: "Mã iGen đã được lưu." });
+    toast({ title: "Đã cập nhật", description: "Thông tin đã được lưu." });
     performBillingSync();
   };
 
@@ -229,7 +224,7 @@ export default function HomePage() {
                   <Table>
                     <TableHeader className="bg-slate-50/50"><TableRow><TableHead className="py-6 pl-8">EMAIL</TableHead><TableHead>VAI TRÒ</TableHead><TableHead className="text-right pr-8">SỐ DƯ CREDITS</TableHead></TableRow></TableHeader>
                     <TableBody>
-                      {allUsers?.filter(u => u.email?.toLowerCase().includes(searchTerm.toLowerCase())).map((u) => (
+                      {allUsers?.map((u) => (
                         <TableRow key={u.id} className="border-slate-100">
                           <TableCell className="py-6 pl-8 font-bold">{u.email}</TableCell>
                           <TableCell><Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role === 'admin' ? 'Admin' : 'User'}</Badge></TableCell>
@@ -273,7 +268,7 @@ export default function HomePage() {
             <form onSubmit={handleUpdateApiKey} className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                  <Key className="w-3 h-3" /> {t.apiKeyLabel}
+                  <Key className="w-3 h-3" /> Mã đối tác iGen
                 </Label>
                 <div className="relative">
                   <Input type={showApiKey ? 'text' : 'password'} value={tempApiKey} onChange={(e) => setTempApiKey(e.target.value)} className="h-14 rounded-2xl pr-12 font-mono" />

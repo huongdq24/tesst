@@ -6,18 +6,16 @@ import { firebaseConfig } from '@/firebase/config';
 const billingClient = new CloudBillingClient();
 
 /**
- * Truy xuất số dư Credits.
- * Hỗ trợ 2 chế độ:
- * 1. Dùng accessToken (OAuth): Truy xuất số dư của chính tài khoản vừa đăng nhập.
- * 2. Dùng Service Account: Truy xuất số dư từ các dự án SA có quyền (Dùng cho Admin/Master Sync).
+ * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
+ * Hỗ trợ bóc tách mảng credits từ JSON response.
  */
 export async function getRealtimeCredits(accessToken?: string) {
   try {
     let totalCreditsUSD = 0;
     let foundAnyCredit = false;
 
+    // CHẾ ĐỘ 1: DÙNG ACCESS TOKEN (Dành cho người dùng vừa đăng nhập Google)
     if (accessToken) {
-      // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Cho người dùng mới)
       const response = await fetch('https://cloudbilling.googleapis.com/v1/billingAccounts', {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
@@ -27,7 +25,6 @@ export async function getRealtimeCredits(accessToken?: string) {
         const accounts = data.billingAccounts || [];
         
         for (const account of accounts) {
-          // Gọi API để lấy thông tin chi tiết bao gồm credits
           const detailRes = await fetch(`https://cloudbilling.googleapis.com/v1/${account.name}`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
           });
@@ -41,6 +38,7 @@ export async function getRealtimeCredits(accessToken?: string) {
                 if (amount) {
                   const val = parseFloat(amount.value || '0');
                   const currency = amount.currencyCode || 'VND';
+                  // Quy đổi VND sang USD xấp xỉ
                   totalCreditsUSD += (currency === 'VND' ? val / 25000 : val);
                 }
               });
@@ -50,7 +48,7 @@ export async function getRealtimeCredits(accessToken?: string) {
       }
     }
 
-    // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Duy trì cho Admin/Discovery)
+    // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Phương án dự phòng cho Admin)
     if (!foundAnyCredit) {
       const [billingAccounts] = await billingClient.listBillingAccounts();
       for (const account of billingAccounts) {
@@ -58,6 +56,7 @@ export async function getRealtimeCredits(accessToken?: string) {
         const [accountInfo] = await billingClient.getBillingAccount({ name: account.name });
         const rawData = accountInfo as any;
         const credits = rawData.credits || [];
+        
         if (Array.isArray(credits) && credits.length > 0) {
           foundAnyCredit = true;
           credits.forEach((c: any) => {
@@ -79,7 +78,7 @@ export async function getRealtimeCredits(accessToken?: string) {
       timestamp: new Date().toISOString()
     };
   } catch (error: any) {
-    console.error("Billing API Error:", error.message);
+    console.error("Billing API Critical Error:", error.message);
     return { success: false, credits: '0.00', error: error.message };
   }
 }

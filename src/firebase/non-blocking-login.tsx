@@ -31,7 +31,7 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 export async function initiateGoogleSignIn(authInstance: Auth): Promise<string | null> {
   const provider = new GoogleAuthProvider();
   
-  // Yêu cầu quyền đọc số dư thực từ tài khoản Google của người dùng
+  // YÊU CẦU QUYỀN ĐỌC BILLING TỪ TÀI KHOẢN NGƯỜI DÙNG
   provider.addScope('https://www.googleapis.com/auth/cloud-billing.readonly');
   
   try {
@@ -40,7 +40,7 @@ export async function initiateGoogleSignIn(authInstance: Auth): Promise<string |
     const accessToken = credential?.accessToken || null;
     
     if (accessToken) {
-      // Lưu tạm token để HomePage có thể gọi Discovery Sync ngay lập tức
+      // Lưu tạm token vào sessionStorage để HomePage có thể dùng ngay
       sessionStorage.setItem('google_access_token', accessToken);
     }
     
