@@ -19,7 +19,6 @@ export default function RootPage() {
     if (isUserLoading) return;
 
     if (!user) {
-      // 1. Chưa đăng nhập -> Luôn vào Login
       router.push('/login');
     } else {
       if (isUserDataLoading || userData === undefined) return;
@@ -27,13 +26,11 @@ export default function RootPage() {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
 
       if (isAdmin) {
-        // Đặc quyền Admin: Mặc định vào Home nhưng không chặn vào các trang khác
+        // Admin always has a place in Home
         router.push('/home');
       } else if (userData?.hasClaimedCredits && userData?.apiKey) {
-        // User đã có key -> Vào Home
         router.push('/home');
       } else {
-        // User chưa có key -> Vào trang kích hoạt
         router.push('/igen-x-google');
       }
     }

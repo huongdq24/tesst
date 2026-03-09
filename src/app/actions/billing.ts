@@ -4,10 +4,10 @@
 import { CloudBillingClient } from '@google-cloud/billing';
 
 const billingClient = new CloudBillingClient();
+const BILLING_ACCOUNT_ID = '017D0B-3695DA-8D7FB7';
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
- * Cơ chế: Truy vấn mảng 'credits' trong kết quả trả về của Project.
  */
 export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5626-488a-913') {
   if (!projectId) {
@@ -15,7 +15,6 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
   }
 
   try {
-    // 1. Lấy thông tin Billing của Project
     const [billingInfo] = await billingClient.getProjectBillingInfo({
       name: `projects/${projectId}`,
     });
@@ -23,15 +22,9 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
     let displayCredits = '0.00';
     let currency = 'USD';
 
-    /**
-     * PHÂN TÍCH DỮ LIỆU CREDITS:
-     * Google trả về mảng 'credits' chứa các gói khuyến mãi/dùng thử.
-     * Cấu trúc JSON thực tế: { "credits": [ { "remainingAmount": { "value": "7835100", "currencyCode": "VND" } } ] }
-     */
     const rawData = billingInfo as any;
     
     if (rawData.credits && Array.isArray(rawData.credits) && rawData.credits.length > 0) {
-      // Tìm gói có số dư còn lại (remainingAmount)
       const activeCredit = rawData.credits.find((c: any) => 
         c.remainingAmount && parseFloat(c.remainingAmount.value) >= 0
       );
@@ -41,7 +34,6 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
         currency = activeCredit.remainingAmount.currencyCode;
 
         if (currency === 'VND') {
-          // Quy đổi sang USD (Tỷ giá 25.000) để hiển thị đồng bộ trên UI.
           displayCredits = (val / 25000).toFixed(2); 
         } else {
           displayCredits = val.toFixed(2);
@@ -63,5 +55,27 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
       credits: '0.00', 
       error: error.message 
     };
+  }
+}
+
+/**
+ * Liệt kê tất cả các Project ID liên kết với Billing Account.
+ */
+export async function listAllBillingProjects() {
+  try {
+    const [projects] = await billingClient.listProjectBillingInfo({
+      name: `billingAccounts/${BILLING_ACCOUNT_ID}`,
+    });
+
+    return {
+      success: true,
+      projects: projects.map(p => ({
+        projectId: p.name?.split('/').pop(),
+        billingEnabled: p.billingEnabled,
+      })),
+    };
+  } catch (error: any) {
+    console.error("List Projects Error:", error.message);
+    return { success: false, error: error.message };
   }
 }

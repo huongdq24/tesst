@@ -97,6 +97,7 @@ export default function CreditClaimPage() {
       router.push('/login');
     } else {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+      // Admin bypass to allow manual re-claim or checking
       if (!isAdmin && userData?.hasClaimedCredits && userData?.apiKey) {
         router.push('/home');
       }
@@ -149,8 +150,6 @@ export default function CreditClaimPage() {
 
   if (isUserLoading || isUserDataLoading) return null;
 
-  const displayCredits = userData?.credits || '0.00';
-
   return (
     <main className="min-h-screen relative overflow-hidden bg-slate-50 flex flex-col items-center pt-28 p-4">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
@@ -167,7 +166,7 @@ export default function CreditClaimPage() {
               <div className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group">
                 <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                  ${displayCredits}
+                  ${userData?.credits || '0.00'}
                 </span>
               </div>
             </div>
@@ -185,9 +184,6 @@ export default function CreditClaimPage() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setLang('EN')} className={cn("rounded-xl cursor-pointer p-3", lang === 'EN' && "bg-slate-50 font-bold text-cyan-600")}>
                     English
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLang('ZH')} className={cn("rounded-xl cursor-pointer p-3", lang === 'ZH' && "bg-slate-50 font-bold text-cyan-600")}>
-                    中文
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -216,7 +212,7 @@ export default function CreditClaimPage() {
                       <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
                         <span className="text-xs font-medium text-slate-600">Credits</span>
                         <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                          ${displayCredits}
+                          ${userData?.credits || '0.00'}
                         </span>
                       </div>
                       
@@ -250,16 +246,16 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
-        <div className="glass-card inline-flex flex-col items-center gap-6 px-10 py-6 rounded-[2.5rem] shadow-2xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
-          <div className="flex items-center gap-8">
-            <IGenBranding className="text-4xl md:text-5xl" />
-            <X className="w-8 h-8 text-slate-300" />
-            <div className="flex items-center scale-[1.5]">
-              <GoogleLogo className="w-8 h-8" />
+        <div className="glass-card inline-flex flex-col items-center gap-4 px-8 py-5 rounded-2xl shadow-xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
+          <div className="flex items-center gap-6">
+            <IGenBranding className="text-3xl" />
+            <X className="w-5 h-5 text-slate-300" />
+            <div className="flex items-center scale-[1.2]">
+              <GoogleLogo className="w-6 h-6" />
             </div>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em] border border-slate-200 rounded-full px-4 py-1.5 bg-slate-50/50">
+            <div className="flex items-center gap-2 text-[8px] font-bold text-slate-500 uppercase tracking-[0.2em] border border-slate-200 rounded-full px-3 py-1 bg-slate-50/50">
               <span>Đối tác chiến lược của</span>
               <ColoredGoogleText />
             </div>

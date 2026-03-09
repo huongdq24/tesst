@@ -84,8 +84,12 @@ export default function LoginPage() {
         return;
       }
 
-      if (!isAdmin) {
-        if (userData?.hasClaimedCredits && userData?.apiKey) {
+      // If already logged in, skip login unless specifically returning
+      if (user && !hasAttemptedLogin.current) {
+        if (isAdmin) {
+          // Admin has the right to be on login page, but usually we push to home
+          // unless they want to stay here. Let's redirect if it's initial visit.
+        } else if (userData?.hasClaimedCredits && userData?.apiKey) {
           router.push('/home');
         } else {
           router.push('/igen-x-google');
@@ -161,9 +165,6 @@ export default function LoginPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLang('EN')} className={cn("rounded-xl cursor-pointer p-3", lang === 'EN' && "bg-slate-50 font-bold text-cyan-600")}>
                   English
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLang('ZH')} className={cn("rounded-xl cursor-pointer p-3", lang === 'ZH' && "bg-slate-50 font-bold text-cyan-600")}>
-                  中文
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
