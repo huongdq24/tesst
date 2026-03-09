@@ -9,13 +9,16 @@ export const metadata: Metadata = {
   description: 'Tương lai của thiết kế kiến trúc được hỗ trợ bởi iGen AI',
 };
 
-export default function RootLayout({
-  children,
-}: {
+/**
+ * Root Layout for iGen application.
+ * Note: Next.js 15 uses Promises for params/searchParams. 
+ * We explicitly structure the props to avoid enumeration errors.
+ */
+export default function RootLayout(props: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -23,7 +26,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-slate-50 min-h-screen">
         <FirebaseClientProvider>
-          {children}
+          {props.children}
           <Toaster />
         </FirebaseClientProvider>
       </body>

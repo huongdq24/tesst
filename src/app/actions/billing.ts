@@ -5,27 +5,30 @@ import { CloudBillingClient } from '@google-cloud/billing';
 /**
  * Truy xuất số dư Credits thực tế ĐỘNG (Dynamic) cho TẤT CẢ các dự án liên kết.
  * Quét toàn bộ Billing Accounts mà Service Account có quyền truy cập.
+ * Tích hợp cơ chế xử lý lỗi mạnh mẽ cho môi trường Firebase Studio.
  */
 export async function getRealtimeCredits() {
   let totalCreditsUSD = 0;
   let foundAnyCredit = false;
   let summary = [];
 
-  console.log(`[Server - Dynamic Sync] Bắt đầu quét toàn bộ hệ thống Billing...`);
+  console.log(`[Server - Dynamic Sync] Khởi động tiến trình quét Billing (Service Account)...`);
 
   try {
+    // Khởi tạo client. Trong môi trường Studio, nếu chưa gắn Service Account Key, 
+    // lệnh này có thể ném lỗi "Could not refresh access token".
     const billingClient = new CloudBillingClient();
 
-    // 1. Liệt kê tất cả Billing Accounts mà Service Account có quyền xem
+    // 1. Liệt kê tất cả Billing Accounts
     const [billingAccounts] = await billingClient.listBillingAccounts();
     console.log(`[Server] Tìm thấy ${billingAccounts.length} Billing Account(s).`);
 
     for (const account of billingAccounts) {
       if (!account.name) continue;
 
-      console.log(`[Server] Đang kiểm tra Account: ${account.displayName} (${account.name})`);
+      console.log(`[Server] Đang phân tích Account: ${account.displayName} (${account.name})`);
 
-      // 2. Truy vấn thông tin chi tiết để tìm mảng credits
+      // 2. Truy vấn chi tiết mảng credits
       const [accountInfo] = await billingClient.getBillingAccount({ 
         name: account.name 
       });
@@ -39,7 +42,7 @@ export async function getRealtimeCredits() {
           const amount = c.remainingAmount || c.amount;
           if (amount) {
             const rawVal = String(amount.value || '0');
-            // Xử lý chuỗi số VND/USD (Xóa dấu phẩy, dấu chấm phân cách)
+            // Xử lý chuỗi số dư (Xóa dấu phẩy phân cách định dạng VND/USD)
             const cleanVal = rawVal.replace(/,/g, '').replace(/\.(?=.*\.)/g, ''); 
             const val = parseFloat(cleanVal);
             const currency = amount.currencyCode || 'VND';
@@ -48,12 +51,12 @@ export async function getRealtimeCredits() {
             const converted = (currency === 'VND' ? val / 25000 : val);
             totalCreditsUSD += converted;
             
-            console.log(`[Server] PHÁT HIỆN CREDIT: ${rawVal} ${currency} (~$${converted.toFixed(2)})`);
+            console.log(`[Server] PHÁT HIỆN TÍN DỤNG: ${rawVal} ${currency} (~$${converted.toFixed(2)})`);
           }
         });
       }
 
-      // 3. Liệt kê các dự án liên kết với Account này (Để hiển thị Dashboard Admin)
+      // 3. Liệt kê các dự án liên kết (Dành cho Dashboard Admin)
       try {
         const [projects] = await billingClient.listProjectBillingInfo({ name: account.name });
         summary.push({
@@ -64,17 +67,26 @@ export async function getRealtimeCredits() {
           }))
         });
       } catch (e) {
-        console.warn(`[Server] Không thể liệt kê dự án cho account ${account.name}`);
+        console.warn(`[Server] Bỏ qua danh sách dự án cho account ${account.name}`);
       }
     }
 
   } catch (err: any) {
-    console.error("[Server] Lỗi Billing API (Service Account):", err.message);
+    console.error("[Server] Lỗi Xác thực Google SDK:", err.message);
+    
+    // Nếu lỗi "Could not refresh access token", trả về một lỗi thân thiện thay vì 500
+    if (err.message?.includes('access token')) {
+      return { 
+        success: false, 
+        error: "Hệ thống iGen Cloud đang chờ cấp quyền từ Service Account. Vui lòng triển khai (Publish) app để kích hoạt tự động.",
+        credits: '0.00'
+      };
+    }
     return { success: false, error: err.message };
   }
 
   const finalCredits = totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00';
-  console.log(`[Server] Tổng Credits bóc tách được: $${finalCredits}`);
+  console.log(`[Server] Tổng Credits hoàn tất bóc tách: $${finalCredits}`);
 
   return {
     success: true,

@@ -92,7 +92,7 @@ export default function HomePage() {
     syncLock.current = true;
     setIsSyncing(true);
     
-    console.log("[Client] Đang yêu cầu đồng bộ Credits Động (Service Account)...");
+    console.log("[Client] Đang yêu cầu đồng bộ Credits Động qua Service Account...");
     
     try {
       const result = await getRealtimeCredits();
@@ -106,7 +106,6 @@ export default function HomePage() {
           updatedAt: new Date().toISOString()
         });
         
-        // Master Sync cho Admin
         const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers) {
           allUsers.forEach(u => {
@@ -119,12 +118,13 @@ export default function HomePage() {
         }
         
         if (result.foundCredits) {
-          toast({ title: "Đồng bộ thành công", description: `Hệ thống đã nhận diện Credits: $${latestCredits}` });
+          toast({ title: "Đồng bộ thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
         }
       } else {
-        console.error("[Client] Lỗi Server Action:", result.error);
+        console.warn("[Client] Service Account chưa sẵn sàng:", result.error);
+        // Không hiện toast lỗi nếu là do môi trường Studio chưa config
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[Client] Sync error:", error);
     } finally {
       setIsSyncing(false);

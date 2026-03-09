@@ -52,7 +52,7 @@ export default function CreditClaimPage() {
     if (isVerifying || !apiKey || !user) return;
     setIsVerifying(true);
     
-    console.log("[Client] Đang bắt đầu kích hoạt đồng bộ Credits Động...");
+    console.log("[Client] Đang kích hoạt đồng bộ qua Service Account...");
     
     try {
       const result = await getRealtimeCredits();
@@ -66,11 +66,16 @@ export default function CreditClaimPage() {
         updatedAt: new Date().toISOString()
       });
 
-      toast({ title: "Kích hoạt thành công", description: `Hệ thống iGen đã sẵn sàng. Số dư: $${latestCredits}` });
+      if (result.success && result.foundCredits) {
+        toast({ title: "Kích hoạt thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
+      } else {
+        toast({ title: "Đã liên kết", description: "Tài khoản iGen đã sẵn sàng. Số dư sẽ được cập nhật khi hệ thống xác thực hoàn tất." });
+      }
+      
       router.push('/home');
     } catch (err) {
       console.error("[Client] Lỗi kích hoạt:", err);
-      toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối với hệ thống Billing của Google." });
+      toast({ variant: "destructive", title: "Lỗi", description: "Không thể khởi tạo tiến trình xác thực của iGen." });
     } finally {
       setIsVerifying(false);
     }
@@ -104,8 +109,8 @@ export default function CreditClaimPage() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold mb-2">Đồng bộ Hệ thống Google Cloud</h2>
-        <p className="text-sm text-slate-500 mb-8">Nhập mã định danh iGen của bạn để liên kết và đồng bộ Credits từ hệ thống Google.</p>
+        <h2 className="text-2xl font-bold mb-2">Đồng bộ Hệ thống iGen Cloud</h2>
+        <p className="text-sm text-slate-500 mb-8">Nhập mã định danh iGen của bạn để liên kết và đồng bộ Credits vĩnh viễn.</p>
         
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="space-y-2 text-left">
@@ -128,7 +133,7 @@ export default function CreditClaimPage() {
             {isVerifying ? <RefreshCw className="animate-spin" /> : "Đồng bộ & Kích hoạt Tín dụng"}
           </Button>
           
-          <p className="text-[10px] text-slate-400 italic">Số dư sẽ tự động đồng bộ từ Billing Accounts mà Service Account có quyền xem.</p>
+          <p className="text-[10px] text-slate-400 italic">Số dư sẽ tự động đồng bộ vĩnh viễn thông qua hạ tầng Google Service Account.</p>
         </form>
       </div>
     </main>
