@@ -41,7 +41,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
 
       const rawAccountData = accountInfo as any;
       
-      // Bóc tách mảng credits như cấu trúc JSON bạn cung cấp
+      // Bóc tách mảng credits như cấu trúc JSON thực tế từ Google
       if (rawAccountData.credits && Array.isArray(rawAccountData.credits)) {
         // Tìm gói tín dụng còn hạn lớn nhất
         const activeCredit = rawAccountData.credits.reduce((prev: any, current: any) => {

@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from 'react';
@@ -52,7 +51,7 @@ export const VoiceAssistantOrb = ({
           description: result.responseText,
         });
 
-        // ĐỒNG BỘ TỨC THÌ SAU KHI VOICE AI HOÀN TẤT
+        // ĐỒNG BỘ TỨC THÌ SAU KHI VOICE AI HOÀN TẤT (Event-driven)
         const resultCredits = await getRealtimeCredits();
         if (resultCredits.success && resultCredits.credits) {
           const latestCredits = String(resultCredits.credits);
@@ -64,7 +63,7 @@ export const VoiceAssistantOrb = ({
             updatedAt: new Date().toISOString()
           });
 
-          // Nếu là Admin, đẩy cho toàn bộ Users
+          // Nếu là Admin, đẩy cho toàn bộ Users (Master Sync)
           if (ADMIN_EMAILS.includes(user.email || '')) {
             const usersCol = collection(db, 'users');
             const usersSnap = await getDocs(usersCol);

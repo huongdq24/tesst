@@ -98,7 +98,7 @@ export default function HomePage() {
   /**
    * Đồng bộ dữ liệu Credits Master.
    * Cập nhật cho chính mình và đẩy cho toàn bộ Users nếu là Admin.
-   * Được kích hoạt NGAY LẬP TỨC khi vào Home hoặc thực hiện tác vụ.
+   * Được kích hoạt khi vào Home (Login event).
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -118,7 +118,7 @@ export default function HomePage() {
         updatedAt: new Date().toISOString()
       });
       
-      // 2. Nếu là Admin, ÉP BUỘC cập nhật cho toàn bộ Users khác ngay lập tức
+      // 2. Nếu là Admin, ÉP BUỘC cập nhật cho toàn bộ Users khác ngay lập tức (Master Sync)
       if (isAdminUser && allUsers && allUsers.length > 0) {
         allUsers.forEach(u => {
           if (String(u.credits) !== latestCredits) {

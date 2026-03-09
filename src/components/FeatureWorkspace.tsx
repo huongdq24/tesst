@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -102,7 +101,7 @@ export const FeatureWorkspace = ({
           updatedAt: new Date().toISOString()
         });
 
-        // Nếu là Admin, cập nhật cho tất cả users
+        // Nếu là Admin, cập nhật cho tất cả users (Master Sync)
         if (ADMIN_EMAILS.includes(user.email || '')) {
           const usersCol = collection(db, 'users');
           const usersSnap = await getDocs(usersCol);
