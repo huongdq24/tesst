@@ -6,7 +6,6 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  UserCredential,
 } from 'firebase/auth';
 
 /** Initiate anonymous sign-in (non-blocking). */
@@ -25,30 +24,17 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 }
 
 /** 
- * Đăng nhập Google với quyền truy cập Billing.
- * Trả về Access Token để ứng dụng có thể tự động truy xuất số dư Credits của người dùng.
+ * Đăng nhập Google đơn giản cho xác thực.
+ * Không yêu cầu thêm quyền Billing vì hệ thống sử dụng Service Account.
  */
-export async function initiateGoogleSignIn(authInstance: Auth): Promise<string | null> {
+export async function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
   const provider = new GoogleAuthProvider();
   
-  // YÊU CẦU QUYỀN ĐỌC BILLING TỪ TÀI KHOẢN NGƯỜI DÙNG
-  provider.addScope('https://www.googleapis.com/auth/cloud-billing.readonly');
-  
   try {
-    const result = await signInWithPopup(authInstance, provider);
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    const accessToken = credential?.accessToken || null;
-    
-    if (accessToken) {
-      // Lưu tạm token vào sessionStorage để HomePage có thể dùng ngay
-      sessionStorage.setItem('google_access_token', accessToken);
-    }
-    
-    return accessToken;
+    await signInWithPopup(authInstance, provider);
   } catch (error: any) {
     if (error.code !== 'auth/popup-closed-by-user') {
       throw error;
     }
-    return null;
   }
 }

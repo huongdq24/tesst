@@ -67,7 +67,6 @@ export default function HomePage() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
-  const [tempAccessToken, setTempAccessToken] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
@@ -93,11 +92,10 @@ export default function HomePage() {
     syncLock.current = true;
     setIsSyncing(true);
     
-    console.log("[Client] Đang bắt đầu yêu cầu đồng bộ số dư...");
+    console.log("[Client] Đang yêu cầu đồng bộ số dư qua Service Account...");
     
     try {
-      const oauthToken = tempAccessToken || sessionStorage.getItem('google_access_token') || undefined;
-      const result = await getRealtimeCredits(oauthToken);
+      const result = await getRealtimeCredits();
       
       if (result.success) {
         const latestCredits = String(result.credits);
@@ -107,7 +105,7 @@ export default function HomePage() {
           updatedAt: new Date().toISOString()
         });
         
-        // Admin Master Sync: Cập nhật cho toàn hệ thống nếu là Admin
+        // Admin Master Sync: Đồng bộ số dư cho toàn bộ người dùng nếu là Admin
         const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers) {
           allUsers.forEach(u => {
@@ -119,7 +117,7 @@ export default function HomePage() {
         }
         
         if (result.foundCredits) {
-          toast({ title: "Đồng bộ thành công", description: `Số dư hiện tại: $${latestCredits}` });
+          toast({ title: "Đồng bộ thành công", description: `Số dư Service Account: $${latestCredits}` });
         }
       }
 
@@ -133,7 +131,7 @@ export default function HomePage() {
       setIsSyncing(false);
       syncLock.current = false;
     }
-  }, [user, userData, db, allUsers, tempAccessToken, toast]);
+  }, [user, userData, db, allUsers, toast]);
 
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
@@ -160,13 +158,9 @@ export default function HomePage() {
       apiKey: tempApiKey, 
       updatedAt: new Date().toISOString() 
     });
-    
-    if (tempAccessToken) {
-      sessionStorage.setItem('google_access_token', tempAccessToken);
-    }
 
     setIsEditingApiKey(false);
-    toast({ title: "Đã lưu", description: "Đang cập nhật số dư thực tế..." });
+    toast({ title: "Đã lưu", description: "Đang cập nhật số dư qua Service Account..." });
     performBillingSync();
   };
 
@@ -213,7 +207,7 @@ export default function HomePage() {
                   <Settings className="w-4 h-4 text-slate-400" /> {t.editApiKey}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { auth.signOut(); sessionStorage.removeItem('google_access_token'); router.push('/login'); }} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
+                <DropdownMenuItem onClick={() => { auth.signOut(); router.push('/login'); }} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
                   <LogOut className="w-4 h-4" /> Đăng xuất
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -247,12 +241,15 @@ export default function HomePage() {
               </div>
               <div className="lg:col-span-4">
                 <div className="glass-card rounded-[2rem] p-6 bg-white shadow-2xl border border-slate-100">
-                  <h3 className="text-lg font-bold flex items-center gap-2 mb-6"><Layers className="w-5 h-5 text-cyan-500" /> Billing Discovery</h3>
+                  <h3 className="text-lg font-bold flex items-center gap-2 mb-6"><Layers className="w-5 h-5 text-cyan-500" /> Service Account Info</h3>
                   <div className="space-y-4">
                     {billingProjects.map((p, idx) => (
                       <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                         <p className="text-[10px] text-slate-500">Project: {p.projectId}</p>
                         <p className="text-sm font-bold truncate">{p.accountName}</p>
+                        <Badge variant={p.billingEnabled ? 'default' : 'destructive'} className="mt-2 text-[8px]">
+                          {p.billingEnabled ? 'Billing Active' : 'Billing Disabled'}
+                        </Badge>
                       </div>
                     ))}
                   </div>
@@ -272,7 +269,7 @@ export default function HomePage() {
           <DialogHeader><DialogTitle className="text-2xl font-bold flex items-center gap-2 text-slate-900"><Settings className="w-6 h-6 text-cyan-500" /> {t.editApiKey}</DialogTitle></DialogHeader>
           <div className="mt-6 space-y-6">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Số dư thực tế</p>
+              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Số dư hệ thống</p>
               <p className="text-2xl font-bold text-slate-900">${userData?.credits || '0.00'}</p>
             </div>
             <form onSubmit={handleUpdateApiKey} className="space-y-4">
@@ -297,20 +294,6 @@ export default function HomePage() {
                     {showApiKey ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
                   </Button>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                  <Lock className="w-3 h-3" /> Access Token (Tùy chọn)
-                </Label>
-                <Input 
-                  type="text" 
-                  value={tempAccessToken} 
-                  onChange={(e) => setTempAccessToken(e.target.value)} 
-                  className="h-14 rounded-2xl font-mono bg-slate-50 border-none focus-visible:ring-cyan-500" 
-                  placeholder="ya29.xxxx..."
-                />
-                <p className="text-[10px] text-slate-400 px-2 italic">Dán Access Token từ gcloud shell để đồng bộ tức thì.</p>
               </div>
 
               <div className="flex gap-3 pt-4">

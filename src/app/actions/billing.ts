@@ -3,32 +3,28 @@
 import { CloudBillingClient } from '@google-cloud/billing';
 
 /**
- * Truy xuất số dư Credits thực tế.
- * Hệ thống ưu tiên Service Account để đảm bảo tính vĩnh viễn và tự động.
+ * Truy xuất số dư Credits thực tế chỉ bằng Service Account.
+ * Hệ thống tự động nhận diện thông tin xác thực của Service Account trong môi trường Google Cloud/App Hosting.
  */
-export async function getRealtimeCredits(manualAccessToken?: string) {
+export async function getRealtimeCredits() {
   let totalCreditsUSD = 0;
   let foundAnyCredit = false;
   let errorLog = "";
 
-  console.log("[Server] Bắt đầu tiến trình đồng bộ Billing...");
+  console.log("[Server] Bắt đầu tiến trình đồng bộ Billing bằng Service Account...");
 
   try {
     const billingClient = new CloudBillingClient();
 
-    // 1. LẤY DANH SÁCH TÀI KHOẢN THANH TOÁN
-    const requestOptions = manualAccessToken ? {
-      headers: { 'Authorization': `Bearer ${manualAccessToken}` }
-    } : {};
-
-    const [billingAccounts] = await billingClient.listBillingAccounts(requestOptions as any);
-    console.log(`[Server] Tìm thấy ${billingAccounts.length} Billing Accounts`);
+    // 1. LẤY DANH SÁCH TÀI KHOẢN THANH TOÁN MÀ SERVICE ACCOUNT CÓ QUYỀN TRUY CẬP
+    const [billingAccounts] = await billingClient.listBillingAccounts();
+    console.log(`[Server] Service Account tìm thấy ${billingAccounts.length} Billing Accounts`);
 
     for (const account of billingAccounts) {
       if (!account.name) continue;
 
       // 2. Lấy chi tiết từng tài khoản để bóc tách mảng credits
-      const [accountInfo] = await billingClient.getBillingAccount({ name: account.name }, requestOptions as any);
+      const [accountInfo] = await billingClient.getBillingAccount({ name: account.name });
       
       const rawData = accountInfo as any;
       const credits = rawData.credits || [];
@@ -40,7 +36,7 @@ export async function getRealtimeCredits(manualAccessToken?: string) {
           if (amount) {
             // Xử lý chuỗi số: Loại bỏ dấu phẩy và dấu chấm để parse chính xác (Ví dụ: 7,835,100 -> 7835100)
             const rawVal = String(amount.value || '0');
-            const cleanVal = rawVal.replace(/,/g, '');
+            const cleanVal = rawVal.replace(/,/g, '').replace(/\.(?=.*\.)/g, ''); // Xóa dấu phẩy và dấu chấm trung gian
             const val = parseFloat(cleanVal);
             const currency = amount.currencyCode || 'VND';
             
@@ -55,13 +51,13 @@ export async function getRealtimeCredits(manualAccessToken?: string) {
     }
 
   } catch (err: any) {
-    console.error("[Server] Lỗi Billing API:", err.message);
+    console.error("[Server] Lỗi Billing API (Service Account):", err.message);
     errorLog = err.message;
   }
 
   // Kết quả cuối cùng
   const finalCredits = totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00';
-  console.log(`[Server] Hoàn tất. Kết quả: $${finalCredits}`);
+  console.log(`[Server] Hoàn tất đồng bộ. Kết quả cuối cùng: $${finalCredits}`);
 
   return {
     success: true,
@@ -72,6 +68,9 @@ export async function getRealtimeCredits(manualAccessToken?: string) {
   };
 }
 
+/**
+ * Liệt kê các dự án liên kết thanh toán để Admin kiểm tra cấu hình Service Account.
+ */
 export async function listAllBillingProjects() {
   try {
     const billingClient = new CloudBillingClient();
