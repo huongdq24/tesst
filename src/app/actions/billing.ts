@@ -4,27 +4,31 @@ import { CloudBillingClient } from '@google-cloud/billing';
 
 /**
  * Truy xuất số dư Credits thực tế CHỈ bằng Service Account.
- * Hệ thống tự động nhận diện thông tin xác thực của Service Account trong môi trường Google Cloud/App Hosting.
+ * Sử dụng cơ chế Targeted Sync: Truy vấn trực tiếp Billing Account liên kết với Project.
  */
 export async function getRealtimeCredits() {
+  const projectId = 'project-5306ce34-5626-488a-913';
   let totalCreditsUSD = 0;
   let foundAnyCredit = false;
   let errorLog = "";
 
-  console.log("[Server] Bắt đầu tiến trình đồng bộ Billing bằng Service Account...");
+  console.log(`[Server] Bắt đầu đồng bộ cho Project: ${projectId}`);
 
   try {
     const billingClient = new CloudBillingClient();
 
-    // 1. LẤY DANH SÁCH TÀI KHOẢN THANH TOÁN MÀ SERVICE ACCOUNT CÓ QUYỀN TRUY CẬP
-    const [billingAccounts] = await billingClient.listBillingAccounts();
-    console.log(`[Server] Service Account tìm thấy ${billingAccounts.length} Billing Accounts`);
+    // 1. Lấy thông tin Billing Account liên kết với Project này
+    const [projectBillingInfo] = await billingClient.getProjectBillingInfo({ 
+      name: `projects/${projectId}` 
+    });
 
-    for (const account of billingAccounts) {
-      if (!account.name) continue;
+    if (projectBillingInfo.billingAccountName) {
+      console.log(`[Server] Tìm thấy Billing Account: ${projectBillingInfo.billingAccountName}`);
 
-      // 2. Lấy chi tiết từng tài khoản để bóc tách mảng credits
-      const [accountInfo] = await billingClient.getBillingAccount({ name: account.name });
+      // 2. Truy vấn chi tiết Billing Account để bóc tách credits
+      const [accountInfo] = await billingClient.getBillingAccount({ 
+        name: projectBillingInfo.billingAccountName 
+      });
       
       const rawData = accountInfo as any;
       const credits = rawData.credits || [];
@@ -47,17 +51,20 @@ export async function getRealtimeCredits() {
             console.log(`[Server] Phát hiện Credit: ${rawVal} ${currency} (~$${converted.toFixed(2)})`);
           }
         });
+      } else {
+        console.log("[Server] Không tìm thấy mảng credits trong Billing Account này.");
       }
+    } else {
+      console.log("[Server] Project này chưa được liên kết với bất kỳ Billing Account nào.");
     }
 
   } catch (err: any) {
-    console.error("[Server] Lỗi Billing API (Service Account):", err.message);
+    console.error("[Server] Lỗi Billing API:", err.message);
     errorLog = err.message;
   }
 
-  // Kết quả cuối cùng
   const finalCredits = totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00';
-  console.log(`[Server] Hoàn tất đồng bộ. Kết quả cuối cùng: $${finalCredits}`);
+  console.log(`[Server] Kết quả đồng bộ cuối cùng: $${finalCredits}`);
 
   return {
     success: true,
@@ -69,7 +76,7 @@ export async function getRealtimeCredits() {
 }
 
 /**
- * Liệt kê các dự án liên kết thanh toán để Admin kiểm tra cấu hình Service Account.
+ * Liệt kê trạng thái Billing của các dự án (Dành cho Admin kiểm tra).
  */
 export async function listAllBillingProjects() {
   try {
