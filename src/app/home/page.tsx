@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -18,10 +17,8 @@ import {
   LayoutDashboard,
   Search,
   Calendar,
-  Key,
   Globe,
   Edit,
-  Cloud,
   Layers
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
@@ -99,8 +96,8 @@ export default function HomePage() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
   /**
-   * Đồng bộ dữ liệu Credits từ Google Cloud Billing
-   * Nếu là Admin, sẽ đẩy dữ liệu mới cho tất cả Users khác.
+   * Đồng bộ dữ liệu Credits Master.
+   * Nếu là Admin, thực hiện "Force Update" cho toàn bộ Users để đảm bảo số dư đồng nhất.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -110,55 +107,54 @@ export default function HomePage() {
     
     try {
       const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
-      if (result.success && result.credits) {
-        const latestCredits = String(result.credits);
-        const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-        
-        // Cập nhật cho chính mình
-        if (String(userData.credits || '0.00') !== latestCredits) {
-          const uRef = doc(db, 'users', user.uid);
-          updateDocumentNonBlocking(uRef, {
-            credits: latestCredits,
-            updatedAt: new Date().toISOString()
-          });
-        }
-        
-        // Nếu là Admin, đồng bộ cho toàn bộ hệ thống
-        if (isAdminUser && allUsers && allUsers.length > 0) {
-          allUsers.forEach(u => {
-            if (String(u.credits || '0.00') !== latestCredits) {
-              const otherURef = doc(db, 'users', u.id);
-              updateDocumentNonBlocking(otherURef, {
-                credits: latestCredits,
-                updatedAt: new Date().toISOString()
-              });
-            }
-          });
-        }
-        setLastSynced(new Date().toLocaleTimeString());
+      const latestCredits = result.success ? String(result.credits) : '0.00';
+      const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+      
+      // 1. Cập nhật cho chính mình (đảm bảo hiển thị đúng số dư mới nhất)
+      const selfRef = doc(db, 'users', user.uid);
+      updateDocumentNonBlocking(selfRef, {
+        credits: latestCredits,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // 2. Nếu là Admin, ÉP BUỘC cập nhật cho toàn bộ Users khác
+      // Điều này giải quyết vấn đề lệch số dư giữa các Admin và User "ảo" $300
+      if (isAdminUser && allUsers && allUsers.length > 0) {
+        allUsers.forEach(u => {
+          // Chỉ cập nhật nếu số dư trong Firestore khác với số dư thực tế vừa lấy
+          if (String(u.credits) !== latestCredits) {
+            const targetRef = doc(db, 'users', u.id);
+            updateDocumentNonBlocking(targetRef, {
+              credits: latestCredits,
+              updatedAt: new Date().toISOString()
+            });
+          }
+        });
       }
+      
+      setLastSynced(new Date().toLocaleTimeString());
 
-      // Admin lấy danh sách dự án Billing
-      if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
+      // Lấy danh sách dự án Billing (chỉ cho Admin)
+      if (isAdminUser) {
         const projResult = await listAllBillingProjects();
         if (projResult.success) {
           setBillingProjects(projResult.projects || []);
         }
       }
     } catch (error) {
-      console.error("Manual/Initial Sync Error:", error);
+      console.error("Billing Sync Error:", error);
     } finally {
       setIsSyncing(false);
       syncLock.current = false;
     }
   }, [user, userData, db, allUsers]);
 
-  // CHỈ ĐỒNG BỘ 1 LẦN KHI VÀO TRANG (SAU LOGIN) - KHÔNG DÙNG INTERVAL
+  // Đồng bộ ngay khi vào trang Home và dữ liệu User/Admin đã sẵn sàng
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
     }
-  }, [user, userData?.hasClaimedCredits, isUserDataLoading, allUsers !== undefined]);
+  }, [user, userData?.hasClaimedCredits, isUserDataLoading, !!allUsers]);
 
   useEffect(() => {
     if (isUserLoading || isUserDataLoading) return;

@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Globe, Wallet, ChevronDown, LogOut, Edit, X } from 'lucide-react';
+import { RefreshCw, Globe, Wallet, ChevronDown, LogOut, X } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -23,6 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Language, translations } from '@/lib/i18n';
+import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
 
@@ -88,42 +88,42 @@ export default function CreditClaimPage() {
       router.push('/login');
     } else {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      
-      // ĐẶC QUYỀN ADMIN: Cho phép ở lại trang Claim Credits nếu họ chủ động vào
       if (isAdmin) return;
-
       if (userData?.hasClaimedCredits && userData?.apiKey) {
         router.push('/home');
       }
     }
   }, [user, isUserLoading, userData, isUserDataLoading, router]);
 
-  const handleVerify = (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isVerifying || !apiKey || !user) return;
     setIsVerifying(true);
     
-    setTimeout(() => {
-      setIsVerifying(false);
+    try {
+      // ÉP BUỘC đồng bộ Credits thực tế ngay khi Claim mã
+      const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
+      const latestCredits = result.success ? String(result.credits) : '0.00';
+
       const uRef = doc(db, 'users', user.uid);
-      
       updateDocumentNonBlocking(uRef, {
         hasClaimedCredits: true,
         apiKey: apiKey,
-        projectId: DEFAULT_PROJECT_ID,
-        credits: userData?.credits || '0.00', 
+        credits: latestCredits, // Ghi đè giá trị thực tế ngay lập tức
         updatedAt: new Date().toISOString()
       });
       
       toast({ 
-        title: <div className="flex items-center gap-1"><IGenCodeBranded /> updated.</div>, 
-        description: "iGen AI active. Real-time credits synchronization initiated." 
+        title: <div className="flex items-center gap-1"><IGenCodeBranded /> active.</div>, 
+        description: "iGen AI active. Credits synchronized from Google Cloud." 
       });
       router.push('/home');
-    }, 2000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsVerifying(false);
+    }
   };
-
-  const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
 
   if (isUserLoading || isUserDataLoading) return null;
 
@@ -140,8 +140,8 @@ export default function CreditClaimPage() {
 
           <div className="flex items-center gap-2 md:gap-4">
             <div className="hidden sm:flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group">
-                <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
+              <div className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100">
+                <Wallet className="w-4 h-4 text-cyan-500" />
                 <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
                   ${userData?.credits || '0.00'}
                 </span>
@@ -194,7 +194,7 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[3rem] text-center shadow-2xl relative z-10">
-        <div className="glass-card inline-flex flex-col items-center gap-4 px-8 py-5 rounded-2xl shadow-xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
+        <div className="glass-card inline-flex flex-col items-center gap-6 px-10 py-6 rounded-[2rem] shadow-xl border-white/40 mb-10 group hover:scale-[1.02] transition-all duration-500 bg-white/40">
           <div className="flex items-center gap-6">
             <IGenBranding className="text-3xl" />
             <X className="w-5 h-5 text-slate-300" />
@@ -212,7 +212,7 @@ export default function CreditClaimPage() {
 
         <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
         <p className="text-sm text-slate-500 mb-8 font-medium">
-          Nhập mã đối tác của <span className="text-cyan-500 font-bold">iGen</span> do <ColoredGoogleText /> cung cấp để nhận $300 Credits
+          Nhập mã đối tác của <span className="text-cyan-500 font-bold">iGen</span> do <ColoredGoogleText /> cung cấp để kích hoạt hệ thống.
         </p>
         <div className="mb-8 relative">
           <Input 
@@ -236,7 +236,7 @@ export default function CreditClaimPage() {
               <div className="bg-white p-1 rounded-full flex items-center justify-center">
                 <GoogleLogo className="w-6 h-6" />
               </div>
-              Xác nhận mã và nhận $300 Credits
+              Xác nhận mã và Kích hoạt
             </>
           )}
         </Button>

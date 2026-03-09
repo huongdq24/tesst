@@ -1,4 +1,3 @@
-
 'use server';
 
 import { CloudBillingClient } from '@google-cloud/billing';
@@ -8,6 +7,7 @@ const BILLING_ACCOUNT_ID = '017D0B-3695DA-8D7FB7';
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
+ * Đảm bảo trả về '0.00' nếu không có gói tín dụng nào hoạt động.
  */
 export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5626-488a-913') {
   if (!projectId) {
@@ -22,11 +22,24 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
     let displayCredits = '0.00';
     let currency = 'USD';
 
+    // Nếu Billing không được kích hoạt cho Project này
+    if (!billingInfo.billingEnabled) {
+      return {
+        success: true,
+        credits: '0.00',
+        billingEnabled: false,
+        currency: 'USD',
+        timestamp: new Date().toISOString()
+      };
+    }
+
     const rawData = billingInfo as any;
     
+    // Quét mảng credits từ Google Cloud
     if (rawData.credits && Array.isArray(rawData.credits) && rawData.credits.length > 0) {
+      // Tìm gói tín dụng còn hạn và có số dư
       const activeCredit = rawData.credits.find((c: any) => 
-        c.remainingAmount && parseFloat(c.remainingAmount.value) >= 0
+        c.remainingAmount && parseFloat(c.remainingAmount.value) > 0
       );
 
       if (activeCredit && activeCredit.remainingAmount) {
@@ -50,6 +63,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
     };
   } catch (error: any) {
     console.error("Billing API Error:", error.message);
+    // Trả về 0.00 nếu có lỗi (ví dụ: project không tồn tại hoặc không có quyền truy cập)
     return { 
       success: false, 
       credits: '0.00', 
