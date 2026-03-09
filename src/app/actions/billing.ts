@@ -7,7 +7,7 @@ const BILLING_ACCOUNT_ID = '017D0B-3695DA-8D7FB7';
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
- * Đảm bảo trả về '0.00' nếu không có gói tín dụng nào hoạt động.
+ * Thực hiện truy vấn kép: Project Info -> Billing Account Details để tìm Credits khuyến mãi.
  */
 export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5626-488a-913') {
   if (!projectId) {
@@ -15,44 +15,67 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
   }
 
   try {
+    // 1. Lấy thông tin Billing của Project
     const [billingInfo] = await billingClient.getProjectBillingInfo({
       name: `projects/${projectId}`,
     });
 
-    let displayCredits = '0.00';
-    let currency = 'USD';
-
-    // Nếu Billing không được kích hoạt cho Project này
-    if (!billingInfo.billingEnabled) {
+    if (!billingInfo.billingEnabled || !billingInfo.billingAccountName) {
       return {
         success: true,
         credits: '0.00',
-        billingEnabled: false,
+        billingEnabled: !!billingInfo.billingEnabled,
         currency: 'USD',
         timestamp: new Date().toISOString()
       };
     }
 
-    const rawData = billingInfo as any;
-    
-    // Quét mảng credits từ Google Cloud
-    if (rawData.credits && Array.isArray(rawData.credits) && rawData.credits.length > 0) {
-      // Tìm gói tín dụng còn hạn và có số dư
-      const activeCredit = rawData.credits.find((c: any) => 
-        c.remainingAmount && parseFloat(c.remainingAmount.value) > 0
-      );
+    let displayCredits = '0.00';
+    let currency = 'USD';
 
-      if (activeCredit && activeCredit.remainingAmount) {
-        const val = parseFloat(activeCredit.remainingAmount.value);
-        currency = activeCredit.remainingAmount.currencyCode;
+    // 2. Truy vấn chi tiết Billing Account để tìm Credits khuyến mãi (Free Trial)
+    // Thông tin này thường nằm trong mảng credits của BillingAccount object
+    try {
+      const [accountInfo] = await billingClient.getBillingAccount({
+        name: billingInfo.billingAccountName,
+      });
 
-        if (currency === 'VND') {
-          displayCredits = (val / 25000).toFixed(2); 
-        } else {
-          displayCredits = val.toFixed(2);
+      const rawAccountData = accountInfo as any;
+      
+      if (rawAccountData.credits && Array.isArray(rawAccountData.credits)) {
+        // Tìm gói tín dụng còn hạn lớn nhất (thường là Free Trial $300)
+        const activeCredit = rawAccountData.credits.reduce((prev: any, current: any) => {
+          const prevVal = prev?.remainingAmount ? parseFloat(prev.remainingAmount.value) : 0;
+          const currentVal = current?.remainingAmount ? parseFloat(current.remainingAmount.value) : 0;
+          return (currentVal > prevVal) ? current : prev;
+        }, null);
+
+        if (activeCredit && activeCredit.remainingAmount) {
+          const val = parseFloat(activeCredit.remainingAmount.value);
+          currency = activeCredit.remainingAmount.currencyCode;
+
+          if (currency === 'VND') {
+            displayCredits = (val / 25000).toFixed(2); 
+          } else {
+            displayCredits = val.toFixed(2);
+          }
+        }
+      }
+    } catch (accError: any) {
+      console.warn("Account Detail Fetch Warning:", accError.message);
+      // Nếu không lấy được detail, thử bóc tách từ project billing info (fallback)
+      const rawProjectData = billingInfo as any;
+      if (rawProjectData.credits && Array.isArray(rawProjectData.credits) && rawProjectData.credits.length > 0) {
+        const credit = rawProjectData.credits[0];
+        if (credit.remainingAmount) {
+          const val = parseFloat(credit.remainingAmount.value);
+          displayCredits = credit.remainingAmount.currencyCode === 'VND' ? (val / 25000).toFixed(2) : val.toFixed(2);
         }
       }
     }
+
+    // Đảm bảo nếu là 0 thì trả về 0.00 thay vì giữ giá trị cũ
+    if (displayCredits === 'NaN') displayCredits = '0.00';
 
     return {
       success: true,
@@ -62,8 +85,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
       timestamp: new Date().toISOString()
     };
   } catch (error: any) {
-    console.error("Billing API Error:", error.message);
-    // Trả về 0.00 nếu có lỗi (ví dụ: project không tồn tại hoặc không có quyền truy cập)
+    console.error("Billing API Critical Error:", error.message);
     return { 
       success: false, 
       credits: '0.00', 
@@ -72,9 +94,6 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
   }
 }
 
-/**
- * Liệt kê tất cả các Project ID liên kết với Billing Account.
- */
 export async function listAllBillingProjects() {
   try {
     const [projects] = await billingClient.listProjectBillingInfo({
