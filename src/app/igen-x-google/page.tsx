@@ -52,8 +52,6 @@ export default function CreditClaimPage() {
     if (isVerifying || !apiKey || !user) return;
     setIsVerifying(true);
     
-    console.log("[Client] Đang kích hoạt đồng bộ qua Service Account...");
-    
     try {
       const result = await getRealtimeCredits();
       const latestCredits = result.success ? String(result.credits) : '0.00';

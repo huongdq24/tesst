@@ -56,7 +56,6 @@ import { Badge } from "@/components/ui/badge";
 import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
-const BILLING_CREDITS_URL = "https://console.cloud.google.com/billing/017D0B-3695DA-8D7FB7/credits/all?authuser=3&organizationId=0";
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -73,6 +72,7 @@ export default function HomePage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
   const [billingSummary, setBillingSummary] = useState<any[]>([]);
+  const [dynamicBillingId, setDynamicBillingId] = useState<string>('017D0B-3695DA-8D7FB7');
   const syncLock = useRef(false);
 
   const t = translations[lang];
@@ -94,8 +94,6 @@ export default function HomePage() {
     syncLock.current = true;
     setIsSyncing(true);
     
-    console.log("[Client] Đang yêu cầu đồng bộ Credits Động qua Service Account...");
-    
     try {
       const result = await getRealtimeCredits();
       
@@ -107,6 +105,10 @@ export default function HomePage() {
           credits: latestCredits,
           updatedAt: new Date().toISOString()
         });
+
+        if (result.primaryAccountId) {
+          setDynamicBillingId(result.primaryAccountId);
+        }
         
         const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers) {
@@ -122,8 +124,6 @@ export default function HomePage() {
         if (result.foundCredits) {
           toast({ title: "Đồng bộ thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
         }
-      } else {
-        console.warn("[Client] Service Account chưa sẵn sàng:", result.error);
       }
     } catch (error: any) {
       console.error("[Client] Sync error:", error);
@@ -163,6 +163,8 @@ export default function HomePage() {
     toast({ title: "Đã lưu", description: "Đang đồng bộ lại số dư hệ thống..." });
     performBillingSync();
   };
+
+  const getBillingUrl = (accountId: string) => `https://console.cloud.google.com/billing/${accountId}/credits/all?authuser=3&organizationId=0`;
 
   if (isUserLoading || isUserDataLoading || !user) return null;
 
@@ -238,16 +240,19 @@ export default function HomePage() {
                         <TableRow key={u.id} className="border-slate-100">
                           <TableCell className="py-6 pl-8 font-bold">{u.email}</TableCell>
                           <TableCell><Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role === 'admin' ? 'Admin' : 'User'}</Badge></TableCell>
-                          <TableCell className="text-right pr-8 font-bold">
-                            <a 
-                              href={BILLING_CREDITS_URL} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="inline-flex items-center gap-1 hover:text-cyan-500 transition-colors group"
-                            >
-                              ${u.credits || '0.00'}
-                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </a>
+                          <TableCell className="text-right pr-8">
+                            <div className="flex items-center justify-end gap-1.5 font-bold">
+                              <span>${u.credits || '0.00'}</span>
+                              <a 
+                                href={getBillingUrl(dynamicBillingId)} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="p-1 hover:bg-slate-100 rounded-md text-cyan-500 transition-all flex items-center justify-center"
+                                title="Xem trên Google Cloud"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -261,17 +266,25 @@ export default function HomePage() {
                   <div className="space-y-4">
                     {billingSummary.map((acc, idx) => (
                       <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
-                        <p className="text-xs font-bold text-slate-900">{acc.accountName}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-slate-900 truncate pr-2">{acc.accountName}</p>
+                          <a href={getBillingUrl(acc.accountId)} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:scale-110 transition-transform">
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
                         {acc.projects.map((p: any, pIdx: number) => (
                           <div key={pIdx} className="flex items-center justify-between text-[10px] text-slate-500">
                             <span className="truncate max-w-[120px]">{p.id}</span>
-                            <Badge className="h-4 text-[8px]" variant={p.enabled ? "default" : "destructive"}>
+                            <Badge className="h-4 text-[8px] px-1" variant={p.enabled ? "default" : "destructive"}>
                               {p.enabled ? "Active" : "Disabled"}
                             </Badge>
                           </div>
                         ))}
                       </div>
                     ))}
+                    {billingSummary.length === 0 && (
+                      <p className="text-xs text-slate-400 italic text-center py-4">Chưa có thông tin hạ tầng.</p>
+                    )}
                   </div>
                 </div>
               </div>
