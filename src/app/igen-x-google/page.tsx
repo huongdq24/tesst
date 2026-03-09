@@ -52,10 +52,9 @@ export default function CreditClaimPage() {
     if (isVerifying || !apiKey || !user) return;
     setIsVerifying(true);
     
-    console.log("[Client] Đang bắt đầu kích hoạt hệ thống...");
+    console.log("[Client] Đang bắt đầu kích hoạt đồng bộ Credits Động...");
     
     try {
-      // Đồng bộ credits chỉ bằng Service Account
       const result = await getRealtimeCredits();
       const latestCredits = result.success ? String(result.credits) : '0.00';
       
@@ -67,11 +66,11 @@ export default function CreditClaimPage() {
         updatedAt: new Date().toISOString()
       });
 
-      toast({ title: "Kích hoạt thành công", description: `Chào mừng bạn. Số dư hiện tại: $${latestCredits}` });
+      toast({ title: "Kích hoạt thành công", description: `Hệ thống iGen đã sẵn sàng. Số dư: $${latestCredits}` });
       router.push('/home');
     } catch (err) {
       console.error("[Client] Lỗi kích hoạt:", err);
-      toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối với hệ thống Billing." });
+      toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối với hệ thống Billing của Google." });
     } finally {
       setIsVerifying(false);
     }
@@ -101,12 +100,12 @@ export default function CreditClaimPage() {
             <GoogleLogo className="w-8 h-8" />
           </div>
           <div className="px-4 py-1 bg-slate-50/50 rounded-full border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            Đối tác chiến lược của Google
+            Service Account Infrastructure
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng Google</h2>
-        <p className="text-sm text-slate-500 mb-8">Nhập mã đối tác của iGen để kích hoạt tài khoản của bạn.</p>
+        <h2 className="text-2xl font-bold mb-2">Đồng bộ Hệ thống Google Cloud</h2>
+        <p className="text-sm text-slate-500 mb-8">Nhập mã định danh iGen của bạn để liên kết và đồng bộ Credits từ hệ thống Google.</p>
         
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="space-y-2 text-left">
@@ -116,7 +115,7 @@ export default function CreditClaimPage() {
                 className="h-16 text-lg bg-white border-2 border-slate-100 focus:border-cyan-500 font-mono rounded-2xl px-6 text-center"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Dán iGen Code tại đây..."
+                placeholder="Dán mã iGen tại đây..."
               />
               <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
             </div>
@@ -126,10 +125,10 @@ export default function CreditClaimPage() {
             type="submit"
             className="w-full h-16 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3"
           >
-            {isVerifying ? <RefreshCw className="animate-spin" /> : "Xác nhận & Kích hoạt Tín dụng"}
+            {isVerifying ? <RefreshCw className="animate-spin" /> : "Đồng bộ & Kích hoạt Tín dụng"}
           </Button>
           
-          <p className="text-[10px] text-slate-400 italic">Số dư sẽ tự động đồng bộ từ tài khoản hệ thống của Google.</p>
+          <p className="text-[10px] text-slate-400 italic">Số dư sẽ tự động đồng bộ từ Billing Accounts mà Service Account có quyền xem.</p>
         </form>
       </div>
     </main>

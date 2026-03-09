@@ -3,31 +3,31 @@
 import { CloudBillingClient } from '@google-cloud/billing';
 
 /**
- * Truy xuất số dư Credits thực tế CHỈ bằng Service Account.
- * Sử dụng cơ chế Targeted Sync: Truy vấn trực tiếp Billing Account liên kết với Project.
+ * Truy xuất số dư Credits thực tế ĐỘNG (Dynamic) cho TẤT CẢ các dự án liên kết.
+ * Quét toàn bộ Billing Accounts mà Service Account có quyền truy cập.
  */
 export async function getRealtimeCredits() {
-  const projectId = 'project-5306ce34-5626-488a-913';
   let totalCreditsUSD = 0;
   let foundAnyCredit = false;
-  let errorLog = "";
+  let summary = [];
 
-  console.log(`[Server] Bắt đầu đồng bộ cho Project: ${projectId}`);
+  console.log(`[Server - Dynamic Sync] Bắt đầu quét toàn bộ hệ thống Billing...`);
 
   try {
     const billingClient = new CloudBillingClient();
 
-    // 1. Lấy thông tin Billing Account liên kết với Project này
-    const [projectBillingInfo] = await billingClient.getProjectBillingInfo({ 
-      name: `projects/${projectId}` 
-    });
+    // 1. Liệt kê tất cả Billing Accounts mà Service Account có quyền xem
+    const [billingAccounts] = await billingClient.listBillingAccounts();
+    console.log(`[Server] Tìm thấy ${billingAccounts.length} Billing Account(s).`);
 
-    if (projectBillingInfo.billingAccountName) {
-      console.log(`[Server] Tìm thấy Billing Account: ${projectBillingInfo.billingAccountName}`);
+    for (const account of billingAccounts) {
+      if (!account.name) continue;
 
-      // 2. Truy vấn chi tiết Billing Account để bóc tách credits
+      console.log(`[Server] Đang kiểm tra Account: ${account.displayName} (${account.name})`);
+
+      // 2. Truy vấn thông tin chi tiết để tìm mảng credits
       const [accountInfo] = await billingClient.getBillingAccount({ 
-        name: projectBillingInfo.billingAccountName 
+        name: account.name 
       });
       
       const rawData = accountInfo as any;
@@ -38,8 +38,8 @@ export async function getRealtimeCredits() {
         credits.forEach((c: any) => {
           const amount = c.remainingAmount || c.amount;
           if (amount) {
-            // Xử lý chuỗi số: Loại bỏ dấu phẩy và dấu chấm để parse chính xác
             const rawVal = String(amount.value || '0');
+            // Xử lý chuỗi số VND/USD (Xóa dấu phẩy, dấu chấm phân cách)
             const cleanVal = rawVal.replace(/,/g, '').replace(/\.(?=.*\.)/g, ''); 
             const val = parseFloat(cleanVal);
             const currency = amount.currencyCode || 'VND';
@@ -48,53 +48,46 @@ export async function getRealtimeCredits() {
             const converted = (currency === 'VND' ? val / 25000 : val);
             totalCreditsUSD += converted;
             
-            console.log(`[Server] Phát hiện Credit: ${rawVal} ${currency} (~$${converted.toFixed(2)})`);
+            console.log(`[Server] PHÁT HIỆN CREDIT: ${rawVal} ${currency} (~$${converted.toFixed(2)})`);
           }
         });
-      } else {
-        console.log("[Server] Không tìm thấy mảng credits trong Billing Account này.");
       }
-    } else {
-      console.log("[Server] Project này chưa được liên kết với bất kỳ Billing Account nào.");
+
+      // 3. Liệt kê các dự án liên kết với Account này (Để hiển thị Dashboard Admin)
+      try {
+        const [projects] = await billingClient.listProjectBillingInfo({ name: account.name });
+        summary.push({
+          accountName: account.displayName,
+          projects: projects.map(p => ({
+            id: p.name?.split('/').pop(),
+            enabled: p.billingEnabled
+          }))
+        });
+      } catch (e) {
+        console.warn(`[Server] Không thể liệt kê dự án cho account ${account.name}`);
+      }
     }
 
   } catch (err: any) {
-    console.error("[Server] Lỗi Billing API:", err.message);
-    errorLog = err.message;
+    console.error("[Server] Lỗi Billing API (Service Account):", err.message);
+    return { success: false, error: err.message };
   }
 
   const finalCredits = totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00';
-  console.log(`[Server] Kết quả đồng bộ cuối cùng: $${finalCredits}`);
+  console.log(`[Server] Tổng Credits bóc tách được: $${finalCredits}`);
 
   return {
     success: true,
     credits: finalCredits,
     foundCredits: foundAnyCredit,
-    error: errorLog || undefined,
+    summary: summary,
     timestamp: new Date().toISOString()
   };
 }
 
 /**
- * Liệt kê trạng thái Billing của các dự án (Dành cho Admin kiểm tra).
+ * Liệt kê trạng thái Billing chi tiết (Dành cho Admin).
  */
 export async function listAllBillingProjects() {
-  try {
-    const billingClient = new CloudBillingClient();
-    const [accounts] = await billingClient.listBillingAccounts();
-    let allProjects: any[] = [];
-    for (const account of accounts) {
-      try {
-        const [projects] = await billingClient.listProjectBillingInfo({ name: account.name });
-        allProjects = [...allProjects, ...projects.map(p => ({
-          projectId: p.name?.split('/').pop(),
-          billingEnabled: p.billingEnabled,
-          accountName: account.displayName || account.name
-        }))];
-      } catch (err) { /* silent */ }
-    }
-    return { success: true, projects: allProjects };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+  return getRealtimeCredits();
 }

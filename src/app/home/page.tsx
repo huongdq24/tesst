@@ -52,7 +52,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { getRealtimeCredits, listAllBillingProjects } from '@/app/actions/billing';
+import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
 
@@ -70,7 +70,7 @@ export default function HomePage() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
-  const [billingProjects, setBillingProjects] = useState<any[]>([]);
+  const [billingSummary, setBillingSummary] = useState<any[]>([]);
   const syncLock = useRef(false);
 
   const t = translations[lang];
@@ -92,7 +92,7 @@ export default function HomePage() {
     syncLock.current = true;
     setIsSyncing(true);
     
-    console.log("[Client] Đang yêu cầu đồng bộ số dư qua Service Account...");
+    console.log("[Client] Đang yêu cầu đồng bộ Credits Động (Service Account)...");
     
     try {
       const result = await getRealtimeCredits();
@@ -100,12 +100,13 @@ export default function HomePage() {
       if (result.success) {
         const latestCredits = String(result.credits);
         const selfRef = doc(db, 'users', user.uid);
+        
         updateDocumentNonBlocking(selfRef, {
           credits: latestCredits,
           updatedAt: new Date().toISOString()
         });
         
-        // Admin Master Sync: Đồng bộ số dư cho toàn bộ người dùng nếu là Admin
+        // Master Sync cho Admin
         const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers) {
           allUsers.forEach(u => {
@@ -114,16 +115,14 @@ export default function HomePage() {
               updatedAt: new Date().toISOString()
             });
           });
+          if (result.summary) setBillingSummary(result.summary);
         }
         
         if (result.foundCredits) {
-          toast({ title: "Đồng bộ thành công", description: `Số dư Service Account: $${latestCredits}` });
+          toast({ title: "Đồng bộ thành công", description: `Hệ thống đã nhận diện Credits: $${latestCredits}` });
         }
-      }
-
-      if (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
-        const projResult = await listAllBillingProjects();
-        if (projResult.success) setBillingProjects(projResult.projects || []);
+      } else {
+        console.error("[Client] Lỗi Server Action:", result.error);
       }
     } catch (error) {
       console.error("[Client] Sync error:", error);
@@ -160,7 +159,7 @@ export default function HomePage() {
     });
 
     setIsEditingApiKey(false);
-    toast({ title: "Đã lưu", description: "Đang cập nhật số dư qua Service Account..." });
+    toast({ title: "Đã lưu", description: "Đang đồng bộ lại số dư hệ thống..." });
     performBillingSync();
   };
 
@@ -241,15 +240,19 @@ export default function HomePage() {
               </div>
               <div className="lg:col-span-4">
                 <div className="glass-card rounded-[2rem] p-6 bg-white shadow-2xl border border-slate-100">
-                  <h3 className="text-lg font-bold flex items-center gap-2 mb-6"><Layers className="w-5 h-5 text-cyan-500" /> Service Account Info</h3>
+                  <h3 className="text-lg font-bold flex items-center gap-2 mb-6"><Layers className="w-5 h-5 text-cyan-500" /> Billing Infrastructure</h3>
                   <div className="space-y-4">
-                    {billingProjects.map((p, idx) => (
-                      <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <p className="text-[10px] text-slate-500">Project: {p.projectId}</p>
-                        <p className="text-sm font-bold truncate">{p.accountName}</p>
-                        <Badge variant={p.billingEnabled ? 'default' : 'destructive'} className="mt-2 text-[8px]">
-                          {p.billingEnabled ? 'Billing Active' : 'Billing Disabled'}
-                        </Badge>
+                    {billingSummary.map((acc, idx) => (
+                      <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                        <p className="text-xs font-bold text-slate-900">{acc.accountName}</p>
+                        {acc.projects.map((p: any, pIdx: number) => (
+                          <div key={pIdx} className="flex items-center justify-between text-[10px] text-slate-500">
+                            <span className="truncate max-w-[120px]">{p.id}</span>
+                            <Badge className="h-4 text-[8px]" variant={p.enabled ? "default" : "destructive"}>
+                              {p.enabled ? "Active" : "Disabled"}
+                            </Badge>
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -269,7 +272,7 @@ export default function HomePage() {
           <DialogHeader><DialogTitle className="text-2xl font-bold flex items-center gap-2 text-slate-900"><Settings className="w-6 h-6 text-cyan-500" /> {t.editApiKey}</DialogTitle></DialogHeader>
           <div className="mt-6 space-y-6">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Số dư hệ thống</p>
+              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Tín dụng hệ thống (Service Account)</p>
               <p className="text-2xl font-bold text-slate-900">${userData?.credits || '0.00'}</p>
             </div>
             <form onSubmit={handleUpdateApiKey} className="space-y-4">
