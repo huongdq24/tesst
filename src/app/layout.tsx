@@ -10,11 +10,6 @@ export const metadata: Metadata = {
   description: 'Tương lai của thiết kế kiến trúc được hỗ trợ bởi iGen AI',
 };
 
-/**
- * Root Layout for iGen application.
- * Note: Next.js 15 uses Promises for params/searchParams. 
- * We explicitly structure the props to avoid enumeration errors.
- */
 export default function RootLayout({
   children,
 }: {

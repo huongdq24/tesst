@@ -121,7 +121,7 @@ export default function CreditClaimPage() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold mb-2">Đồng bộ Hệ thống iGen Cloud</h2>
+        <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng <ColoredGoogleText /></h2>
         <p className="text-sm text-slate-500 mb-8">Nhập mã định danh iGen của bạn để liên kết và đồng bộ Credits vĩnh viễn.</p>
         
         <form onSubmit={handleVerify} className="space-y-6">
