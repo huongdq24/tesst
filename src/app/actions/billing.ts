@@ -54,7 +54,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
           const val = parseFloat(activeCredit.remainingAmount.value);
           currency = activeCredit.remainingAmount.currencyCode;
 
-          // Quy đổi VND sang USD xấp xỉ (/ 25.000)
+          // Quy đổi VND sang USD xấp xỉ (VND / 25.000)
           if (currency === 'VND') {
             displayCredits = (val / 25000).toFixed(2); 
           } else {

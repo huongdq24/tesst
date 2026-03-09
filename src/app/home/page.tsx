@@ -96,8 +96,9 @@ export default function HomePage() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
   /**
-   * Đồng bộ dữ liệu Credits Master (CHỈ GỌI KHI CÓ SỰ KIỆN).
+   * Đồng bộ dữ liệu Credits Master.
    * Cập nhật cho chính mình và đẩy cho toàn bộ Users nếu là Admin.
+   * Được kích hoạt NGAY LẬP TỨC khi vào Home hoặc thực hiện tác vụ.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -146,7 +147,7 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers]);
 
-  // CHỈ ĐỒNG BỘ 1 LẦN KHI VÀO TRANG HOME (Sự kiện Đăng nhập/Load trang)
+  // CHỈ ĐỒNG BỘ 1 LẦN KHI VÀO TRANG HOME (Sự kiện Đăng nhập)
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
@@ -159,7 +160,6 @@ export default function HomePage() {
       router.push('/login');
     } else {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      // Admin có thể ở lại bất kỳ trang nào (Login/Claim/Home) mà không bị chuyển hướng cưỡng bức
       if (isAdmin) return;
 
       if (!userData?.hasClaimedCredits || !userData?.apiKey) {
