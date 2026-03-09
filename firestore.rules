@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -42,13 +43,14 @@ service cloud.firestore {
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if (isExistingOwner(userId) || isAdmin()) && isUnchanged('id');
       allow delete: if isAdmin();
-    }
 
-    match /users/{userId}/projects/{projectId} {
-      allow get, list: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if (isExistingOwner(userId) || isAdmin()) && isUnchanged('userId');
-      allow delete: if isExistingOwner(userId) || isAdmin();
+      // Cấu trúc nested để đảm bảo context userId được kế thừa chính xác
+      match /projects/{projectId} {
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if (isExistingOwner(userId) || isAdmin()) && isUnchanged('userId');
+        allow delete: if isExistingOwner(userId) || isAdmin();
+      }
     }
 
     match /{path=**} {
