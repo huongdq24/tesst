@@ -112,7 +112,7 @@ export default function HomePage() {
           });
         }
         
-        // Nếu là Admin, thực hiện đồng bộ cho toàn bộ các User khác
+        // Nếu là Admin, thực hiện đồng bộ cho toàn bộ các User khác dùng chung Project này
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
