@@ -88,7 +88,7 @@ export default function CreditClaimPage() {
       router.push('/login');
     } else {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      if (isAdmin) return;
+      if (isAdmin) return; // Admin có thể ở lại trang này
       if (userData?.hasClaimedCredits && userData?.apiKey) {
         router.push('/home');
       }
@@ -101,7 +101,7 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
-      // ÉP BUỘC đồng bộ Credits thực tế ngay khi Claim mã
+      // ÉP BUỘC đồng bộ Credits thực tế ngay khi kích hoạt mã
       const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
       const latestCredits = result.success ? String(result.credits) : '0.00';
 
@@ -109,7 +109,7 @@ export default function CreditClaimPage() {
       updateDocumentNonBlocking(uRef, {
         hasClaimedCredits: true,
         apiKey: apiKey,
-        credits: latestCredits, // Ghi đè giá trị thực tế ngay lập tức
+        credits: latestCredits,
         updatedAt: new Date().toISOString()
       });
       

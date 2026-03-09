@@ -67,7 +67,6 @@ export const FeatureWorkspace = ({
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     setFilterDate(thirtyDaysAgo.toISOString());
     
-    // Set default media type based on feature
     if (featureId === 'videoCreator') setMediaType('VIDEO');
     else setMediaType('IMAGE');
   }, [featureId]);
@@ -85,23 +84,23 @@ export const FeatureWorkspace = ({
   const { data: history, isLoading: isHistoryLoading } = useCollection(projectsQuery);
 
   /**
-   * Đồng bộ số dư cho User hiện tại và Admin nếu cần.
+   * Đồng bộ Credits tức thì sau tác vụ AI.
    */
-  const syncCreditsOnAction = async () => {
+  const syncCreditsAfterAI = async () => {
     if (!user || !db) return;
     try {
       const resultCredits = await getRealtimeCredits();
       if (resultCredits.success && resultCredits.credits) {
         const latestCredits = String(resultCredits.credits);
         
-        // Cập nhật cho chính mình
+        // 1. Cập nhật chính mình
         const uRef = doc(db, 'users', user.uid);
         updateDocumentNonBlocking(uRef, {
           credits: latestCredits,
           updatedAt: new Date().toISOString()
         });
 
-        // Nếu là Admin, cập nhật cho tất cả users (Master Sync)
+        // 2. Nếu là Admin, ép cập nhật toàn bộ Users (Master Sync)
         if (ADMIN_EMAILS.includes(user.email || '')) {
           const usersCol = collection(db, 'users');
           const usersSnap = await getDocs(usersCol);
@@ -115,7 +114,7 @@ export const FeatureWorkspace = ({
         }
       }
     } catch (e) {
-      console.error("Post-Action Sync Error:", e);
+      console.error("Post-AI Sync Error:", e);
     }
   };
 
@@ -159,8 +158,8 @@ export const FeatureWorkspace = ({
         updatedAt: new Date().toISOString()
       });
 
-      // ĐỒNG BỘ TỨC THÌ SAU KHI AI HOÀN TẤT
-      await syncCreditsOnAction();
+      // ĐỒNG BỘ CREDITS TỨC THÌ SAU KHI HOÀN THÀNH
+      await syncCreditsAfterAI();
 
     } catch (error) {
       toast({

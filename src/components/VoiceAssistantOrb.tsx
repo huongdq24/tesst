@@ -33,7 +33,6 @@ export const VoiceAssistantOrb = ({
     if (isProcessing || !user || !db) return;
     
     setIsListening(true);
-    // Simulating voice capture...
     setTimeout(async () => {
       setIsListening(false);
       setIsProcessing(true);
@@ -51,19 +50,17 @@ export const VoiceAssistantOrb = ({
           description: result.responseText,
         });
 
-        // ĐỒNG BỘ TỨC THÌ SAU KHI VOICE AI HOÀN TẤT (Event-driven)
+        // ĐỒNG BỘ TỨC THÌ SAU KHI VOICE AI HOÀN TẤT
         const resultCredits = await getRealtimeCredits();
         if (resultCredits.success && resultCredits.credits) {
           const latestCredits = String(resultCredits.credits);
           
-          // Cập nhật chính mình
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
             credits: latestCredits,
             updatedAt: new Date().toISOString()
           });
 
-          // Nếu là Admin, đẩy cho toàn bộ Users (Master Sync)
           if (ADMIN_EMAILS.includes(user.email || '')) {
             const usersCol = collection(db, 'users');
             const usersSnap = await getDocs(usersCol);

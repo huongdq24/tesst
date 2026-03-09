@@ -78,7 +78,7 @@ export default function LoginPage() {
     if (user && !isUserLoading && !isUserDataLoading) {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
       
-      // ĐẶC QUYỀN ADMIN: Cho phép ở lại trang Login nếu họ chủ động vào
+      // ĐẶC QUYỀN ADMIN: Chỉ chuyển hướng nếu họ vừa thực hiện thao tác đăng nhập xong
       if (isAdmin && !hasAttemptedLogin.current) return;
 
       if (hasAttemptedLogin.current) {

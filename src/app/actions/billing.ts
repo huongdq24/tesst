@@ -7,7 +7,7 @@ const BILLING_ACCOUNT_ID = '017D0B-3695DA-8D7FB7';
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
- * Thực hiện truy vấn kép: Project Info -> Billing Account Details để tìm Credits khuyến mãi.
+ * Truy vấn chi tiết Billing Account để tìm Credits khuyến mãi (Free Trial).
  */
 export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5626-488a-913') {
   if (!projectId) {
@@ -33,7 +33,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
     let displayCredits = '0.00';
     let currency = 'USD';
 
-    // 2. Truy vấn chi tiết Billing Account để tìm Credits khuyến mãi (Free Trial)
+    // 2. Truy vấn chi tiết Billing Account để tìm mảng credits thực tế
     try {
       const [accountInfo] = await billingClient.getBillingAccount({
         name: billingInfo.billingAccountName,
@@ -41,9 +41,8 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
 
       const rawAccountData = accountInfo as any;
       
-      // Bóc tách mảng credits như cấu trúc JSON thực tế từ Google
       if (rawAccountData.credits && Array.isArray(rawAccountData.credits)) {
-        // Tìm gói tín dụng còn hạn lớn nhất
+        // Tìm gói tín dụng có số dư còn lại lớn nhất
         const activeCredit = rawAccountData.credits.reduce((prev: any, current: any) => {
           const prevVal = prev?.remainingAmount ? parseFloat(prev.remainingAmount.value) : 0;
           const currentVal = current?.remainingAmount ? parseFloat(current.remainingAmount.value) : 0;
@@ -54,7 +53,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
           const val = parseFloat(activeCredit.remainingAmount.value);
           currency = activeCredit.remainingAmount.currencyCode;
 
-          // Quy đổi VND sang USD xấp xỉ (VND / 25.000)
+          // Quy đổi VND sang USD (xấp xỉ VND / 25.000)
           if (currency === 'VND') {
             displayCredits = (val / 25000).toFixed(2); 
           } else {
