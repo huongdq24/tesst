@@ -88,7 +88,11 @@ export default function CreditClaimPage() {
       router.push('/login');
     } else {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      if (!isAdmin && userData?.hasClaimedCredits && userData?.apiKey) {
+      
+      // ĐẶC QUYỀN ADMIN: Cho phép ở lại trang Claim Credits nếu họ chủ động vào
+      if (isAdmin) return;
+
+      if (userData?.hasClaimedCredits && userData?.apiKey) {
         router.push('/home');
       }
     }

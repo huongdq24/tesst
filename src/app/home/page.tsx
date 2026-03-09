@@ -98,6 +98,10 @@ export default function HomePage() {
   }, [db, userData, user]);
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
+  /**
+   * Đồng bộ dữ liệu Credits từ Google Cloud Billing
+   * Nếu là Admin, sẽ đẩy dữ liệu mới cho tất cả Users khác.
+   */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
@@ -110,7 +114,7 @@ export default function HomePage() {
         const latestCredits = String(result.credits);
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         
-        // Update current user
+        // Cập nhật cho chính mình
         if (String(userData.credits || '0.00') !== latestCredits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -119,7 +123,7 @@ export default function HomePage() {
           });
         }
         
-        // Push to all users if Admin is active
+        // Nếu là Admin, đồng bộ cho toàn bộ hệ thống
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
             if (String(u.credits || '0.00') !== latestCredits) {
@@ -134,6 +138,7 @@ export default function HomePage() {
         setLastSynced(new Date().toLocaleTimeString());
       }
 
+      // Admin lấy danh sách dự án Billing
       if (userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
         const projResult = await listAllBillingProjects();
         if (projResult.success) {
@@ -141,22 +146,19 @@ export default function HomePage() {
         }
       }
     } catch (error) {
-      console.error("Auto-Sync Error:", error);
+      console.error("Manual/Initial Sync Error:", error);
     } finally {
       setIsSyncing(false);
       syncLock.current = false;
     }
   }, [user, userData, db, allUsers]);
 
+  // CHỈ ĐỒNG BỘ 1 LẦN KHI VÀO TRANG (SAU LOGIN) - KHÔNG DÙNG INTERVAL
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
-      const interval = setInterval(() => {
-        performBillingSync();
-      }, 60000); 
-      return () => clearInterval(interval);
     }
-  }, [user, userData?.hasClaimedCredits, isUserDataLoading, allUsers, performBillingSync]);
+  }, [user, userData?.hasClaimedCredits, isUserDataLoading, allUsers !== undefined]);
 
   useEffect(() => {
     if (isUserLoading || isUserDataLoading) return;

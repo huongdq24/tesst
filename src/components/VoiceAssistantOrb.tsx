@@ -10,8 +10,10 @@ import { IGenBranding } from './Branding';
 import { Language } from '@/lib/i18n';
 import { getRealtimeCredits } from '@/app/actions/billing';
 import { useUser, useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, collection, getDocs } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+
+const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
 
 export const VoiceAssistantOrb = ({ 
   lang, 
@@ -29,7 +31,7 @@ export const VoiceAssistantOrb = ({
   const { toast } = useToast();
 
   const handleOrbClick = async () => {
-    if (isProcessing || !user) return;
+    if (isProcessing || !user || !db) return;
     
     setIsListening(true);
     // Simulating voice capture...
@@ -50,14 +52,30 @@ export const VoiceAssistantOrb = ({
           description: result.responseText,
         });
 
-        // ĐỒNG BỘ THỰC TẾ TỪ GOOGLE CLOUD BILLING API NGAY LẬP TỨC
+        // ĐỒNG BỘ TỨC THÌ SAU KHI VOICE AI HOÀN TẤT
         const resultCredits = await getRealtimeCredits();
         if (resultCredits.success && resultCredits.credits) {
+          const latestCredits = String(resultCredits.credits);
+          
+          // Cập nhật chính mình
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
-            credits: resultCredits.credits,
+            credits: latestCredits,
             updatedAt: new Date().toISOString()
           });
+
+          // Nếu là Admin, đẩy cho toàn bộ Users
+          if (ADMIN_EMAILS.includes(user.email || '')) {
+            const usersCol = collection(db, 'users');
+            const usersSnap = await getDocs(usersCol);
+            usersSnap.forEach(uDoc => {
+               const otherURef = doc(db, 'users', uDoc.id);
+               updateDocumentNonBlocking(otherURef, {
+                 credits: latestCredits,
+                 updatedAt: new Date().toISOString()
+               });
+            });
+          }
         }
       } catch (error) {
         toast({

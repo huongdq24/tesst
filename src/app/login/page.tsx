@@ -78,12 +78,15 @@ export default function LoginPage() {
     if (user && !isUserLoading && !isUserDataLoading) {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
       
+      // ĐẶC QUYỀN ADMIN: Cho phép ở lại trang Login nếu họ chủ động vào
+      if (isAdmin && !hasAttemptedLogin.current) return;
+
       if (hasAttemptedLogin.current) {
         router.push('/home');
         return;
       }
 
-      if (user && !hasAttemptedLogin.current && !isAdmin) {
+      if (user && !isAdmin) {
         if (userData?.hasClaimedCredits && userData?.apiKey) {
           router.push('/home');
         } else {

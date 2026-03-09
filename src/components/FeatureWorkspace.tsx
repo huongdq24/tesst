@@ -25,11 +25,13 @@ import { aiVideoWalkthroughGenerator } from '@/ai/flows/ai-video-walkthrough-gen
 import { aiDesignConceptGenerator } from '@/ai/flows/ai-design-concept-generator';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, getDocs } from 'firebase/firestore';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { formatDistanceToNow } from 'date-fns';
-import { vi, enUS, zhCN } from 'date-fns/locale';
+import { vi, enUS } from 'date-fns/locale';
 import { getRealtimeCredits } from '@/app/actions/billing';
+
+const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
 
 export const FeatureWorkspace = ({ 
   featureId, 
@@ -56,7 +58,6 @@ export const FeatureWorkspace = ({
 
   // Settings
   const [cinematicPan, setCinematicPan] = useState(true);
-  const [consistentSync, setConsistentSync] = useState(false);
   const [extendVideo, setExtendVideo] = useState(false);
 
   // Hydration-safe date
@@ -83,6 +84,41 @@ export const FeatureWorkspace = ({
   }, [db, user, featureId, filterDate]);
 
   const { data: history, isLoading: isHistoryLoading } = useCollection(projectsQuery);
+
+  /**
+   * Đồng bộ số dư cho User hiện tại và Admin nếu cần.
+   */
+  const syncCreditsOnAction = async () => {
+    if (!user || !db) return;
+    try {
+      const resultCredits = await getRealtimeCredits();
+      if (resultCredits.success && resultCredits.credits) {
+        const latestCredits = String(resultCredits.credits);
+        
+        // Cập nhật cho chính mình
+        const uRef = doc(db, 'users', user.uid);
+        updateDocumentNonBlocking(uRef, {
+          credits: latestCredits,
+          updatedAt: new Date().toISOString()
+        });
+
+        // Nếu là Admin, cập nhật cho tất cả users
+        if (ADMIN_EMAILS.includes(user.email || '')) {
+          const usersCol = collection(db, 'users');
+          const usersSnap = await getDocs(usersCol);
+          usersSnap.forEach(uDoc => {
+             const otherURef = doc(db, 'users', uDoc.id);
+             updateDocumentNonBlocking(otherURef, {
+               credits: latestCredits,
+               updatedAt: new Date().toISOString()
+             });
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Post-Action Sync Error:", e);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!prompt || !user) return;
@@ -124,15 +160,8 @@ export const FeatureWorkspace = ({
         updatedAt: new Date().toISOString()
       });
 
-      // ĐỒNG BỘ THỰC TẾ TỪ GOOGLE CLOUD BILLING API NGAY SAU KHI XONG
-      const resultCredits = await getRealtimeCredits();
-      if (resultCredits.success && resultCredits.credits) {
-        const uRef = doc(db, 'users', user.uid);
-        updateDocumentNonBlocking(uRef, {
-          credits: resultCredits.credits,
-          updatedAt: new Date().toISOString()
-        });
-      }
+      // ĐỒNG BỘ TỨC THÌ SAU KHI AI HOÀN TẤT
+      await syncCreditsOnAction();
 
     } catch (error) {
       toast({
