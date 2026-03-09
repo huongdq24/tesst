@@ -5,12 +5,12 @@
 
 ---
 
-## 📊 Cơ chế quản lý Credits (Tín dụng)
+## 📊 Cơ chế quản lý Credits (Tín dụng) thực tế
 
-Ứng dụng hiện tại đã được nâng cấp để đọc dữ liệu trực tiếp từ cấu trúc **Credits Object** của Google Cloud Billing API.
+Ứng dụng hiện tại đã được cấu hình để đọc dữ liệu trực tiếp từ Google Cloud Billing API.
 
-### Phân tích dữ liệu thực tế (JSON)
-Khi tài khoản có gói dùng thử, Google trả về mảng `credits` như sau:
+### Phân tích cơ chế bóc tách dữ liệu (JSON)
+Khi tài khoản có gói dùng thử hoặc tín dụng khuyến mãi, Google trả về mảng `credits` trong thông tin Billing:
 
 ```json
 {
@@ -18,30 +18,26 @@ Khi tài khoản có gói dùng thử, Google trả về mảng `credits` như s
     {
       "displayName": "Free Trial",
       "amount": { "currencyCode": "VND", "value": "7835100" },
-      "remainingAmount": { "colorCode": "VND", "value": "7835100" },
+      "remainingAmount": { "currencyCode": "VND", "value": "7835100" },
       "expirationTime": "2026-06-02T23:59:59Z"
     }
   ]
 }
 ```
 
-- **Logic xử lý**: Hệ thống sẽ quét mảng này, tìm đối tượng có `displayName` là "Free Trial".
-- **Quy đổi**: Do giá trị trả về là tiền VND (ví dụ: 7.835.100), ứng dụng sẽ thực hiện quy đổi xấp xỉ sang USD (chia cho tỷ giá 25.000) để hiển thị con số `$300.00` quen thuộc trên giao diện, hoặc hiển thị số dư thực tế nếu là tài khoản trả phí.
+- **Logic xử lý**: 
+  1. Hệ thống gọi `getProjectBillingInfo`.
+  2. Quét mảng `credits` để tìm số dư (`remainingAmount`).
+  3. Nếu đơn vị là `VND`, hệ thống sẽ quy đổi xấp xỉ sang `USD` (chia cho 25.000) để hiển thị đồng bộ trên giao diện với ký hiệu `$`.
+  4. Nếu không có gói tín dụng nào (Tài khoản Free Tier thông thường), số dư sẽ hiển thị đúng là **$0.00**.
 
-## 🛠 Hướng dẫn cho Nhà phát triển
-
-### Kiểm tra dữ liệu thô (Raw Data)
-Kết quả JSON thực tế từ Google được log tại Terminal của Backend trong Server Action `src/app/actions/billing.ts`.
-
-### Thay đổi Project ID
-1. Mở file `src/app/home/page.tsx`.
-2. Thay đổi giá trị `DEFAULT_PROJECT_ID` thành ID dự án Google Cloud của bạn.
-3. Đảm bảo Service Account có quyền `Billing Account Viewer`.
+## 🚀 Cách kiểm tra dữ liệu thật
+1. Đăng nhập bằng Gmail có quyền xem Billing của Project.
+2. Hệ thống sẽ tự động chạy Server Action `getRealtimeCredits`.
+3. Bạn có thể xem kết quả JSON thô được log tại Terminal của máy chủ khi ứng dụng đang chạy.
 
 ---
 
-## 🚀 Lộ trình lên Production (Xác minh Google)
-
-Để hiển thị số dư cho người dùng cá nhân thông qua Gmail của họ:
-1. **OAuth Verification**: Gửi ứng dụng lên Google Cloud Console để xác minh quyền `cloud-billing.readonly`.
-2. **Budgets API**: Tích hợp thêm Cloud Billing Budgets API để theo dõi chi tiêu chi tiết hơn.
+## 🛠 Lộ trình tiếp theo
+- **Xác minh App**: Để đọc dữ liệu Billing của người dùng bất kỳ thông qua OAuth2, ứng dụng cần được Google Cloud Console xác minh chính thức.
+- **Budget API**: Tích hợp thêm Budget API nếu muốn theo dõi các hạn mức chi tiêu tự thiết lập.

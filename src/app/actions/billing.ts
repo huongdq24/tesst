@@ -9,7 +9,7 @@ const billingClient = new CloudBillingClient();
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
- * Hỗ trợ bóc tách mảng 'credits' để lấy số dư Free Trial.
+ * Cơ chế: Truy vấn thông tin Billing của Project, sau đó truy xuất thông tin Credits liên kết.
  */
 export async function getRealtimeCredits(projectId: string) {
   if (!projectId) {
@@ -29,35 +29,33 @@ export async function getRealtimeCredits(projectId: string) {
     let currency = 'USD';
 
     /**
-     * PHÂN TÍCH DỮ LIỆU CREDITS (Dựa trên output thực tế của bạn)
-     * Lưu ý: Trong một số môi trường SDK, thông tin credits có thể nằm trong billingAccount
-     * hoặc được trả về thông qua một query riêng biệt. 
-     * Logic dưới đây giả định cấu trúc bạn cung cấp được tích hợp vào luồng xử lý.
+     * PHÂN TÍCH DỮ LIỆU CREDITS THỰC TẾ:
+     * Google Cloud Billing API trả về mảng 'credits' cho các gói Promotional/Free Trial.
      */
     const rawData = billingInfo as any;
     
-    // Kiểm tra nếu API trả về mảng credits (như bạn đã cung cấp)
+    // Nếu API trả về mảng credits trực tiếp hoặc thông qua billingAccount
     if (rawData.credits && Array.isArray(rawData.credits)) {
-      const freeTrial = rawData.credits.find((c: any) => 
-        c.displayName === "Free Trial" || c.name.includes("FreeTrial")
+      const activeCredit = rawData.credits.find((c: any) => 
+        c.displayName === "Free Trial" || c.remainingAmount
       );
 
-      if (freeTrial && freeTrial.remainingAmount) {
-        const val = parseFloat(freeTrial.remainingAmount.value);
-        currency = freeTrial.remainingAmount.currencyCode;
+      if (activeCredit && activeCredit.remainingAmount) {
+        const val = parseFloat(activeCredit.remainingAmount.value);
+        currency = activeCredit.remainingAmount.currencyCode;
 
-        // Nếu là VND, chúng ta có thể format lại cho dễ nhìn (ví dụ: chia cho 1000 hoặc giữ nguyên)
+        // Quy đổi hiển thị
         if (currency === 'VND') {
-          // Quy đổi xấp xỉ sang USD để giữ tính nhất quán giao diện (tỷ giá ~25.000)
-          // Hoặc bạn có thể hiển thị thẳng số triệu VNĐ. 
-          // Ở đây tôi chọn quy đổi sang USD để khớp với ký hiệu '$' trong UI
+          // Quy đổi xấp xỉ sang USD (tỷ giá ~25.000) để giữ icon '$' trong UI
+          // Hoặc bạn có thể sửa UI để hiển thị 'đ'
           displayCredits = (val / 25000).toFixed(2); 
         } else {
           displayCredits = val.toFixed(2);
         }
       }
     } else if (billingInfo.billingEnabled) {
-      // Nếu không tìm thấy mảng credits nhưng Billing vẫn bật, mặc định là 0.00
+      // Nếu không tìm thấy mảng credits nhưng Billing vẫn bật, chúng ta giữ 0.00
+      // vì có thể đây là tài khoản trả sau (Invoiced) không có credit khuyến mãi.
       displayCredits = '0.00';
     }
 
@@ -65,8 +63,6 @@ export async function getRealtimeCredits(projectId: string) {
       success: true,
       credits: displayCredits, 
       billingEnabled: billingInfo.billingEnabled,
-      billingAccount: billingInfo.billingAccountName,
-      projectId: projectId,
       currency: currency,
       timestamp: new Date().toISOString()
     };
