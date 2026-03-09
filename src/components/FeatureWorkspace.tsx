@@ -65,8 +65,7 @@ export const FeatureWorkspace = ({
   const syncCreditsAfterAI = async () => {
     if (!user || !db) return;
     try {
-      const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
-      const resultCredits = await getRealtimeCredits(oauthToken);
+      const resultCredits = await getRealtimeCredits();
       if (resultCredits.success) {
         const latestCredits = String(resultCredits.credits);
         

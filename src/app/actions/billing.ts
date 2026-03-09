@@ -3,7 +3,7 @@
 import { CloudBillingClient } from '@google-cloud/billing';
 
 /**
- * Truy xuất số dư Credits thực tế chỉ bằng Service Account.
+ * Truy xuất số dư Credits thực tế CHỈ bằng Service Account.
  * Hệ thống tự động nhận diện thông tin xác thực của Service Account trong môi trường Google Cloud/App Hosting.
  */
 export async function getRealtimeCredits() {
@@ -34,9 +34,9 @@ export async function getRealtimeCredits() {
         credits.forEach((c: any) => {
           const amount = c.remainingAmount || c.amount;
           if (amount) {
-            // Xử lý chuỗi số: Loại bỏ dấu phẩy và dấu chấm để parse chính xác (Ví dụ: 7,835,100 -> 7835100)
+            // Xử lý chuỗi số: Loại bỏ dấu phẩy và dấu chấm để parse chính xác
             const rawVal = String(amount.value || '0');
-            const cleanVal = rawVal.replace(/,/g, '').replace(/\.(?=.*\.)/g, ''); // Xóa dấu phẩy và dấu chấm trung gian
+            const cleanVal = rawVal.replace(/,/g, '').replace(/\.(?=.*\.)/g, ''); 
             const val = parseFloat(cleanVal);
             const currency = amount.currencyCode || 'VND';
             

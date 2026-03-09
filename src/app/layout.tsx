@@ -9,14 +9,11 @@ export const metadata: Metadata = {
   description: 'Tương lai của thiết kế kiến trúc được hỗ trợ bởi iGen AI',
 };
 
-export default async function RootLayout(props: {
+export default function RootLayout({
+  children,
+}: {
   children: React.ReactNode;
-  params: Promise<any>;
 }) {
-  const { children } = props;
-  // Unwrap params even if not used to satisfy Next.js 15 requirement
-  await props.params;
-
   return (
     <html lang="en">
       <head>
