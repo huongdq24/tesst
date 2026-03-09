@@ -96,8 +96,8 @@ export default function HomePage() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
   /**
-   * Đồng bộ dữ liệu Credits Master.
-   * Cập nhật số dư thực tế cho chính mình và đẩy cho tất cả users nếu là Admin.
+   * Đồng bộ dữ liệu Credits Master (CHỈ GỌI KHI CÓ SỰ KIỆN).
+   * Cập nhật cho chính mình và đẩy cho toàn bộ Users nếu là Admin.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -117,7 +117,7 @@ export default function HomePage() {
         updatedAt: new Date().toISOString()
       });
       
-      // 2. Nếu là Admin, ÉP BUỘC cập nhật cho toàn bộ Users khác
+      // 2. Nếu là Admin, ÉP BUỘC cập nhật cho toàn bộ Users khác ngay lập tức
       if (isAdminUser && allUsers && allUsers.length > 0) {
         allUsers.forEach(u => {
           if (String(u.credits) !== latestCredits) {
@@ -146,6 +146,7 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers]);
 
+  // CHỈ ĐỒNG BỘ 1 LẦN KHI VÀO TRANG HOME (Sự kiện Đăng nhập/Load trang)
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
@@ -158,7 +159,10 @@ export default function HomePage() {
       router.push('/login');
     } else {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      if (!isAdmin && (!userData?.hasClaimedCredits || !userData?.apiKey)) {
+      // Admin có thể ở lại bất kỳ trang nào (Login/Claim/Home) mà không bị chuyển hướng cưỡng bức
+      if (isAdmin) return;
+
+      if (!userData?.hasClaimedCredits || !userData?.apiKey) {
         router.push('/igen-x-google');
       }
     }
@@ -230,7 +234,7 @@ export default function HomePage() {
           
           <div className="flex items-center gap-2 md:gap-4">
             <div className="hidden sm:flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 hover:border-cyan-300 transition-all group">
+              <div className="flex items-center gap-2 bg-white text-slate-900 px-3 md:px-4 py-1.5 rounded-full shadow-lg border border-slate-100 group">
                 <Wallet className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
                   ${userData?.credits || '0.00'}

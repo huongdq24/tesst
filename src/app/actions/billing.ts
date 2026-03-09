@@ -34,7 +34,6 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
     let currency = 'USD';
 
     // 2. Truy vấn chi tiết Billing Account để tìm Credits khuyến mãi (Free Trial)
-    // Thông tin này thường nằm trong mảng credits của BillingAccount object
     try {
       const [accountInfo] = await billingClient.getBillingAccount({
         name: billingInfo.billingAccountName,
@@ -42,8 +41,9 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
 
       const rawAccountData = accountInfo as any;
       
+      // Bóc tách mảng credits như cấu trúc JSON bạn cung cấp
       if (rawAccountData.credits && Array.isArray(rawAccountData.credits)) {
-        // Tìm gói tín dụng còn hạn lớn nhất (thường là Free Trial $300)
+        // Tìm gói tín dụng còn hạn lớn nhất
         const activeCredit = rawAccountData.credits.reduce((prev: any, current: any) => {
           const prevVal = prev?.remainingAmount ? parseFloat(prev.remainingAmount.value) : 0;
           const currentVal = current?.remainingAmount ? parseFloat(current.remainingAmount.value) : 0;
@@ -54,6 +54,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
           const val = parseFloat(activeCredit.remainingAmount.value);
           currency = activeCredit.remainingAmount.currencyCode;
 
+          // Quy đổi VND sang USD xấp xỉ (/ 25.000)
           if (currency === 'VND') {
             displayCredits = (val / 25000).toFixed(2); 
           } else {
@@ -63,18 +64,8 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
       }
     } catch (accError: any) {
       console.warn("Account Detail Fetch Warning:", accError.message);
-      // Nếu không lấy được detail, thử bóc tách từ project billing info (fallback)
-      const rawProjectData = billingInfo as any;
-      if (rawProjectData.credits && Array.isArray(rawProjectData.credits) && rawProjectData.credits.length > 0) {
-        const credit = rawProjectData.credits[0];
-        if (credit.remainingAmount) {
-          const val = parseFloat(credit.remainingAmount.value);
-          displayCredits = credit.remainingAmount.currencyCode === 'VND' ? (val / 25000).toFixed(2) : val.toFixed(2);
-        }
-      }
     }
 
-    // Đảm bảo nếu là 0 thì trả về 0.00 thay vì giữ giá trị cũ
     if (displayCredits === 'NaN') displayCredits = '0.00';
 
     return {
