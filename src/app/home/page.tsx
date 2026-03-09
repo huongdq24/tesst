@@ -6,6 +6,7 @@ import { IGenBranding } from '@/components/Branding';
 import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Wallet, 
@@ -53,12 +54,6 @@ import { Badge } from "@/components/ui/badge";
 import { getRealtimeCredits, listAllBillingProjects } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
-
-const IGenCodeBranded = () => (
-  <span className="font-bold">
-    <span className="text-cyan-500">iGen</span> Code
-  </span>
-);
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
