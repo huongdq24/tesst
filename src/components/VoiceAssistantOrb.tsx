@@ -9,6 +9,7 @@ import { IGenBranding } from './Branding';
 import { Language } from '@/lib/i18n';
 import { getRealtimeCredits } from '@/app/actions/billing';
 import { useUser, useFirestore } from '@/firebase';
+import { firebaseConfig } from '@/firebase/config';
 import { doc, collection, getDocs } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
@@ -50,8 +51,8 @@ export const VoiceAssistantOrb = ({
           description: result.responseText,
         });
 
-        // ĐỒNG BỘ TỨC THÌ SAU KHI VOICE AI HOÀN TẤT
-        const resultCredits = await getRealtimeCredits();
+        // KÍCH HOẠT ĐỒNG BỘ NGAY SAU KHI VOICE AI XONG (Event-driven)
+        const resultCredits = await getRealtimeCredits(firebaseConfig.projectId);
         if (resultCredits.success && resultCredits.credits) {
           const latestCredits = String(resultCredits.credits);
           

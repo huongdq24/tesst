@@ -24,6 +24,7 @@ import { aiVideoWalkthroughGenerator } from '@/ai/flows/ai-video-walkthrough-gen
 import { aiDesignConceptGenerator } from '@/ai/flows/ai-design-concept-generator';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { firebaseConfig } from '@/firebase/config';
 import { collection, query, where, orderBy, doc, getDocs } from 'firebase/firestore';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { formatDistanceToNow } from 'date-fns';
@@ -84,12 +85,13 @@ export const FeatureWorkspace = ({
   const { data: history, isLoading: isHistoryLoading } = useCollection(projectsQuery);
 
   /**
-   * Đồng bộ Credits tức thì sau tác vụ AI.
+   * Đồng bộ Credits tức thì sau tác vụ AI (Event-driven).
    */
   const syncCreditsAfterAI = async () => {
     if (!user || !db) return;
     try {
-      const resultCredits = await getRealtimeCredits();
+      // Sử dụng Project ID động từ config
+      const resultCredits = await getRealtimeCredits(firebaseConfig.projectId);
       if (resultCredits.success && resultCredits.credits) {
         const latestCredits = String(resultCredits.credits);
         
@@ -100,7 +102,7 @@ export const FeatureWorkspace = ({
           updatedAt: new Date().toISOString()
         });
 
-        // 2. Nếu là Admin, ép cập nhật toàn bộ Users (Master Sync)
+        // 2. Nếu là Admin, thực hiện Master Sync
         if (ADMIN_EMAILS.includes(user.email || '')) {
           const usersCol = collection(db, 'users');
           const usersSnap = await getDocs(usersCol);
@@ -158,7 +160,7 @@ export const FeatureWorkspace = ({
         updatedAt: new Date().toISOString()
       });
 
-      // ĐỒNG BỘ CREDITS TỨC THÌ SAU KHI HOÀN THÀNH
+      // KÍCH HOẠT ĐỒNG BỘ NGAY SAU KHI XONG
       await syncCreditsAfterAI();
 
     } catch (error) {

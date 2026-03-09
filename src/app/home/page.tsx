@@ -27,6 +27,7 @@ import { FeatureWorkspace } from '@/components/FeatureWorkspace';
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc, collection } from 'firebase/firestore';
+import { firebaseConfig } from '@/firebase/config';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,7 +57,6 @@ import { cn } from "@/lib/utils";
 import { getRealtimeCredits, listAllBillingProjects } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
-const DEFAULT_PROJECT_ID = 'project-5306ce34-5626-488a-913';
 
 const IGenCodeBranded = () => (
   <span className="font-bold">
@@ -96,8 +96,8 @@ export default function HomePage() {
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
   /**
-   * Đồng bộ dữ liệu Credits Master.
-   * Kích hoạt ngay khi vào trang Home (Event-driven).
+   * Đồng bộ dữ liệu Credits - Kích hoạt theo sự kiện.
+   * Không còn Polling 60s.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -106,7 +106,8 @@ export default function HomePage() {
     setIsSyncing(true);
     
     try {
-      const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
+      // Gọi API với Project ID động từ config
+      const result = await getRealtimeCredits(firebaseConfig.projectId);
       const latestCredits = result.success ? String(result.credits) : '0.00';
       const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
       
@@ -117,7 +118,7 @@ export default function HomePage() {
         updatedAt: new Date().toISOString()
       });
       
-      // 2. ÉP BUỘC đồng nhất số dư cho toàn bộ Users nếu là Admin (Master Sync)
+      // 2. MASTER SYNC: Nếu là Admin, ép đồng nhất số dư cho toàn bộ Users
       if (isAdminUser && allUsers && allUsers.length > 0) {
         allUsers.forEach(u => {
           if (String(u.credits) !== latestCredits) {
@@ -146,7 +147,7 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers]);
 
-  // ĐỒNG BỘ 1 LẦN DUY NHẤT KHI VÀO TRANG (Sự kiện Đăng nhập/Chuyển hướng thành công)
+  // ĐỒNG BỘ 1 LẦN DUY NHẤT KHI VÀO TRANG (Sự kiện Đăng nhập)
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
@@ -352,7 +353,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100">
                     <RefreshCw className="w-3.5 h-3.5 text-green-500" />
                     <span className="text-[10px] text-slate-600 font-bold">
-                      {lang === 'VI' ? 'Tự động đồng bộ' : 'Auto-synced'}: {lastSynced || '...'}
+                      {lang === 'VI' ? 'Đã đồng bộ' : 'Last Sync'}: {lastSynced || '...'}
                     </span>
                     {isSyncing && <RefreshCw className="w-3 h-3 animate-spin text-cyan-500 ml-1" />}
                   </div>
@@ -443,7 +444,7 @@ export default function HomePage() {
                 <div className="glass-card rounded-[2rem] p-6 border-none shadow-2xl bg-white sticky top-28">
                   <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
                     <Layers className="w-5 h-5 text-cyan-500" />
-                    Billing Insights
+                    Billing Discovery
                   </h3>
                   <div className="space-y-4">
                     {billingProjects.length > 0 ? (
@@ -452,20 +453,22 @@ export default function HomePage() {
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-tight">Project ID</span>
                             <Badge variant={p.billingEnabled ? 'default' : 'secondary'} className="text-[9px] h-4">
-                              {p.billingEnabled ? 'Billing Active' : 'Inactive'}
+                              {p.billingEnabled ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
                           <p className="text-sm font-mono font-bold text-slate-900 truncate">{p.projectId}</p>
-                          <div className="mt-2 flex items-center justify-between text-xs">
-                            <span className="text-slate-500">Current Balance</span>
-                            <span className="font-bold text-cyan-600">${userData?.credits || '0.00'}</span>
+                          <div className="mt-2 flex flex-col gap-1">
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className="text-slate-400">Account:</span>
+                              <span className="font-bold text-slate-600">{p.accountName}</span>
+                            </div>
                           </div>
                         </div>
                       ))
                     ) : (
                       <div className="text-center py-12 text-slate-400">
                         <RefreshCw className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                        <p className="text-xs font-medium">Đang tải dữ liệu từ Google Cloud...</p>
+                        <p className="text-xs font-medium">Đang khám phá dữ liệu Google Cloud...</p>
                       </div>
                     )}
                   </div>

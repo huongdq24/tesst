@@ -11,6 +11,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/fireb
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { IGenBranding } from '@/components/Branding';
+import { firebaseConfig } from '@/firebase/config';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,8 +65,6 @@ const IGenCodeBranded = () => (
   </span>
 );
 
-const DEFAULT_PROJECT_ID = 'project-5306ce34-5626-488a-913';
-
 export default function CreditClaimPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -88,7 +87,7 @@ export default function CreditClaimPage() {
       router.push('/login');
     } else {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      if (isAdmin) return; // Admin có thể ở lại trang này
+      if (isAdmin) return; 
       if (userData?.hasClaimedCredits && userData?.apiKey) {
         router.push('/home');
       }
@@ -101,8 +100,8 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
-      // ÉP BUỘC đồng bộ Credits thực tế ngay khi kích hoạt mã
-      const result = await getRealtimeCredits(DEFAULT_PROJECT_ID);
+      // Đồng bộ Credits thực tế ngay khi kích hoạt mã bằng Project ID động
+      const result = await getRealtimeCredits(firebaseConfig.projectId);
       const latestCredits = result.success ? String(result.credits) : '0.00';
 
       const uRef = doc(db, 'users', user.uid);
