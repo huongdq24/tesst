@@ -7,22 +7,37 @@ const billingClient = new CloudBillingClient();
 
 /**
  * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * Cơ chế DISCOVERY: Tự động quét toàn bộ Billing Accounts và Projects mà Service Account có quyền.
+ * Cơ chế DEEP DISCOVERY: Quét sâu vào toàn bộ Billing Accounts và Project liên kết.
  */
 export async function getRealtimeCredits(targetProjectId?: string) {
   try {
     // 1. Lấy danh sách tất cả Billing Accounts mà SA có quyền truy cập
     const [billingAccounts] = await billingClient.listBillingAccounts();
     
-    if (!billingAccounts || billingAccounts.length === 0) {
-      return { success: true, credits: '0.00', message: 'No billing accounts found' };
-    }
-
     let totalCreditsUSD = 0;
     let foundAnyCredit = false;
 
-    // 2. Duyệt qua từng Billing Account để tìm mảng credits
-    for (const account of billingAccounts) {
+    // 2. Nếu không tìm thấy Account qua list, thử lấy từ Project hiện tại
+    let accountsToScan = [...billingAccounts];
+    if (accountsToScan.length === 0) {
+      try {
+        const currentProjectId = targetProjectId || firebaseConfig.projectId;
+        const [projectBillingInfo] = await billingClient.getProjectBillingInfo({
+          name: `projects/${currentProjectId}`,
+        });
+        if (projectBillingInfo.billingAccountName) {
+          const [directAccount] = await billingClient.getBillingAccount({
+            name: projectBillingInfo.billingAccountName,
+          });
+          accountsToScan.push(directAccount);
+        }
+      } catch (e) {
+        console.warn("Could not find billing account via project link.");
+      }
+    }
+
+    // 3. Duyệt qua từng Billing Account để bóc tách mảng credits (Free Trial)
+    for (const account of accountsToScan) {
       if (!account.name) continue;
 
       try {
@@ -30,17 +45,17 @@ export async function getRealtimeCredits(targetProjectId?: string) {
           name: account.name,
         });
 
-        // Bóc tách dữ liệu thô (có thể chứa credits từ gói Free Trial)
-        // Lưu ý: Dữ liệu này trả về từ API Google có mảng credits cho các gói khuyến mãi
+        // Bóc tách dữ liệu thô từ mảng credits (Đây là nơi Google lưu $300 Free Trial)
         const rawData = accountInfo as any;
         const credits = rawData.credits || [];
 
         if (Array.isArray(credits) && credits.length > 0) {
           foundAnyCredit = true;
           credits.forEach((c: any) => {
-            if (c.remainingAmount) {
-              const val = parseFloat(c.remainingAmount.value || '0');
-              const currency = c.remainingAmount.currencyCode || 'USD';
+            const amount = c.remainingAmount || c.amount;
+            if (amount) {
+              const val = parseFloat(amount.value || '0');
+              const currency = amount.currencyCode || 'USD';
 
               // Quy đổi VND sang USD nếu cần (tỉ giá xấp xỉ 25.000)
               if (currency === 'VND') {
@@ -56,16 +71,9 @@ export async function getRealtimeCredits(targetProjectId?: string) {
       }
     }
 
-    // 3. Nếu không tìm thấy credits trực tiếp, kiểm tra trạng thái của Project hiện tại
-    const currentProjectId = targetProjectId || firebaseConfig.projectId;
-    const [billingInfo] = await billingClient.getProjectBillingInfo({
-      name: `projects/${currentProjectId}`,
-    });
-
     return {
       success: true,
       credits: totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00',
-      billingEnabled: billingInfo.billingEnabled,
       foundCredits: foundAnyCredit,
       timestamp: new Date().toISOString()
     };
@@ -76,7 +84,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
 }
 
 /**
- * Khám phá các dự án liên kết với Billing Account.
+ * Khám phá các dự án liên kết với Billing Account để hiển thị trong Admin Panel.
  */
 export async function listAllBillingProjects() {
   try {
@@ -91,10 +99,10 @@ export async function listAllBillingProjects() {
         allProjects = [...allProjects, ...projects.map(p => ({
           projectId: p.name?.split('/').pop(),
           billingEnabled: p.billingEnabled,
-          accountName: account.displayName
+          accountName: account.displayName || account.name
         }))];
       } catch (err) {
-        console.warn(`Could not list projects for ${account.name}`);
+        console.warn(`Could not list projects for account.`);
       }
     }
 
