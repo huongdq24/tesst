@@ -38,6 +38,7 @@ export async function getRealtimeCredits(accessToken?: string) {
               const credits = detail.credits || [];
               if (Array.isArray(credits) && credits.length > 0) {
                 foundAnyCredit = true;
+                console.log(`[Server] Tìm thấy mảng Credits (${credits.length} items) trong Account: ${account.name}`);
                 credits.forEach((c: any) => {
                   const amount = c.remainingAmount || c.amount;
                   if (amount) {
@@ -72,6 +73,7 @@ export async function getRealtimeCredits(accessToken?: string) {
         
         if (Array.isArray(credits) && credits.length > 0) {
           foundAnyCredit = true;
+          console.log(`[Server] SA tìm thấy mảng Credits (${credits.length} items)`);
           credits.forEach((c: any) => {
             const amount = c.remainingAmount || c.amount;
             if (amount) {
@@ -84,7 +86,7 @@ export async function getRealtimeCredits(accessToken?: string) {
       }
     }
 
-    // NẾU VẪN KHÔNG THẤY: Discovery trực tiếp từ Project
+    // NẾU VẪN KHÔNG THẤY: Discovery cuối cùng từ Project Billing Info
     if (!foundAnyCredit) {
       console.log("[Server] Discovery cuối: Kiểm tra trực tiếp Project Billing Info...");
        try {
