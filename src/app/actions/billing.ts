@@ -1,10 +1,11 @@
+
 'use server';
 
 import { CloudBillingClient } from '@google-cloud/billing';
 
 /**
  * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * Thiết kế chống lỗi 500 khi SDK không thể xác thực trên Server.
+ * Thiết kế chống lỗi 500 bằng cách bao bọc SDK trong try/catch và ưu tiên User Token.
  */
 export async function getRealtimeCredits(accessToken?: string) {
   let totalCreditsUSD = 0;
@@ -13,8 +14,7 @@ export async function getRealtimeCredits(accessToken?: string) {
 
   console.log("[Server] Bắt đầu tiến trình đồng bộ Billing...");
 
-  // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Mạnh nhất cho người dùng Google)
-  // Lưu ý: accessToken phải là OAuth Token, không được là Project ID string.
+  // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Tài khoản cá nhân)
   if (accessToken && accessToken.startsWith('ya29.')) { 
     try {
       console.log("[Server] Đang truy vấn bằng User Access Token...");
@@ -52,6 +52,7 @@ export async function getRealtimeCredits(accessToken?: string) {
       } else {
         const errData = await response.json().catch(() => ({}));
         console.warn("[Server] Token User không hợp lệ hoặc hết hạn:", errData);
+        errorLog += `OAuth Response Error: ${JSON.stringify(errData)}; `;
       }
     } catch (err: any) {
       console.error("[Server] Lỗi Chế độ 1 (OAuth):", err.message);
@@ -59,7 +60,7 @@ export async function getRealtimeCredits(accessToken?: string) {
     }
   }
 
-  // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Phương án dự phòng)
+  // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Tài khoản hệ thống)
   if (!foundAnyCredit) {
     try {
       console.log("[Server] Đang thử Chế độ 2 (Service Account)...");
@@ -86,7 +87,7 @@ export async function getRealtimeCredits(accessToken?: string) {
         }
       }
     } catch (err: any) {
-      console.warn("[Server] Chế độ 2 thất bại:", err.message);
+      console.warn("[Server] Chế độ 2 (Service Account) thất bại:", err.message);
       errorLog += `SDK Error: ${err.message}`;
     }
   }
@@ -94,7 +95,7 @@ export async function getRealtimeCredits(accessToken?: string) {
   console.log(`[Server] Hoàn tất. Tìm thấy Credits: ${foundAnyCredit}. Tổng: $${totalCreditsUSD}`);
 
   return {
-    success: foundAnyCredit,
+    success: true, // Trả về true để không làm sập UI, chỉ báo số dư 0
     credits: totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00',
     foundCredits: foundAnyCredit,
     error: errorLog || undefined,

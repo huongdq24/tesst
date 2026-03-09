@@ -1,17 +1,18 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, X } from 'lucide-react';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
+import { RefreshCw, X, Lock } from 'lucide-react';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { IGenBranding } from '@/components/Branding';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Language, translations } from '@/lib/i18n';
 import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
@@ -31,6 +32,7 @@ export default function CreditClaimPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [apiKey, setApiKey] = useState('');
+  const [manualToken, setManualToken] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
@@ -53,9 +55,8 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
-      // KHÔNG truyền projectId làm Token nữa. 
-      // Lấy Token từ sessionStorage nếu vừa đăng nhập bằng Google.
-      const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
+      // Ưu tiên dùng Access Token thủ công nếu có
+      const oauthToken = manualToken || sessionStorage.getItem('google_access_token') || undefined;
       const result = await getRealtimeCredits(oauthToken);
       const latestCredits = result.success ? String(result.credits) : '0.00';
       
@@ -66,6 +67,10 @@ export default function CreditClaimPage() {
         credits: latestCredits,
         updatedAt: new Date().toISOString()
       });
+
+      if (manualToken) {
+        sessionStorage.setItem('google_access_token', manualToken);
+      }
       
       toast({ title: "Kích hoạt thành công", description: `Chào mừng bạn. Số dư hiện tại: $${latestCredits}` });
       router.push('/home');
@@ -106,15 +111,32 @@ export default function CreditClaimPage() {
         </div>
 
         <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng Google</h2>
-        <p className="text-sm text-slate-500 mb-8">Nhập mã đối tác của iGen để kích hoạt hệ thống.</p>
+        <p className="text-sm text-slate-500 mb-8">Nhập mã đối tác và Access Token (tùy chọn) để kích hoạt.</p>
         
         <form onSubmit={handleVerify} className="space-y-6">
-          <Input 
-            className="h-16 text-lg bg-white border-2 border-slate-100 focus:border-cyan-500 font-mono rounded-2xl px-6 text-center"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Dán iGen Code tại đây..."
-          />
+          <div className="space-y-2 text-left">
+            <Label className="text-[10px] font-bold text-slate-400 uppercase ml-4">Mã iGen (Bắt buộc)</Label>
+            <Input 
+              className="h-16 text-lg bg-white border-2 border-slate-100 focus:border-cyan-500 font-mono rounded-2xl px-6 text-center"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Dán iGen Code tại đây..."
+            />
+          </div>
+
+          <div className="space-y-2 text-left">
+            <Label className="text-[10px] font-bold text-slate-400 uppercase ml-4 flex items-center gap-2">
+              <Lock className="w-3 h-3" /> Access Token (Tùy chọn - Dùng để đồng bộ $300)
+            </Label>
+            <Input 
+              className="h-14 bg-white border-2 border-slate-100 focus:border-cyan-500 font-mono rounded-2xl px-6"
+              value={manualToken}
+              onChange={(e) => setManualToken(e.target.value)}
+              placeholder="ya29.xxxx..."
+            />
+            <p className="text-[10px] text-slate-400 italic px-4">Lấy từ Network tab trong Google AI Studio (Authorization Header).</p>
+          </div>
+
           <Button 
             type="submit"
             className="w-full h-16 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3"

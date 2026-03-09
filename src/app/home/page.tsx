@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -19,7 +20,8 @@ import {
   Settings,
   Key,
   Eye,
-  EyeOff
+  EyeOff,
+  Lock
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -66,6 +68,7 @@ export default function HomePage() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isEditingApiKey, setIsEditingApiKey] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
+  const [tempAccessToken, setTempAccessToken] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
@@ -92,7 +95,8 @@ export default function HomePage() {
     setIsSyncing(true);
     
     try {
-      const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
+      // Ưu tiên dùng Access Token thủ công vừa nhập, nếu không lấy từ Session
+      const oauthToken = tempAccessToken || sessionStorage.getItem('google_access_token') || undefined;
       console.log("[Client] Đang đồng bộ với Token:", oauthToken ? "Có" : "Không");
       
       const result = await getRealtimeCredits(oauthToken);
@@ -115,6 +119,10 @@ export default function HomePage() {
             });
           });
         }
+        
+        if (result.foundCredits) {
+          toast({ title: "Đồng bộ thành công", description: `Số dư hiện tại: $${latestCredits}` });
+        }
       }
 
       if (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '')) {
@@ -127,7 +135,7 @@ export default function HomePage() {
       setIsSyncing(false);
       syncLock.current = false;
     }
-  }, [user, userData, db, allUsers]);
+  }, [user, userData, db, allUsers, tempAccessToken, toast]);
 
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
@@ -149,12 +157,18 @@ export default function HomePage() {
   const handleUpdateApiKey = (e: React.FormEvent) => {
     e.preventDefault();
     if (!tempApiKey || !user) return;
+    
     updateDocumentNonBlocking(doc(db, 'users', user.uid), { 
       apiKey: tempApiKey, 
       updatedAt: new Date().toISOString() 
     });
+    
+    if (tempAccessToken) {
+      sessionStorage.setItem('google_access_token', tempAccessToken);
+    }
+
     setIsEditingApiKey(false);
-    toast({ title: "Đã cập nhật", description: "Mã iGen đã được lưu thành công." });
+    toast({ title: "Đã lưu", description: "Hệ thống đang tiến hành đồng bộ số dư mới." });
     performBillingSync();
   };
 
@@ -286,6 +300,21 @@ export default function HomePage() {
                   </Button>
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                  <Lock className="w-3 h-3" /> Access Token (Tùy chọn)
+                </Label>
+                <Input 
+                  type="text" 
+                  value={tempAccessToken} 
+                  onChange={(e) => setTempAccessToken(e.target.value)} 
+                  className="h-14 rounded-2xl font-mono bg-slate-50 border-none focus-visible:ring-cyan-500" 
+                  placeholder="ya29.xxxx..."
+                />
+                <p className="text-[10px] text-slate-400 px-2 italic">Dán Access Token từ Google AI Studio để đồng bộ $300 ngay lập tức.</p>
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <Button type="button" variant="ghost" onClick={() => setIsEditingApiKey(false)} className="flex-1 h-14 rounded-2xl font-bold text-slate-500">{t.cancel}</Button>
                 <Button type="submit" className="flex-1 h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold shadow-lg transition-all">{t.saveChanges}</Button>
