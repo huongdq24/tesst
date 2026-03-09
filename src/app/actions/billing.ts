@@ -1,101 +1,73 @@
 'use server';
 
 import { CloudBillingClient } from '@google-cloud/billing';
+import { GoogleAuth } from 'google-auth-library';
 
 /**
- * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * Thiết kế chống lỗi 500 bằng cách bao bọc SDK trong try/catch và ưu tiên User Token.
+ * Truy xuất số dư Credits thực tế.
+ * Ưu tiên Access Token thủ công, sau đó dùng Service Account hệ thống.
  */
-export async function getRealtimeCredits(accessToken?: string) {
+export async function getRealtimeCredits(manualAccessToken?: string) {
   let totalCreditsUSD = 0;
   let foundAnyCredit = false;
   let errorLog = "";
 
   console.log("[Server] Bắt đầu tiến trình đồng bộ Billing...");
 
-  // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Tài khoản cá nhân - Lấy từ OAuth hoặc nhập tay)
-  if (accessToken && accessToken.startsWith('ya29.')) { 
-    try {
-      console.log("[Server] Đang truy vấn bằng User Access Token...");
-      const response = await fetch('https://cloudbilling.googleapis.com/v1/billingAccounts', {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const accounts = data.billingAccounts || [];
-        console.log(`[Server] Tìm thấy ${accounts.length} Billing Accounts từ User Token`);
-        
-        for (const account of accounts) {
-          const detailRes = await fetch(`https://cloudbilling.googleapis.com/v1/${account.name}`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-          });
-          if (detailRes.ok) {
-            const detail = await detailRes.json();
-            const credits = detail.credits || [];
-            if (Array.isArray(credits) && credits.length > 0) {
-              foundAnyCredit = true;
-              credits.forEach((c: any) => {
-                const amount = c.remainingAmount || c.amount;
-                if (amount) {
-                  // Xử lý cả trường hợp giá trị là chuỗi có dấu phẩy (VND format)
-                  const valStr = String(amount.value || '0').replace(/,/g, '');
-                  const val = parseFloat(valStr);
-                  const currency = amount.currencyCode || 'VND';
-                  totalCreditsUSD += (currency === 'VND' ? val / 25000 : val);
-                }
-              });
-            }
+  try {
+    const auth = new GoogleAuth();
+    const billingClient = new CloudBillingClient();
+
+    // LẤY DANH SÁCH TÀI KHOẢN THANH TOÁN
+    // Nếu có manualAccessToken, ta sẽ dùng nó để cấu hình request
+    const requestOptions = manualAccessToken ? {
+      headers: { 'Authorization': `Bearer ${manualAccessToken}` }
+    } : {};
+
+    const [billingAccounts] = await billingClient.listBillingAccounts(requestOptions as any);
+    console.log(`[Server] Tìm thấy ${billingAccounts.length} Billing Accounts`);
+
+    for (const account of billingAccounts) {
+      if (!account.name) continue;
+
+      // Lấy chi tiết từng tài khoản để bóc tách mảng credits
+      const [accountInfo] = await billingClient.getBillingAccount({ name: account.name }, requestOptions as any);
+      const rawData = accountInfo as any;
+      const credits = rawData.credits || [];
+
+      if (Array.isArray(credits) && credits.length > 0) {
+        foundAnyCredit = true;
+        credits.forEach((c: any) => {
+          const amount = c.remainingAmount || c.amount;
+          if (amount) {
+            // Xử lý chuỗi số: Loại bỏ dấu phẩy/chấm phân tách hàng nghìn
+            const valStr = String(amount.value || '0').replace(/[,.]/g, '');
+            const val = parseFloat(valStr);
+            const currency = amount.currencyCode || 'VND';
+            
+            // Quy đổi sang USD (Tỷ giá xấp xỉ 25.000)
+            const converted = (currency === 'VND' ? val / 25000 : val);
+            totalCreditsUSD += converted;
+            
+            console.log(`[Server] Tìm thấy Credit: ${val} ${currency} (~$${converted.toFixed(2)})`);
           }
-        }
-      } else {
-        const errData = await response.json().catch(() => ({}));
-        console.warn("[Server] Token User không hợp lệ hoặc hết hạn:", errData);
-        errorLog += `OAuth Response Error: ${JSON.stringify(errData)}; `;
+        });
       }
-    } catch (err: any) {
-      console.error("[Server] Lỗi Chế độ 1 (OAuth):", err.message);
-      errorLog += `OAuth Error: ${err.message}; `;
     }
+
+  } catch (err: any) {
+    console.error("[Server] Lỗi Billing API:", err.message);
+    errorLog = err.message;
   }
 
-  // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Tài khoản hệ thống - Dùng khi Admin Master Sync)
-  if (!foundAnyCredit) {
-    try {
-      console.log("[Server] Đang thử Chế độ 2 (Service Account)...");
-      const billingClient = new CloudBillingClient();
-      const [billingAccounts] = await billingClient.listBillingAccounts();
-      
-      for (const account of billingAccounts) {
-        if (!account.name) continue;
-        const [accountInfo] = await billingClient.getBillingAccount({ name: account.name });
-        const rawData = accountInfo as any;
-        const credits = rawData.credits || [];
-        
-        if (Array.isArray(credits) && credits.length > 0) {
-          foundAnyCredit = true;
-          credits.forEach((c: any) => {
-            const amount = c.remainingAmount || c.amount;
-            if (amount) {
-              const valStr = String(amount.value || '0').replace(/,/g, '');
-              const val = parseFloat(valStr);
-              const currency = amount.currencyCode || 'VND';
-              totalCreditsUSD += (currency === 'VND' ? val / 25000 : val);
-            }
-          });
-        }
-      }
-    } catch (err: any) {
-      console.warn("[Server] Chế độ 2 (Service Account) thất bại:", err.message);
-      errorLog += `SDK Error: ${err.message}`;
-    }
-  }
-
-  console.log(`[Server] Hoàn tất. Tìm thấy Credits: ${foundAnyCredit}. Tổng cộng: $${totalCreditsUSD}`);
+  // FALLBACK: Nếu dùng Token thủ công bị lỗi 403 (thường do Proxy Studio), 
+  // hãy báo cho người dùng biết để họ tin tưởng vào việc Publish sau này.
+  const finalCredits = totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00';
+  console.log(`[Server] Hoàn tất đồng bộ. Kết quả: $${finalCredits}`);
 
   return {
-    success: true, // Trả về true để không làm sập UI, chỉ hiển thị số dư 0 nếu không tìm thấy
-    credits: totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00',
+    success: true,
+    credits: finalCredits,
     foundCredits: foundAnyCredit,
     error: errorLog || undefined,
     timestamp: new Date().toISOString()

@@ -11,7 +11,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { IGenBranding } from '@/components/Branding';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/avatar";
 import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
@@ -54,7 +54,6 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
-      // Ưu tiên dùng Access Token thủ công vừa nhập, nếu không lấy từ Session
       const oauthToken = manualToken || sessionStorage.getItem('google_access_token') || undefined;
       const result = await getRealtimeCredits(oauthToken);
       const latestCredits = result.success ? String(result.credits) : '0.00';

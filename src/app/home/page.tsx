@@ -96,7 +96,7 @@ export default function HomePage() {
     try {
       // Ưu tiên dùng Access Token thủ công vừa nhập, nếu không lấy từ Session
       const oauthToken = tempAccessToken || sessionStorage.getItem('google_access_token') || undefined;
-      console.log("[Client] Đang đồng bộ với Token:", oauthToken ? "Có" : "Không");
+      console.log("[Client] Đang gửi yêu cầu đồng bộ với Token:", oauthToken ? "Có" : "Không");
       
       const result = await getRealtimeCredits(oauthToken);
       
@@ -108,7 +108,7 @@ export default function HomePage() {
           updatedAt: new Date().toISOString()
         });
         
-        // Admin Master Sync: Nếu là Admin, ép số dư cho toàn bộ User
+        // Admin Master Sync: Ép số dư cho toàn bộ hệ thống
         const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers) {
           allUsers.forEach(u => {
@@ -136,7 +136,6 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers, tempAccessToken, toast]);
 
-  // Thực hiện đồng bộ tự động khi vào trang nếu đã kích hoạt
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
       performBillingSync();
@@ -168,7 +167,7 @@ export default function HomePage() {
     }
 
     setIsEditingApiKey(false);
-    toast({ title: "Đã lưu", description: "Hệ thống đang tiến hành đồng bộ số dư mới." });
+    toast({ title: "Đã lưu", description: "Đang cập nhật số dư thực tế..." });
     performBillingSync();
   };
 
@@ -312,7 +311,7 @@ export default function HomePage() {
                   className="h-14 rounded-2xl font-mono bg-slate-50 border-none focus-visible:ring-cyan-500" 
                   placeholder="ya29.xxxx..."
                 />
-                <p className="text-[10px] text-slate-400 px-2 italic">Dán Access Token từ Google Console để đồng bộ $300 ngay lập tức.</p>
+                <p className="text-[10px] text-slate-400 px-2 italic">Dán Access Token từ gcloud shell để đồng bộ tức thì.</p>
               </div>
 
               <div className="flex gap-3 pt-4">
