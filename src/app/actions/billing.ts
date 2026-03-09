@@ -1,13 +1,13 @@
+
 'use server';
 
 import { CloudBillingClient } from '@google-cloud/billing';
-import { firebaseConfig } from '@/firebase/config';
 
 const billingClient = new CloudBillingClient();
 
 /**
  * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * Hỗ trợ bóc tách mảng credits từ JSON response.
+ * Hỗ trợ bóc tách mảng credits từ JSON response của cả User Token và Service Account.
  */
 export async function getRealtimeCredits(accessToken?: string) {
   try {
@@ -30,8 +30,9 @@ export async function getRealtimeCredits(accessToken?: string) {
           });
           if (detailRes.ok) {
             const detail = await detailRes.json();
+            // Bóc tách mảng credits
             const credits = detail.credits || [];
-            if (Array.isArray(credits)) {
+            if (Array.isArray(credits) && credits.length > 0) {
               foundAnyCredit = true;
               credits.forEach((c: any) => {
                 const amount = c.remainingAmount || c.amount;
@@ -48,12 +49,17 @@ export async function getRealtimeCredits(accessToken?: string) {
       }
     }
 
-    // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Phương án dự phòng cho Admin)
+    // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Phương án dự phòng/Admin Sync)
+    // Nếu chưa tìm thấy Credits từ Token cá nhân, hoặc đang chạy Admin Sync
     if (!foundAnyCredit) {
       const [billingAccounts] = await billingClient.listBillingAccounts();
       for (const account of billingAccounts) {
         if (!account.name) continue;
+        
+        // Lấy thông tin chi tiết tài khoản bao gồm mảng credits
         const [accountInfo] = await billingClient.getBillingAccount({ name: account.name });
+        
+        // SDK thường trả về object thô, chúng ta ép kiểu để bóc tách credits "ẩn"
         const rawData = accountInfo as any;
         const credits = rawData.credits || [];
         
@@ -83,6 +89,9 @@ export async function getRealtimeCredits(accessToken?: string) {
   }
 }
 
+/**
+ * Liệt kê toàn bộ dự án đang liên kết thanh toán để Admin Discovery.
+ */
 export async function listAllBillingProjects() {
   try {
     const [accounts] = await billingClient.listBillingAccounts();

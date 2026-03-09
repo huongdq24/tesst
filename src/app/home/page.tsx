@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -69,7 +70,6 @@ export default function HomePage() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [billingProjects, setBillingProjects] = useState<any[]>([]);
   const syncLock = useRef(false);
 
