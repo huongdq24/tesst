@@ -7,7 +7,7 @@ const billingClient = new CloudBillingClient();
 
 /**
  * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * Thực hiện Discovery để tìm đúng Billing Account và mảng credits.
+ * Thực hiện bóc tách mảng credits từ Billing Account.
  */
 export async function getRealtimeCredits(targetProjectId?: string) {
   const projectId = targetProjectId || firebaseConfig.projectId;
@@ -17,7 +17,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
   }
 
   try {
-    // 1. Lấy thông tin Billing của Project để biết Billing Account Name
+    // 1. Lấy thông tin Billing của Project để xác định Billing Account Name
     const [billingInfo] = await billingClient.getProjectBillingInfo({
       name: `projects/${projectId}`,
     });
@@ -34,7 +34,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
     let displayCredits = '0.00';
     let currency = 'USD';
 
-    // 2. Truy vấn chi tiết Billing Account để bóc tách mảng credits
+    // 2. Truy vấn chi tiết Billing Account để tìm mảng credits (Free Trial)
     try {
       const [accountInfo] = await billingClient.getBillingAccount({
         name: billingInfo.billingAccountName,
@@ -42,8 +42,8 @@ export async function getRealtimeCredits(targetProjectId?: string) {
 
       const rawAccountData = accountInfo as any;
       
+      // Bóc tách mảng credits theo cấu trúc JSON của Google
       if (rawAccountData.credits && Array.isArray(rawAccountData.credits)) {
-        // Tìm gói tín dụng có số dư còn lại (thường là Free Trial)
         const activeCredit = rawAccountData.credits.reduce((prev: any, current: any) => {
           const prevVal = prev?.remainingAmount ? parseFloat(prev.remainingAmount.value) : 0;
           const currentVal = current?.remainingAmount ? parseFloat(current.remainingAmount.value) : 0;
@@ -54,7 +54,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
           const val = parseFloat(activeCredit.remainingAmount.value);
           currency = activeCredit.remainingAmount.currencyCode;
 
-          // Quy đổi VND sang USD (xấp xỉ VND / 25.000)
+          // Quy đổi VND sang USD (xấp xỉ VND / 25.000) nếu cần
           if (currency === 'VND') {
             displayCredits = (val / 25000).toFixed(2); 
           } else {
@@ -63,12 +63,12 @@ export async function getRealtimeCredits(targetProjectId?: string) {
         }
       }
     } catch (accError: any) {
-      console.warn("Lưu ý: Service Account cần quyền 'Billing Account Viewer' trên Billing Account để thấy mảng credits.");
+      console.warn("Billing Sync Warning: Service Account needs 'Billing Account Viewer' to see credits.");
     }
 
     return {
       success: true,
-      credits: displayCredits === 'NaN' ? '0.00' : displayCredits, 
+      credits: displayCredits === 'NaN' || !displayCredits ? '0.00' : displayCredits, 
       billingEnabled: billingInfo.billingEnabled,
       currency: currency,
       timestamp: new Date().toISOString()
@@ -80,7 +80,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
 }
 
 /**
- * Khám phá các dự án và tài khoản thanh toán mà Service Account có quyền truy cập.
+ * Khám phá các dự án liên kết với Billing Account.
  */
 export async function listAllBillingProjects() {
   try {
