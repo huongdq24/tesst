@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, X, Lock } from 'lucide-react';
+import { RefreshCw, Lock } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -63,9 +63,7 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
-      console.log("[Client] Đang yêu cầu đồng bộ số dư qua Service Account...");
       const result = await getRealtimeCredits();
-      
       const latestCredits = result.success ? String(result.credits) : '0.00';
       
       const uRef = doc(db, 'users', user.uid);
@@ -76,16 +74,10 @@ export default function CreditClaimPage() {
         updatedAt: new Date().toISOString()
       });
 
-      if (result.success && result.foundCredits) {
-        toast({ title: "Kích hoạt thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
-      } else {
-        toast({ title: "Đã liên kết", description: "Tài khoản iGen đã sẵn sàng. Số dư sẽ được cập nhật tự động qua Service Account." });
-      }
-      
+      toast({ title: "Kích hoạt thành công", description: "Hệ thống iGen đã sẵn sàng." });
       router.push('/home');
     } catch (err) {
-      console.error("[Client] Lỗi kích hoạt:", err);
-      toast({ variant: "destructive", title: "Lỗi", description: "Không thể khởi tạo tiến trình xác thực của iGen." });
+      toast({ variant: "destructive", title: "Lỗi", description: "Không thể khởi tạo tiến trình xác thực." });
     } finally {
       setIsVerifying(false);
     }
@@ -111,7 +103,7 @@ export default function CreditClaimPage() {
         <div className="glass-card inline-flex flex-col items-center gap-6 px-12 py-6 rounded-[1.5rem] shadow-xl border-white/40 mb-10 group hover:scale-[1.02] transition-all bg-white/40">
           <div className="flex items-center gap-8">
             <IGenBranding className="text-2xl" />
-            <X className="w-4 h-4 text-slate-300" />
+            <span className="text-slate-300">×</span>
             <GoogleLogo className="w-8 h-8" />
           </div>
           <div className="px-4 py-1 bg-slate-50/50 rounded-full border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
@@ -150,8 +142,6 @@ export default function CreditClaimPage() {
               </>
             )}
           </Button>
-          
-          <p className="text-[10px] text-slate-400 italic">Số dư sẽ tự động đồng bộ vĩnh viễn thông qua hạ tầng Google Service Account.</p>
         </form>
       </div>
     </main>

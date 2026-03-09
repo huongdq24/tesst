@@ -95,7 +95,6 @@ export default function HomePage() {
     setIsSyncing(true);
     
     try {
-      console.log("[Client] Đang yêu cầu đồng bộ số dư qua Service Account...");
       const result = await getRealtimeCredits();
       
       if (result.success) {
@@ -125,8 +124,6 @@ export default function HomePage() {
         if (result.foundCredits) {
           toast({ title: "Đồng bộ thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
         }
-      } else {
-        console.error("[Client] Lỗi Server Action:", result.error);
       }
     } catch (error: any) {
       console.error("[Client] Sync error:", error);
@@ -163,7 +160,7 @@ export default function HomePage() {
     });
 
     setIsEditingApiKey(false);
-    toast({ title: "Đã lưu", description: "Đang đồng bộ lại số dư hệ thống..." });
+    toast({ title: "Đã lưu", description: "Đang cập nhật hệ thống..." });
     performBillingSync();
   };
 
