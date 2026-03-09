@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -109,7 +108,7 @@ export default function HomePage() {
           updatedAt: new Date().toISOString()
         });
         
-        // Admin Master Sync
+        // Admin Master Sync: Nếu là Admin, ép số dư cho toàn bộ User
         const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         if (isAdminUser && allUsers) {
           allUsers.forEach(u => {
@@ -137,6 +136,7 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers, tempAccessToken, toast]);
 
+  // Thực hiện đồng bộ tự động khi vào trang nếu đã kích hoạt
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
       performBillingSync();
@@ -312,7 +312,7 @@ export default function HomePage() {
                   className="h-14 rounded-2xl font-mono bg-slate-50 border-none focus-visible:ring-cyan-500" 
                   placeholder="ya29.xxxx..."
                 />
-                <p className="text-[10px] text-slate-400 px-2 italic">Dán Access Token từ Google AI Studio để đồng bộ $300 ngay lập tức.</p>
+                <p className="text-[10px] text-slate-400 px-2 italic">Dán Access Token từ Google Console để đồng bộ $300 ngay lập tức.</p>
               </div>
 
               <div className="flex gap-3 pt-4">

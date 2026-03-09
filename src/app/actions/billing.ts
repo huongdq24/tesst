@@ -1,4 +1,3 @@
-
 'use server';
 
 import { CloudBillingClient } from '@google-cloud/billing';
@@ -14,7 +13,7 @@ export async function getRealtimeCredits(accessToken?: string) {
 
   console.log("[Server] Bắt đầu tiến trình đồng bộ Billing...");
 
-  // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Tài khoản cá nhân)
+  // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Tài khoản cá nhân - Lấy từ OAuth hoặc nhập tay)
   if (accessToken && accessToken.startsWith('ya29.')) { 
     try {
       console.log("[Server] Đang truy vấn bằng User Access Token...");
@@ -39,7 +38,7 @@ export async function getRealtimeCredits(accessToken?: string) {
               credits.forEach((c: any) => {
                 const amount = c.remainingAmount || c.amount;
                 if (amount) {
-                  // Xử lý cả trường hợp giá trị là chuỗi có dấu phẩy
+                  // Xử lý cả trường hợp giá trị là chuỗi có dấu phẩy (VND format)
                   const valStr = String(amount.value || '0').replace(/,/g, '');
                   const val = parseFloat(valStr);
                   const currency = amount.currencyCode || 'VND';
@@ -60,7 +59,7 @@ export async function getRealtimeCredits(accessToken?: string) {
     }
   }
 
-  // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Tài khoản hệ thống)
+  // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Tài khoản hệ thống - Dùng khi Admin Master Sync)
   if (!foundAnyCredit) {
     try {
       console.log("[Server] Đang thử Chế độ 2 (Service Account)...");
@@ -92,10 +91,10 @@ export async function getRealtimeCredits(accessToken?: string) {
     }
   }
 
-  console.log(`[Server] Hoàn tất. Tìm thấy Credits: ${foundAnyCredit}. Tổng: $${totalCreditsUSD}`);
+  console.log(`[Server] Hoàn tất. Tìm thấy Credits: ${foundAnyCredit}. Tổng cộng: $${totalCreditsUSD}`);
 
   return {
-    success: true, // Trả về true để không làm sập UI, chỉ báo số dư 0
+    success: true, // Trả về true để không làm sập UI, chỉ hiển thị số dư 0 nếu không tìm thấy
     credits: totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00',
     foundCredits: foundAnyCredit,
     error: errorLog || undefined,

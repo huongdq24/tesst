@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -55,7 +54,7 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
-      // Ưu tiên dùng Access Token thủ công nếu có
+      // Ưu tiên dùng Access Token thủ công vừa nhập, nếu không lấy từ Session
       const oauthToken = manualToken || sessionStorage.getItem('google_access_token') || undefined;
       const result = await getRealtimeCredits(oauthToken);
       const latestCredits = result.success ? String(result.credits) : '0.00';
@@ -111,7 +110,7 @@ export default function CreditClaimPage() {
         </div>
 
         <h2 className="text-2xl font-bold mb-2">Chương trình hợp tác cùng Google</h2>
-        <p className="text-sm text-slate-500 mb-8">Nhập mã đối tác và Access Token (tùy chọn) để kích hoạt.</p>
+        <p className="text-sm text-slate-500 mb-8">Nhập mã đối tác và Access Token (tùy chọn) để kích hoạt iGen AI.</p>
         
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="space-y-2 text-left">
@@ -126,7 +125,7 @@ export default function CreditClaimPage() {
 
           <div className="space-y-2 text-left">
             <Label className="text-[10px] font-bold text-slate-400 uppercase ml-4 flex items-center gap-2">
-              <Lock className="w-3 h-3" /> Access Token (Tùy chọn - Dùng để đồng bộ $300)
+              <Lock className="w-3 h-3" /> Access Token (Tùy chọn - Để đồng bộ $300)
             </Label>
             <Input 
               className="h-14 bg-white border-2 border-slate-100 focus:border-cyan-500 font-mono rounded-2xl px-6"
@@ -134,14 +133,14 @@ export default function CreditClaimPage() {
               onChange={(e) => setManualToken(e.target.value)}
               placeholder="ya29.xxxx..."
             />
-            <p className="text-[10px] text-slate-400 italic px-4">Lấy từ Network tab trong Google AI Studio (Authorization Header).</p>
+            <p className="text-[10px] text-slate-400 italic px-4">Lấy từ Google Cloud Console (`gcloud auth print-access-token`).</p>
           </div>
 
           <Button 
             type="submit"
             className="w-full h-16 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-lg font-bold shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3"
           >
-            {isVerifying ? <RefreshCw className="animate-spin" /> : "Xác nhận & Kích hoạt"}
+            {isVerifying ? <RefreshCw className="animate-spin" /> : "Xác nhận & Kích hoạt Tín dụng"}
           </Button>
         </form>
       </div>
