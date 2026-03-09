@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -311,7 +310,7 @@ export default function HomePage() {
             </div>
             <form onSubmit={handleUpdateApiKey} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                <Label className="text-sm font-bold text-slate-400 uppercase flex items-center gap-2">
                   <Key className="w-3 h-3" /> {t.apiKeyLabel}
                 </Label>
                 <div className="relative">
