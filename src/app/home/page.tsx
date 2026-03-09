@@ -86,31 +86,31 @@ export default function HomePage() {
   }, [db, userData, user]);
   const { data: allUsers } = useCollection(usersCollectionRef);
 
-  /**
-   * Đồng bộ Credits dựa trên Access Token của người dùng hoặc Service Account.
-   */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
     syncLock.current = true;
     setIsSyncing(true);
+    console.log("[Client] Khởi động đồng bộ Credits cho:", user.email);
     
     try {
       const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
+      console.log("[Client] Access Token hiện có:", oauthToken ? "CÓ" : "KHÔNG");
+      
       const result = await getRealtimeCredits(oauthToken);
+      console.log("[Client] Kết quả từ Billing API:", result);
       
       const latestCredits = result.success ? String(result.credits) : (userData?.credits || '0.00');
       const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
       
-      // Cập nhật cho chính mình
       const selfRef = doc(db, 'users', user.uid);
       updateDocumentNonBlocking(selfRef, {
         credits: latestCredits,
         updatedAt: new Date().toISOString()
       });
       
-      // ADMIN MASTER PUSH: Ép đồng bộ cho toàn hệ thống để con số $300 nhất quán
       if (isAdminUser && allUsers) {
+        console.log("[Client] Admin Master Sync: Đang cập nhật cho toàn bộ hệ thống...");
         allUsers.forEach(u => {
           updateDocumentNonBlocking(doc(db, 'users', u.id), {
             credits: latestCredits,
@@ -124,7 +124,7 @@ export default function HomePage() {
         if (projResult.success) setBillingProjects(projResult.projects || []);
       }
     } catch (error) {
-      console.error("Sync Error:", error);
+      console.error("[Client] Sync Error:", error);
     } finally {
       setIsSyncing(false);
       syncLock.current = false;

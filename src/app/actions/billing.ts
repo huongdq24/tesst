@@ -14,8 +14,11 @@ export async function getRealtimeCredits(accessToken?: string) {
     let totalCreditsUSD = 0;
     let foundAnyCredit = false;
 
+    console.log("[Server] Bắt đầu gọi Billing API...");
+
     // CHẾ ĐỘ 1: DÙNG ACCESS TOKEN (Dành cho người dùng vừa đăng nhập Google)
     if (accessToken) {
+      console.log("[Server] Chế độ 1: Sử dụng User Access Token");
       try {
         const response = await fetch('https://cloudbilling.googleapis.com/v1/billingAccounts', {
           headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -24,6 +27,7 @@ export async function getRealtimeCredits(accessToken?: string) {
         if (response.ok) {
           const data = await response.json();
           const accounts = data.billingAccounts || [];
+          console.log(`[Server] Tìm thấy ${accounts.length} Billing Accounts từ User Token`);
           
           for (const account of accounts) {
             const detailRes = await fetch(`https://cloudbilling.googleapis.com/v1/${account.name}`, {
@@ -31,7 +35,6 @@ export async function getRealtimeCredits(accessToken?: string) {
             });
             if (detailRes.ok) {
               const detail = await detailRes.json();
-              // Bóc tách mảng credits từ REST response
               const credits = detail.credits || [];
               if (Array.isArray(credits) && credits.length > 0) {
                 foundAnyCredit = true;
@@ -46,22 +49,24 @@ export async function getRealtimeCredits(accessToken?: string) {
               }
             }
           }
+        } else {
+          console.log("[Server] Token User không hợp lệ hoặc không có quyền.");
         }
       } catch (err) {
-        console.warn("User Token Billing Sync failed, falling back to Service Account.");
+        console.warn("[Server] Lỗi khi dùng Token User:", err);
       }
     }
 
     // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Phương án dự phòng/Admin Sync)
     if (!foundAnyCredit) {
+      console.log("[Server] Chế độ 2: Sử dụng Service Account");
       const [billingAccounts] = await billingClient.listBillingAccounts();
+      console.log(`[Server] SA tìm thấy ${billingAccounts.length} Billing Accounts`);
+      
       for (const account of billingAccounts) {
         if (!account.name) continue;
         
-        // Lấy thông tin chi tiết tài khoản bao gồm mảng credits qua SDK
         const [accountInfo] = await billingClient.getBillingAccount({ name: account.name });
-        
-        // SDK trả về object thô, chúng ta ép kiểu để bóc tách credits "ẩn"
         const rawData = accountInfo as any;
         const credits = rawData.credits || [];
         
@@ -79,14 +84,14 @@ export async function getRealtimeCredits(accessToken?: string) {
       }
     }
 
-    // NẾU VẪN KHÔNG THẤY: Thử quét Project Billing Info trực tiếp (Discovery cấp cuối)
+    // NẾU VẪN KHÔNG THẤY: Discovery trực tiếp từ Project
     if (!foundAnyCredit) {
+      console.log("[Server] Discovery cuối: Kiểm tra trực tiếp Project Billing Info...");
        try {
          const [projectBillingInfo] = await billingClient.getProjectBillingInfo({
            name: 'projects/project-5306ce34-5626-488a-913'
          });
          const rawProj = projectBillingInfo as any;
-         // Đôi khi credits nằm ở đây nếu được gán cho project cụ thể
          const credits = rawProj.credits || [];
          if (Array.isArray(credits) && credits.length > 0) {
            foundAnyCredit = true;
@@ -99,8 +104,10 @@ export async function getRealtimeCredits(accessToken?: string) {
              }
            });
          }
-       } catch (err) { /* silent discovery */ }
+       } catch (err) { /* silent */ }
     }
+
+    console.log(`[Server] Hoàn tất. Tìm thấy Credits: ${foundAnyCredit}. Tổng USD: ${totalCreditsUSD}`);
 
     return {
       success: true,
@@ -109,14 +116,11 @@ export async function getRealtimeCredits(accessToken?: string) {
       timestamp: new Date().toISOString()
     };
   } catch (error: any) {
-    console.error("Billing API Critical Error:", error.message);
+    console.error("[Server] Billing API Critical Error:", error.message);
     return { success: false, credits: '0.00', error: error.message };
   }
 }
 
-/**
- * Liệt kê toàn bộ dự án đang liên kết thanh toán để Admin Discovery.
- */
 export async function listAllBillingProjects() {
   try {
     const [accounts] = await billingClient.listBillingAccounts();
