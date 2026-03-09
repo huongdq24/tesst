@@ -20,7 +20,8 @@ import {
   Key,
   Eye,
   EyeOff,
-  Lock
+  Lock,
+  ExternalLink
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -55,6 +56,7 @@ import { Badge } from "@/components/ui/badge";
 import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
+const BILLING_CREDITS_URL = "https://console.cloud.google.com/billing/017D0B-3695DA-8D7FB7/credits/all?authuser=3&organizationId=0";
 
 export default function HomePage() {
   const { user, isUserLoading } = useUser();
@@ -122,7 +124,6 @@ export default function HomePage() {
         }
       } else {
         console.warn("[Client] Service Account chưa sẵn sàng:", result.error);
-        // Không hiện toast lỗi nếu là do môi trường Studio chưa config
       }
     } catch (error: any) {
       console.error("[Client] Sync error:", error);
@@ -225,13 +226,29 @@ export default function HomePage() {
               <div className="lg:col-span-8">
                 <div className="glass-card rounded-[2rem] overflow-hidden bg-white shadow-2xl border border-slate-100">
                   <Table>
-                    <TableHeader className="bg-slate-50/50"><TableRow><TableHead className="py-6 pl-8">EMAIL</TableHead><TableHead>VAI TRÒ</TableHead><TableHead className="text-right pr-8">SỐ DƯ CREDITS</TableHead></TableRow></TableHeader>
+                    <TableHeader className="bg-slate-50/50">
+                      <TableRow>
+                        <TableHead className="py-6 pl-8">EMAIL</TableHead>
+                        <TableHead>VAI TRÒ</TableHead>
+                        <TableHead className="text-right pr-8">SỐ DƯ CREDITS</TableHead>
+                      </TableRow>
+                    </TableHeader>
                     <TableBody>
                       {allUsers?.map((u) => (
                         <TableRow key={u.id} className="border-slate-100">
                           <TableCell className="py-6 pl-8 font-bold">{u.email}</TableCell>
                           <TableCell><Badge variant={u.role === 'admin' ? 'default' : 'secondary'}>{u.role === 'admin' ? 'Admin' : 'User'}</Badge></TableCell>
-                          <TableCell className="text-right pr-8 font-bold">${u.credits || '0.00'}</TableCell>
+                          <TableCell className="text-right pr-8 font-bold">
+                            <a 
+                              href={BILLING_CREDITS_URL} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="inline-flex items-center gap-1 hover:text-cyan-500 transition-colors group"
+                            >
+                              ${u.credits || '0.00'}
+                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </a>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

@@ -15,8 +15,7 @@ export async function getRealtimeCredits() {
   console.log(`[Server - Dynamic Sync] Khởi động tiến trình quét Billing (Service Account)...`);
 
   try {
-    // Khởi tạo client. Trong môi trường Studio, nếu chưa gắn Service Account Key, 
-    // lệnh này có thể ném lỗi "Could not refresh access token".
+    // Khởi tạo client sử dụng Application Default Credentials (Service Account)
     const billingClient = new CloudBillingClient();
 
     // 1. Liệt kê tất cả Billing Accounts
@@ -56,7 +55,7 @@ export async function getRealtimeCredits() {
         });
       }
 
-      // 3. Liệt kê các dự án liên kết (Dành cho Dashboard Admin)
+      // 3. Liệt kê các dự án liên kết
       try {
         const [projects] = await billingClient.listProjectBillingInfo({ name: account.name });
         summary.push({
@@ -74,7 +73,7 @@ export async function getRealtimeCredits() {
   } catch (err: any) {
     console.error("[Server] Lỗi Xác thực Google SDK:", err.message);
     
-    // Nếu lỗi "Could not refresh access token", trả về một lỗi thân thiện thay vì 500
+    // Nếu lỗi "Could not refresh access token", trả về một lỗi thân thiện
     if (err.message?.includes('access token')) {
       return { 
         success: false, 
@@ -82,7 +81,7 @@ export async function getRealtimeCredits() {
         credits: '0.00'
       };
     }
-    return { success: false, error: err.message };
+    return { success: false, error: err.message, credits: '0.00' };
   }
 
   const finalCredits = totalCreditsUSD > 0 ? totalCreditsUSD.toFixed(2) : '0.00';
@@ -95,11 +94,4 @@ export async function getRealtimeCredits() {
     summary: summary,
     timestamp: new Date().toISOString()
   };
-}
-
-/**
- * Liệt kê trạng thái Billing chi tiết (Dành cho Admin).
- */
-export async function listAllBillingProjects() {
-  return getRealtimeCredits();
 }
