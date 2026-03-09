@@ -31,6 +31,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
         });
 
         // Bóc tách dữ liệu thô (có thể chứa credits từ gói Free Trial)
+        // Lưu ý: Dữ liệu này trả về từ API Google có mảng credits cho các gói khuyến mãi
         const rawData = accountInfo as any;
         const credits = rawData.credits || [];
 
@@ -41,6 +42,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
               const val = parseFloat(c.remainingAmount.value || '0');
               const currency = c.remainingAmount.currencyCode || 'USD';
 
+              // Quy đổi VND sang USD nếu cần (tỉ giá xấp xỉ 25.000)
               if (currency === 'VND') {
                 totalCreditsUSD += (val / 25000);
               } else {
