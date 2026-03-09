@@ -15,7 +15,7 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
   }
 
   try {
-    // 1. Lấy thông tin Billing cơ bản của Project
+    // 1. Lấy thông tin Billing của Project
     const [billingInfo] = await billingClient.getProjectBillingInfo({
       name: `projects/${projectId}`,
     });
@@ -27,8 +27,8 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
     let currency = 'USD';
 
     /**
-     * PHÂN TÍCH DỮ LIỆU CREDITS THỰC TẾ:
-     * Dựa trên JSON thực tế, số dư nằm trong mảng 'credits'.
+     * PHÂN TÍCH DỮ LIỆU CREDITS:
+     * Google trả về mảng 'credits' chứa các gói khuyến mãi/dùng thử.
      */
     const rawData = billingInfo as any;
     
