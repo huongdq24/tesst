@@ -32,17 +32,25 @@ Khi tài khoản có gói dùng thử hoặc tín dụng khuyến mãi, Google t
   4. Nếu không có gói tín dụng nào (Tài khoản Free Tier thông thường), số dư sẽ hiển thị đúng là **$0.00**.
 
 ## 🚀 Cách kích hoạt quyền truy cập thực tế
-Để ứng dụng hiển thị con số thật từ tài khoản của bạn, bạn cần thực hiện các bước sau trên Google Cloud Console:
 
-1. **Enable API**: Bật **Cloud Billing API** tại Google Cloud Console.
-2. **IAM Configuration**: 
-   - Truy cập trang **Billing** -> Chọn Billing Account của bạn.
-   - Thêm quyền cho **Service Account** của App Hosting (hoặc email của bạn).
-   - Gán vai trò: **Billing Account Viewer**.
-3. **Project ID**: Đảm bảo biến `DEFAULT_PROJECT_ID` trong code trỏ đúng về ID dự án của bạn (`project-5306ce34-5626-488a-913`).
+Để Web App hiển thị con số thật, bạn cần cấp quyền cho **Service Account** của ứng dụng thay vì đăng nhập thủ công mỗi lần.
+
+### Bước 1: Tìm email Service Account
+Khi bạn deploy ứng dụng lên Firebase App Hosting, một email tự động sẽ được tạo (thường có đuôi `@developer.gserviceaccount.com`). Bạn có thể tìm thấy nó trong phần **IAM & Admin** của Google Cloud Console.
+
+### Bước 2: Gán quyền Billing
+1. Truy cập trang **Billing** trong Google Cloud Console.
+2. Chọn Billing Account của bạn.
+3. Ở cột bên phải (hoặc tab Account Management), nhấn **Add Principal**.
+4. Dán email Service Account ở Bước 1 vào.
+5. Gán vai trò (Role): **Billing Account Viewer**.
+
+### Bước 3: Đảm bảo Project ID chính xác
+Đảm bảo biến `DEFAULT_PROJECT_ID` trong `src/app/home/page.tsx` trỏ đúng về ID dự án của bạn (`project-5306ce34-5626-488a-913`).
 
 ---
 
-## 🛠 Lộ trình tiếp theo
-- **Budget API**: Tích hợp thêm Budget API để theo dõi hạn mức chi tiêu tự thiết lập nếu không dùng gói Free Trial.
-- **Auto-Sync**: Tối ưu hóa tần suất đồng bộ giữa Firestore và Billing API để giảm thiểu số lượng lời gọi API.
+## 🛠 Lợi ích của cơ chế này
+- **Chính xác 100%**: Dữ liệu lấy trực tiếp từ hệ thống kế toán của Google.
+- **Tự động**: Số dư cập nhật ngay cả khi bạn không đăng nhập.
+- **Bảo mật**: Service Account chỉ có quyền xem hóa đơn, không thể thay đổi cài đặt dự án.

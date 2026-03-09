@@ -7,7 +7,7 @@ const billingClient = new CloudBillingClient();
 
 /**
  * Lấy trạng thái Credits thực tế từ Google Cloud Billing API.
- * Yêu cầu: Service Account chạy App phải có quyền 'Billing Account Viewer'.
+ * Cơ chế: Truy vấn mảng 'credits' trong kết quả trả về của Project.
  */
 export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5626-488a-913') {
   if (!projectId) {
@@ -28,13 +28,12 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
 
     /**
      * PHÂN TÍCH DỮ LIỆU CREDITS THỰC TẾ:
-     * Logic này xử lý mảng 'credits' từ JSON trả về để bóc tách số dư Free Trial.
-     * Google trả về credits trong mảng nếu tài khoản có khuyến mãi hoặc dùng thử.
+     * Dựa trên JSON output của Cloud Billing API, số dư nằm trong mảng 'credits'.
      */
     const rawData = billingInfo as any;
     
-    if (rawData.credits && Array.isArray(rawData.credits)) {
-      // Tìm gói Free Trial hoặc gói có số dư lớn hơn 0
+    if (rawData.credits && Array.isArray(rawData.credits) && rawData.credits.length > 0) {
+      // Tìm gói Free Trial hoặc gói có số dư còn lại (remainingAmount)
       const activeCredit = rawData.credits.find((c: any) => 
         c.displayName === "Free Trial" || (c.remainingAmount && parseFloat(c.remainingAmount.value) > 0)
       );
@@ -44,14 +43,14 @@ export async function getRealtimeCredits(projectId: string = 'project-5306ce34-5
         currency = activeCredit.remainingAmount.currencyCode;
 
         if (currency === 'VND') {
-          // Quy đổi sang USD (Tỷ giá giả định 25.000) để hiển thị đồng bộ với ký hiệu '$' trên UI.
+          // Quy đổi sang USD (Tỷ giá tạm tính 25.000) để hiển thị đồng bộ với ký hiệu '$' trên UI.
           displayCredits = (val / 25000).toFixed(2); 
         } else {
           displayCredits = val.toFixed(2);
         }
       }
     } else if (billingInfo.billingEnabled) {
-      // Nếu không có mảng credits nhưng Billing đang bật, có thể là tài khoản thanh toán trả sau (Postpaid)
+      // Nếu không có mảng credits nhưng Billing đang bật, đây là tài khoản trả sau (Postpaid)
       displayCredits = '0.00';
     }
 
