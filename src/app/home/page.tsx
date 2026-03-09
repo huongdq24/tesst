@@ -21,8 +21,7 @@ import {
   Key,
   Globe,
   Edit,
-  Cloud,
-  CheckCircle2
+  Cloud
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -45,7 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -97,10 +96,6 @@ export default function HomePage() {
   }, [db, userData, user]);
   const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
 
-  /**
-   * TỰ ĐỘNG ĐỒNG BỘ: 
-   * Dùng Service Account lấy số dư thực tế và "ép" cập nhật cho toàn bộ Database nếu là Admin.
-   */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
     
@@ -113,7 +108,6 @@ export default function HomePage() {
         const latestCredits = String(result.credits);
         const isAdminUser = userData.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
         
-        // 1. Cập nhật cho chính Admin đang xem
         if (String(userData.credits || '0.00') !== latestCredits) {
           const uRef = doc(db, 'users', user.uid);
           updateDocumentNonBlocking(uRef, {
@@ -122,7 +116,6 @@ export default function HomePage() {
           });
         }
         
-        // 2. Ép đồng bộ cho toàn bộ User khác (Chỉ Admin làm được việc này)
         if (isAdminUser && allUsers && allUsers.length > 0) {
           allUsers.forEach(u => {
             if (String(u.credits || '0.00') !== latestCredits) {
@@ -144,7 +137,6 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers]);
 
-  // Kích hoạt cơ chế Auto-Sync mỗi 60 giây
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
@@ -161,8 +153,11 @@ export default function HomePage() {
     if (isUserLoading || isUserDataLoading) return;
     if (!user) {
       router.push('/login');
-    } else if (!userData?.hasClaimedCredits || !userData?.apiKey) {
-      router.push('/igen-x-google');
+    } else {
+      const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
+      if (!isAdmin && (!userData?.hasClaimedCredits || !userData?.apiKey)) {
+        router.push('/igen-x-google');
+      }
     }
   }, [user, isUserLoading, userData, isUserDataLoading, router]);
 
@@ -352,7 +347,7 @@ export default function HomePage() {
                     {allUsers?.length || 0} {lang === 'VI' ? 'Người dùng' : 'Users'}
                   </Badge>
                   <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                    <RefreshCw className="w-3.5 h-3.5 text-green-500" />
                     <span className="text-[10px] text-slate-600 font-bold">
                       {lang === 'VI' ? 'Tự động đồng bộ' : 'Auto-synced'}: {lastSynced || '...'}
                     </span>

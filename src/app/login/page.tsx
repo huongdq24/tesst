@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
@@ -67,6 +68,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const hasAttemptedLogin = useRef(false);
 
   const t = translations[lang];
 
@@ -74,9 +76,16 @@ export default function LoginPage() {
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   useEffect(() => {
-    if (user && !isUserLoading && !isUserDataLoading && userData) {
+    if (user && !isUserLoading && !isUserDataLoading) {
       const isAdmin = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-      // Chỉ tự động chuyển hướng nếu KHÔNG phải Admin
+      
+      // Nếu là Admin vừa đăng nhập xong (thông qua nút bấm) thì phải chuyển hướng
+      if (hasAttemptedLogin.current) {
+        router.push('/home');
+        return;
+      }
+
+      // Đối với User thường: Luôn chuyển hướng nếu đã đủ điều kiện
       if (!isAdmin) {
         if (userData?.hasClaimedCredits && userData?.apiKey) {
           router.push('/home');
@@ -90,7 +99,10 @@ export default function LoginPage() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userEmail || !password) return;
+    
     setIsAuthenticating(true);
+    hasAttemptedLogin.current = true; // Đánh dấu là đang thực hiện đăng nhập
+
     try {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, userEmail, password);
@@ -98,25 +110,31 @@ export default function LoginPage() {
       } else {
         await initiateEmailSignIn(auth, userEmail, password);
       }
+      // Sau khi thành công, useEffect sẽ nhận diện hasAttemptedLogin và chuyển hướng
     } catch (error: any) {
-        toast({ variant: "destructive", title: t.authError, description: `${error.code} - ${error.message}` });
-    } finally {
         setIsAuthenticating(false);
+        hasAttemptedLogin.current = false;
+        toast({ 
+          variant: "destructive", 
+          title: t.authError, 
+          description: error.message || "Invalid credentials." 
+        });
     }
   };
 
   const handleGoogleLogin = async () => {
     setIsAuthenticating(true);
+    hasAttemptedLogin.current = true;
     try {
       await initiateGoogleSignIn(auth);
     } catch (error: any) {
+      setIsAuthenticating(false);
+      hasAttemptedLogin.current = false;
       toast({
         variant: "destructive",
         title: "Google Sign-In Failed",
         description: error.message
       });
-    } finally {
-      setIsAuthenticating(false);
     }
   };
 
@@ -168,6 +186,7 @@ export default function LoginPage() {
             className="h-12 bg-slate-50/50 rounded-xl"
             value={userEmail}
             onChange={(e) => setUserEmail(e.target.value)}
+            disabled={isAuthenticating}
           />
           <Input 
             type="password" 
@@ -175,6 +194,7 @@ export default function LoginPage() {
             className="h-12 bg-slate-50/50 rounded-xl"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isAuthenticating}
           />
           <Button disabled={isAuthenticating} className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold shadow-lg">
             {isAuthenticating ? <RefreshCw className="w-5 h-5 animate-spin" /> : (isSignUp ? t.signUpTitle : t.loginButton)}
