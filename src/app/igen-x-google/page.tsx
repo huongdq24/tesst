@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Lock } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -123,9 +123,8 @@ export default function CreditClaimPage() {
                 className="h-16 text-lg bg-white border-2 border-slate-100 focus:border-cyan-500 font-mono rounded-2xl px-6 text-center"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Dán mã iGen tại đây..."
+                placeholder="Dán mã tại đây..."
               />
-              <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
             </div>
           </div>
 

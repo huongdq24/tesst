@@ -20,7 +20,6 @@ import {
   Key,
   Eye,
   EyeOff,
-  Lock,
   ExternalLink
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
