@@ -5,7 +5,6 @@ import { Mic, RefreshCw } from 'lucide-react';
 import { voiceArchitecturalAssistant } from '@/ai/flows/voice-architectural-assistant-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { IGenBranding } from './Branding';
 import { Language } from '@/lib/i18n';
 import { getRealtimeCredits } from '@/app/actions/billing';
 import { useUser, useFirestore } from '@/firebase';
@@ -31,6 +30,8 @@ export const VoiceAssistantOrb = ({
   const handleOrbClick = async () => {
     if (isProcessing || !user || !db) return;
     setIsListening(true);
+    
+    // Giả lập nghe (2s) trước khi xử lý
     setTimeout(async () => {
       setIsListening(false);
       setIsProcessing(true);
@@ -41,11 +42,15 @@ export const VoiceAssistantOrb = ({
         
         toast({ title: "iGen Assistant", description: result.responseText });
 
-        // ĐỒNG BỘ THEO SỰ KIỆN: Ngay sau Voice AI
+        // ĐỒNG BỘ THEO SỰ KIỆN: Gọi ngay sau khi Voice AI hoàn tất
         const res = await getRealtimeCredits(firebaseConfig.projectId);
         if (res.success) {
           const latestCredits = String(res.credits);
+          
+          // 1. Cập nhật cho chính mình
           updateDocumentNonBlocking(doc(db, 'users', user.uid), { credits: latestCredits, updatedAt: new Date().toISOString() });
+          
+          // 2. ADMIN MASTER SYNC: Ép đồng bộ cho toàn bộ hệ thống
           if (ADMIN_EMAILS.includes(user.email || '')) {
             const usersSnap = await getDocs(collection(db, 'users'));
             usersSnap.forEach(uDoc => {
@@ -53,8 +58,12 @@ export const VoiceAssistantOrb = ({
             });
           }
         }
-      } catch (error) { console.error(error); }
-      finally { setIsProcessing(false); }
+      } catch (error) { 
+        console.error(error); 
+        toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối với iGen Voice Engine." });
+      } finally { 
+        setIsProcessing(false); 
+      }
     }, 2000);
   };
 

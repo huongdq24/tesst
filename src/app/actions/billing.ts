@@ -7,7 +7,7 @@ const billingClient = new CloudBillingClient();
 
 /**
  * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * @param targetProjectId Project ID mục tiêu.
+ * Thực hiện Discovery để tìm đúng Billing Account và mảng credits.
  */
 export async function getRealtimeCredits(targetProjectId?: string) {
   const projectId = targetProjectId || firebaseConfig.projectId;
@@ -17,7 +17,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
   }
 
   try {
-    // 1. Lấy thông tin Billing của Project
+    // 1. Lấy thông tin Billing của Project để biết Billing Account Name
     const [billingInfo] = await billingClient.getProjectBillingInfo({
       name: `projects/${projectId}`,
     });
@@ -34,7 +34,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
     let displayCredits = '0.00';
     let currency = 'USD';
 
-    // 2. Truy vấn chi tiết Billing Account để lấy mảng credits (Yêu cầu quyền Billing Account Viewer)
+    // 2. Truy vấn chi tiết Billing Account để bóc tách mảng credits
     try {
       const [accountInfo] = await billingClient.getBillingAccount({
         name: billingInfo.billingAccountName,
@@ -43,7 +43,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
       const rawAccountData = accountInfo as any;
       
       if (rawAccountData.credits && Array.isArray(rawAccountData.credits)) {
-        // Tìm gói tín dụng có số dư còn lại lớn nhất (thường là Free Trial $300)
+        // Tìm gói tín dụng có số dư còn lại (thường là Free Trial)
         const activeCredit = rawAccountData.credits.reduce((prev: any, current: any) => {
           const prevVal = prev?.remainingAmount ? parseFloat(prev.remainingAmount.value) : 0;
           const currentVal = current?.remainingAmount ? parseFloat(current.remainingAmount.value) : 0;
@@ -54,7 +54,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
           const val = parseFloat(activeCredit.remainingAmount.value);
           currency = activeCredit.remainingAmount.currencyCode;
 
-          // Quy đổi VND sang USD (xấp xỉ VND / 25.000) nếu tài khoản là VND
+          // Quy đổi VND sang USD (xấp xỉ VND / 25.000)
           if (currency === 'VND') {
             displayCredits = (val / 25000).toFixed(2); 
           } else {
@@ -80,7 +80,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
 }
 
 /**
- * Khám phá các dự án mà Service Account có quyền truy cập.
+ * Khám phá các dự án và tài khoản thanh toán mà Service Account có quyền truy cập.
  */
 export async function listAllBillingProjects() {
   try {

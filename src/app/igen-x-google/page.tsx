@@ -5,22 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, Globe, Wallet, ChevronDown, LogOut, X } from 'lucide-react';
+import { RefreshCw, X } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { IGenBranding } from '@/components/Branding';
 import { firebaseConfig } from '@/firebase/config';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 import { Language, translations } from '@/lib/i18n';
 import { getRealtimeCredits } from '@/app/actions/billing';
 
@@ -37,14 +28,11 @@ const GoogleLogo = ({ className = "w-6 h-6" }: { className?: string }) => (
 
 export default function CreditClaimPage() {
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const [lang, setLang] = useState<Language>('VI');
   const [apiKey, setApiKey] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const t = translations[lang];
 
   const userRef = useMemoFirebase(() => user ? doc(db, 'users', user.uid) : null, [db, user]);
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
@@ -66,8 +54,10 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
+      // Gọi API Billing thực tế ngay khi kích hoạt
       const result = await getRealtimeCredits(firebaseConfig.projectId);
       const latestCredits = result.success ? String(result.credits) : '0.00';
+      
       const uRef = doc(db, 'users', user.uid);
       updateDocumentNonBlocking(uRef, {
         hasClaimedCredits: true,
@@ -75,10 +65,12 @@ export default function CreditClaimPage() {
         credits: latestCredits,
         updatedAt: new Date().toISOString()
       });
-      toast({ title: "Kích hoạt thành công", description: "Hệ thống iGen AI đã sẵn sàng." });
+      
+      toast({ title: "Kích hoạt thành công", description: `Chào mừng bạn. Số dư hiện tại: $${latestCredits}` });
       router.push('/home');
     } catch (err) {
       console.error(err);
+      toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối với Google Billing." });
     } finally {
       setIsVerifying(false);
     }
@@ -101,13 +93,14 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[2.5rem] text-center shadow-2xl relative z-10">
-        <div className="glass-card inline-flex flex-col items-center gap-6 px-10 py-6 rounded-[1.5rem] shadow-xl border-white/40 mb-10 group hover:scale-[1.02] transition-all bg-white/40">
-          <div className="flex items-center gap-6">
+        {/* KHUNG ĐỐI TÁC: Đã chỉnh thành hình chữ nhật gọn gàng */}
+        <div className="glass-card inline-flex flex-col items-center gap-6 px-12 py-6 rounded-[1.5rem] shadow-xl border-white/40 mb-10 group hover:scale-[1.02] transition-all bg-white/40">
+          <div className="flex items-center gap-8">
             <IGenBranding className="text-2xl" />
             <X className="w-4 h-4 text-slate-300" />
             <GoogleLogo className="w-8 h-8" />
           </div>
-          <div className="px-3 py-1 bg-slate-50/50 rounded-full border border-slate-200 text-[10px] font-bold text-slate-500 uppercase">
+          <div className="px-4 py-1 bg-slate-50/50 rounded-full border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
             Đối tác chiến lược của Google
           </div>
         </div>

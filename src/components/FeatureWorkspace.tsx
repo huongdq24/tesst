@@ -2,21 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   ChevronLeft, 
-  Zap, 
-  Settings, 
-  Play, 
-  Download, 
-  Sparkles, 
-  Clock, 
-  History as HistoryIcon,
-  Calendar,
-  ImageIcon,
-  Video
+  RefreshCw
 } from 'lucide-react';
 import { translations, Language } from '@/lib/i18n';
 import { IGenBranding } from './Branding';
@@ -27,8 +17,6 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { firebaseConfig } from '@/firebase/config';
 import { collection, query, where, orderBy, doc, getDocs } from 'firebase/firestore';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { formatDistanceToNow } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
 import { getRealtimeCredits } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
@@ -46,7 +34,6 @@ export const FeatureWorkspace = ({
 }) => {
   const { user } = useUser();
   const db = useFirestore();
-  const [isProMode, setIsProMode] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultMedia, setResultMedia] = useState<string | null>(null);
@@ -54,8 +41,6 @@ export const FeatureWorkspace = ({
   const { toast } = useToast();
   const t = translations[lang];
 
-  const [cinematicPan, setCinematicPan] = useState(true);
-  const [extendVideo, setExtendVideo] = useState(false);
   const [filterDate, setFilterDate] = useState<string | null>(null);
 
   useEffect(() => {
@@ -76,10 +61,10 @@ export const FeatureWorkspace = ({
     );
   }, [db, user, featureId, filterDate]);
 
-  const { data: history, isLoading: isHistoryLoading } = useCollection(projectsQuery);
+  const { data: history } = useCollection(projectsQuery);
 
   /**
-   * ĐỒNG BỘ THEO SỰ KIỆN: Gọi ngay sau khi AI hoàn tất tác vụ.
+   * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt ngay sau khi AI hoàn tất tác vụ.
    */
   const syncCreditsAfterAI = async () => {
     if (!user || !db) return;
@@ -87,10 +72,12 @@ export const FeatureWorkspace = ({
       const resultCredits = await getRealtimeCredits(firebaseConfig.projectId);
       if (resultCredits.success) {
         const latestCredits = String(resultCredits.credits);
+        
+        // 1. Cập nhật cho chính mình
         const uRef = doc(db, 'users', user.uid);
         updateDocumentNonBlocking(uRef, { credits: latestCredits, updatedAt: new Date().toISOString() });
 
-        // Nếu là Admin, cập nhật đồng bộ cho toàn hệ thống
+        // 2. ADMIN MASTER SYNC: Đồng nhất cho toàn bộ hệ thống
         if (ADMIN_EMAILS.includes(user.email || '')) {
           const usersSnap = await getDocs(collection(db, 'users'));
           usersSnap.forEach(uDoc => {
@@ -108,17 +95,21 @@ export const FeatureWorkspace = ({
     try {
       let outputUrl = '';
       if (featureId === 'videoCreator') {
-        const result = await aiVideoWalkthroughGenerator({ description: prompt, cinematicPan, aiVideoExtend: extendVideo, apiKey: userApiKey });
+        const result = await aiVideoWalkthroughGenerator({ description: prompt, cinematicPan: true, aiVideoExtend: false, apiKey: userApiKey });
         outputUrl = result.videoDataUri;
       } else {
         const result = await aiDesignConceptGenerator({ designPrompt: prompt });
         outputUrl = result.moodboardImage;
       }
       setResultMedia(outputUrl);
+      
       addDocumentNonBlocking(collection(db, 'users', user.uid, 'projects'), {
         userId: user.uid, featureId, name: prompt.substring(0, 30), status: 'completed', outputUrl, createdAt: new Date().toISOString()
       });
+      
+      // GỌI ĐỒNG BỘ NGAY LẬP TỨC SAU AI CALL
       await syncCreditsAfterAI();
+      
     } catch (error) {
       toast({ variant: "destructive", title: "Lỗi", description: "Không thể khởi tạo AI." });
     } finally { setIsGenerating(false); }

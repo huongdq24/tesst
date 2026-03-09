@@ -6,7 +6,6 @@ import { IGenBranding } from '@/components/Branding';
 import { Language, translations } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Wallet, 
@@ -16,9 +15,6 @@ import {
   ShieldCheck,
   LayoutDashboard,
   Search,
-  Calendar,
-  Globe,
-  Edit,
   Layers
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
@@ -39,7 +35,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -53,7 +48,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { getRealtimeCredits, listAllBillingProjects } from '@/app/actions/billing';
 
 const ADMIN_EMAILS = ['igen-architect@admin.com', 'igentech1@gmail.com'];
@@ -93,10 +87,11 @@ export default function HomePage() {
     }
     return null;
   }, [db, userData, user]);
-  const { data: allUsers, isLoading: isAllUsersLoading } = useCollection(usersCollectionRef);
+  const { data: allUsers } = useCollection(usersCollectionRef);
 
   /**
-   * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt khi vào trang hoặc có hành động quan trọng.
+   * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt khi vào trang (Login Event).
+   * Không sử dụng Polling định kỳ.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -116,7 +111,7 @@ export default function HomePage() {
         updatedAt: new Date().toISOString()
       });
       
-      // 2. MASTER SYNC: Nếu là Admin, ép đồng bộ cho toàn bộ User khác
+      // 2. ADMIN MASTER SYNC: Ép đồng bộ cho toàn bộ User khác để đảm bảo nhất quán
       if (isAdminUser && allUsers && allUsers.length > 0) {
         allUsers.forEach(u => {
           if (String(u.credits) !== latestCredits) {
@@ -145,7 +140,7 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers]);
 
-  // Thực hiện đồng bộ ngay khi vào trang (Sự kiện Đăng nhập thành công)
+  // Thực hiện đồng bộ ngay khi vào trang (Sự kiện Đăng nhập/Vào trang chủ)
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
@@ -172,7 +167,6 @@ export default function HomePage() {
     toast({ title: "Updated", description: "Settings saved." });
   };
 
-  const maskApiKey = (key?: string) => key ? `••••${key.slice(-4)}` : '••••••••';
   const filteredUsers = allUsers?.filter(u => 
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
