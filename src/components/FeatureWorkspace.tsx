@@ -14,7 +14,6 @@ import { aiVideoWalkthroughGenerator } from '@/ai/flows/ai-video-walkthrough-gen
 import { aiDesignConceptGenerator } from '@/ai/flows/ai-design-concept-generator';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { firebaseConfig } from '@/firebase/config';
 import { collection, query, where, orderBy, doc, getDocs } from 'firebase/firestore';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { getRealtimeCredits } from '@/app/actions/billing';
@@ -63,21 +62,17 @@ export const FeatureWorkspace = ({
 
   const { data: history } = useCollection(projectsQuery);
 
-  /**
-   * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt ngay sau khi AI hoàn tất tác vụ.
-   */
   const syncCreditsAfterAI = async () => {
     if (!user || !db) return;
     try {
-      const resultCredits = await getRealtimeCredits(firebaseConfig.projectId);
+      const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
+      const resultCredits = await getRealtimeCredits(oauthToken);
       if (resultCredits.success) {
         const latestCredits = String(resultCredits.credits);
         
-        // 1. Cập nhật cho chính mình
         const uRef = doc(db, 'users', user.uid);
         updateDocumentNonBlocking(uRef, { credits: latestCredits, updatedAt: new Date().toISOString() });
 
-        // 2. ADMIN MASTER SYNC: Đồng nhất cho toàn bộ hệ thống
         if (ADMIN_EMAILS.includes(user.email || '')) {
           const usersSnap = await getDocs(collection(db, 'users'));
           usersSnap.forEach(uDoc => {
@@ -107,7 +102,6 @@ export const FeatureWorkspace = ({
         userId: user.uid, featureId, name: prompt.substring(0, 30), status: 'completed', outputUrl, createdAt: new Date().toISOString()
       });
       
-      // GỌI ĐỒNG BỘ NGAY LẬP TỨC SAU AI CALL
       await syncCreditsAfterAI();
       
     } catch (error) {

@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -94,6 +93,8 @@ export default function HomePage() {
     
     try {
       const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
+      console.log("[Client] Đang đồng bộ với Token:", oauthToken ? "Có" : "Không");
+      
       const result = await getRealtimeCredits(oauthToken);
       
       if (result.success) {
@@ -255,8 +256,8 @@ export default function HomePage() {
       <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />
 
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-        <DialogContent className="rounded-[2.5rem] p-8 max-w-md border-none shadow-2xl">
-          <DialogHeader><DialogTitle className="text-2xl font-bold flex items-center gap-2"><Settings className="w-6 h-6 text-cyan-500" /> {t.editApiKey}</DialogTitle></DialogHeader>
+        <DialogContent className="rounded-[2.5rem] p-8 max-w-md border-none shadow-2xl bg-white">
+          <DialogHeader><DialogTitle className="text-2xl font-bold flex items-center gap-2 text-slate-900"><Settings className="w-6 h-6 text-cyan-500" /> {t.editApiKey}</DialogTitle></DialogHeader>
           <div className="mt-6 space-y-6">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
               <p className="text-xs font-bold text-slate-400 uppercase mb-1">Số dư thực tế</p>

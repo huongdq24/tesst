@@ -8,7 +8,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Language } from '@/lib/i18n';
 import { getRealtimeCredits } from '@/app/actions/billing';
 import { useUser, useFirestore } from '@/firebase';
-import { firebaseConfig } from '@/firebase/config';
 import { doc, collection, getDocs } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
@@ -31,7 +30,6 @@ export const VoiceAssistantOrb = ({
     if (isProcessing || !user || !db) return;
     setIsListening(true);
     
-    // Giả lập nghe (2s) trước khi xử lý
     setTimeout(async () => {
       setIsListening(false);
       setIsProcessing(true);
@@ -42,15 +40,13 @@ export const VoiceAssistantOrb = ({
         
         toast({ title: "iGen Assistant", description: result.responseText });
 
-        // ĐỒNG BỘ THEO SỰ KIỆN: Gọi ngay sau khi Voice AI hoàn tất
-        const res = await getRealtimeCredits(firebaseConfig.projectId);
+        const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
+        const res = await getRealtimeCredits(oauthToken);
         if (res.success) {
           const latestCredits = String(res.credits);
           
-          // 1. Cập nhật cho chính mình
           updateDocumentNonBlocking(doc(db, 'users', user.uid), { credits: latestCredits, updatedAt: new Date().toISOString() });
           
-          // 2. ADMIN MASTER SYNC: Ép đồng bộ cho toàn bộ hệ thống
           if (ADMIN_EMAILS.includes(user.email || '')) {
             const usersSnap = await getDocs(collection(db, 'users'));
             usersSnap.forEach(uDoc => {

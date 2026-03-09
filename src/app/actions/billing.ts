@@ -1,4 +1,3 @@
-
 'use server';
 
 import { CloudBillingClient } from '@google-cloud/billing';
@@ -14,8 +13,9 @@ export async function getRealtimeCredits(accessToken?: string) {
 
   console.log("[Server] Bắt đầu tiến trình đồng bộ Billing...");
 
-  // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Mạnh nhất & Chính xác nhất cho người dùng Google)
-  if (accessToken) {
+  // CHẾ ĐỘ 1: DÙNG USER ACCESS TOKEN (Mạnh nhất cho người dùng Google)
+  // Lưu ý: accessToken phải là OAuth Token, không được là Project ID string.
+  if (accessToken && accessToken.startsWith('ya29.')) { 
     try {
       console.log("[Server] Đang truy vấn bằng User Access Token...");
       const response = await fetch('https://cloudbilling.googleapis.com/v1/billingAccounts', {
@@ -25,7 +25,7 @@ export async function getRealtimeCredits(accessToken?: string) {
       if (response.ok) {
         const data = await response.json();
         const accounts = data.billingAccounts || [];
-        console.log(`[Server] Tìm thấy ${accounts.length} Billing Accounts`);
+        console.log(`[Server] Tìm thấy ${accounts.length} Billing Accounts từ User Token`);
         
         for (const account of accounts) {
           const detailRes = await fetch(`https://cloudbilling.googleapis.com/v1/${account.name}`, {
@@ -39,7 +39,9 @@ export async function getRealtimeCredits(accessToken?: string) {
               credits.forEach((c: any) => {
                 const amount = c.remainingAmount || c.amount;
                 if (amount) {
-                  const val = parseFloat(String(amount.value || '0').replace(/,/g, ''));
+                  // Xử lý cả trường hợp giá trị là chuỗi có dấu phẩy
+                  const valStr = String(amount.value || '0').replace(/,/g, '');
+                  const val = parseFloat(valStr);
                   const currency = amount.currencyCode || 'VND';
                   totalCreditsUSD += (currency === 'VND' ? val / 25000 : val);
                 }
@@ -48,7 +50,8 @@ export async function getRealtimeCredits(accessToken?: string) {
           }
         }
       } else {
-        console.warn("[Server] Token User không có quyền truy cập Billing hoặc đã hết hạn.");
+        const errData = await response.json().catch(() => ({}));
+        console.warn("[Server] Token User không hợp lệ hoặc hết hạn:", errData);
       }
     } catch (err: any) {
       console.error("[Server] Lỗi Chế độ 1 (OAuth):", err.message);
@@ -56,7 +59,7 @@ export async function getRealtimeCredits(accessToken?: string) {
     }
   }
 
-  // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Chỉ chạy nếu Chế độ 1 không tìm thấy Credits)
+  // CHẾ ĐỘ 2: DÙNG SERVICE ACCOUNT (Phương án dự phòng)
   if (!foundAnyCredit) {
     try {
       console.log("[Server] Đang thử Chế độ 2 (Service Account)...");
@@ -74,7 +77,8 @@ export async function getRealtimeCredits(accessToken?: string) {
           credits.forEach((c: any) => {
             const amount = c.remainingAmount || c.amount;
             if (amount) {
-              const val = parseFloat(String(amount.value || '0').replace(/,/g, ''));
+              const valStr = String(amount.value || '0').replace(/,/g, '');
+              const val = parseFloat(valStr);
               const currency = amount.currencyCode || 'VND';
               totalCreditsUSD += (currency === 'VND' ? val / 25000 : val);
             }
@@ -82,7 +86,7 @@ export async function getRealtimeCredits(accessToken?: string) {
         }
       }
     } catch (err: any) {
-      console.warn("[Server] Chế độ 2 thất bại (Thường do môi trường thiếu ADC):", err.message);
+      console.warn("[Server] Chế độ 2 thất bại:", err.message);
       errorLog += `SDK Error: ${err.message}`;
     }
   }

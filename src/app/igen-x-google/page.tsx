@@ -10,7 +10,6 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/fireb
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { IGenBranding } from '@/components/Branding';
-import { firebaseConfig } from '@/firebase/config';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Language, translations } from '@/lib/i18n';
 import { getRealtimeCredits } from '@/app/actions/billing';
@@ -54,8 +53,10 @@ export default function CreditClaimPage() {
     setIsVerifying(true);
     
     try {
-      // Gọi API Billing thực tế ngay khi kích hoạt
-      const result = await getRealtimeCredits(firebaseConfig.projectId);
+      // KHÔNG truyền projectId làm Token nữa. 
+      // Lấy Token từ sessionStorage nếu vừa đăng nhập bằng Google.
+      const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
+      const result = await getRealtimeCredits(oauthToken);
       const latestCredits = result.success ? String(result.credits) : '0.00';
       
       const uRef = doc(db, 'users', user.uid);
@@ -93,7 +94,6 @@ export default function CreditClaimPage() {
       </header>
 
       <div className="glass w-full max-w-xl p-10 rounded-[2.5rem] text-center shadow-2xl relative z-10">
-        {/* KHUNG ĐỐI TÁC: Đã chỉnh thành hình chữ nhật gọn gàng */}
         <div className="glass-card inline-flex flex-col items-center gap-6 px-12 py-6 rounded-[1.5rem] shadow-xl border-white/40 mb-10 group hover:scale-[1.02] transition-all bg-white/40">
           <div className="flex items-center gap-8">
             <IGenBranding className="text-2xl" />
