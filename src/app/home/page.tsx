@@ -15,7 +15,9 @@ import {
   ShieldCheck,
   LayoutDashboard,
   Search,
-  Layers
+  Layers,
+  Settings,
+  Key
 } from 'lucide-react';
 import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
@@ -91,7 +93,6 @@ export default function HomePage() {
 
   /**
    * ĐỒNG BỘ THEO SỰ KIỆN: Kích hoạt khi vào trang (Login Event).
-   * Không sử dụng Polling định kỳ.
    */
   const performBillingSync = useCallback(async () => {
     if (!user || !userData || !userData.hasClaimedCredits || syncLock.current) return;
@@ -111,16 +112,14 @@ export default function HomePage() {
         updatedAt: new Date().toISOString()
       });
       
-      // 2. ADMIN MASTER SYNC: Ép đồng bộ cho toàn bộ User khác để đảm bảo nhất quán
+      // 2. ADMIN MASTER SYNC: Ép đồng bộ cho toàn bộ User khác
       if (isAdminUser && allUsers && allUsers.length > 0) {
         allUsers.forEach(u => {
-          if (String(u.credits) !== latestCredits) {
-            const targetRef = doc(db, 'users', u.id);
-            updateDocumentNonBlocking(targetRef, {
-              credits: latestCredits,
-              updatedAt: new Date().toISOString()
-            });
-          }
+          const targetRef = doc(db, 'users', u.id);
+          updateDocumentNonBlocking(targetRef, {
+            credits: latestCredits,
+            updatedAt: new Date().toISOString()
+          });
         });
       }
       
@@ -140,7 +139,6 @@ export default function HomePage() {
     }
   }, [user, userData, db, allUsers]);
 
-  // Thực hiện đồng bộ ngay khi vào trang (Sự kiện Đăng nhập/Vào trang chủ)
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading && allUsers !== undefined) {
       performBillingSync();
@@ -164,7 +162,7 @@ export default function HomePage() {
     const uRef = doc(db, 'users', user.uid);
     updateDocumentNonBlocking(uRef, { apiKey: tempApiKey, updatedAt: new Date().toISOString() });
     setIsEditingApiKey(false);
-    toast({ title: "Updated", description: "Settings saved." });
+    toast({ title: "Đã cập nhật", description: "Cài đặt đã được lưu." });
   };
 
   const filteredUsers = allUsers?.filter(u => 
@@ -221,6 +219,16 @@ export default function HomePage() {
                   <p className="text-sm font-bold truncate">{user?.email}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                
+                <DropdownMenuItem 
+                  onClick={() => { setTempApiKey(userData?.apiKey || ''); setIsEditingApiKey(true); }} 
+                  className="p-3 rounded-xl gap-3 cursor-pointer"
+                >
+                  <Settings className="w-4 h-4 text-slate-400" /> {t.editApiKey}
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
                 <DropdownMenuItem onClick={() => { auth.signOut(); router.push('/login'); }} className="p-3 rounded-xl text-red-500 font-bold gap-3 cursor-pointer">
                   <LogOut className="w-4 h-4" /> Đăng xuất
                 </DropdownMenuItem>
@@ -311,17 +319,42 @@ export default function HomePage() {
       <VoiceAssistantOrb lang={lang} userApiKey={userData?.apiKey} />
 
       <Dialog open={isEditingApiKey} onOpenChange={setIsEditingApiKey}>
-        <DialogContent className="rounded-[2rem] border-none shadow-2xl z-[160]">
+        <DialogContent className="rounded-[2.5rem] border-none shadow-2xl z-[160] p-8 max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold"><IGenCodeBranded /> settings</DialogTitle>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Settings className="w-6 h-6 text-cyan-500" /> {t.editApiKey}
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleUpdateApiKey} className="space-y-4 pt-4">
-            <Input value={tempApiKey} onChange={(e) => setTempApiKey(e.target.value)} className="h-12 bg-slate-50 border-none rounded-xl" placeholder="Paste your code..." />
-            <div className="flex gap-3">
-              <Button type="button" variant="ghost" onClick={() => setIsEditingApiKey(false)} className="flex-1 h-12 rounded-xl">Hủy</Button>
-              <Button type="submit" className="flex-1 h-12 bg-slate-900 text-white rounded-xl shadow-lg">Lưu</Button>
+          
+          <div className="mt-6 space-y-6">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-xs font-bold text-slate-400 uppercase mb-1">Số dư hiện tại</p>
+              <p className="text-2xl font-bold text-slate-900">${userData?.credits || '0.00'}</p>
             </div>
-          </form>
+
+            <form onSubmit={handleUpdateApiKey} className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                  <Key className="w-3 h-3" /> {t.apiKeyLabel}
+                </Label>
+                <Input 
+                  value={tempApiKey} 
+                  onChange={(e) => setTempApiKey(e.target.value)} 
+                  className="h-14 bg-white border-2 border-slate-100 focus:border-cyan-500 rounded-2xl px-4 font-mono" 
+                  placeholder={t.apiKeyPlaceholder} 
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <Button type="button" variant="ghost" onClick={() => setIsEditingApiKey(false)} className="flex-1 h-14 rounded-2xl font-bold">
+                  {t.cancel}
+                </Button>
+                <Button type="submit" className="flex-1 h-14 bg-slate-900 text-white rounded-2xl shadow-lg font-bold hover:bg-slate-800 transition-all">
+                  {t.saveChanges}
+                </Button>
+              </div>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
     </main>

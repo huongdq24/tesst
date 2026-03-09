@@ -7,7 +7,7 @@ const billingClient = new CloudBillingClient();
 
 /**
  * Truy xuất số dư Credits thực tế từ Google Cloud Billing API.
- * Thực hiện bóc tách mảng credits từ Billing Account.
+ * Thực hiện bóc tách mảng credits từ Billing Account một cách an toàn.
  */
 export async function getRealtimeCredits(targetProjectId?: string) {
   const projectId = targetProjectId || firebaseConfig.projectId;
@@ -17,7 +17,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
   }
 
   try {
-    // 1. Lấy thông tin Billing của Project để xác định Billing Account Name
+    // 1. Lấy thông tin Billing của Project
     const [billingInfo] = await billingClient.getProjectBillingInfo({
       name: `projects/${projectId}`,
     });
@@ -34,27 +34,31 @@ export async function getRealtimeCredits(targetProjectId?: string) {
     let displayCredits = '0.00';
     let currency = 'USD';
 
-    // 2. Truy vấn chi tiết Billing Account để tìm mảng credits (Free Trial)
+    // 2. Truy vấn chi tiết Billing Account
     try {
       const [accountInfo] = await billingClient.getBillingAccount({
         name: billingInfo.billingAccountName,
       });
 
+      // Google SDK có thể trả về dữ liệu thô trong thuộc tính internals hoặc trực tiếp
       const rawAccountData = accountInfo as any;
       
-      // Bóc tách mảng credits theo cấu trúc JSON của Google
-      if (rawAccountData.credits && Array.isArray(rawAccountData.credits)) {
-        const activeCredit = rawAccountData.credits.reduce((prev: any, current: any) => {
-          const prevVal = prev?.remainingAmount ? parseFloat(prev.remainingAmount.value) : 0;
-          const currentVal = current?.remainingAmount ? parseFloat(current.remainingAmount.value) : 0;
-          return (currentVal > prevVal) ? current : prev;
-        }, null);
+      // Kiểm tra mảng credits (thường có trong gói Free Trial hoặc khuyến mãi)
+      const creditsArray = rawAccountData.credits || [];
+      
+      if (creditsArray && Array.isArray(creditsArray) && creditsArray.length > 0) {
+        // Tìm gói tín dụng có giá trị lớn nhất (thường là gói active)
+        const activeCredit = creditsArray.reduce((prev: any, current: any) => {
+          const prevVal = prev?.remainingAmount?.value ? parseFloat(prev.remainingAmount.value) : 0;
+          const currentVal = current?.remainingAmount?.value ? parseFloat(current.remainingAmount.value) : 0;
+          return (currentVal >= prevVal) ? current : prev;
+        }, creditsArray[0]);
 
         if (activeCredit && activeCredit.remainingAmount) {
           const val = parseFloat(activeCredit.remainingAmount.value);
-          currency = activeCredit.remainingAmount.currencyCode;
+          currency = activeCredit.remainingAmount.currencyCode || 'USD';
 
-          // Quy đổi VND sang USD (xấp xỉ VND / 25.000) nếu cần
+          // Quy đổi VND sang USD (xấp xỉ VND / 25.000)
           if (currency === 'VND') {
             displayCredits = (val / 25000).toFixed(2); 
           } else {
@@ -63,7 +67,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
         }
       }
     } catch (accError: any) {
-      console.warn("Billing Sync Warning: Service Account needs 'Billing Account Viewer' to see credits.");
+      console.warn("Billing Sync Warning: ", accError.message);
     }
 
     return {
