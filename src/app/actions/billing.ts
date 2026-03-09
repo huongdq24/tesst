@@ -55,7 +55,7 @@ export async function getRealtimeCredits(targetProjectId?: string) {
             const amount = c.remainingAmount || c.amount;
             if (amount) {
               const val = parseFloat(amount.value || '0');
-              const currency = amount.currencyCode || 'USD';
+              const currency = amount.currencyCode || 'VND';
 
               // Quy đổi VND sang USD nếu cần (tỉ giá xấp xỉ 25.000)
               if (currency === 'VND') {
