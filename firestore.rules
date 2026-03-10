@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -15,17 +14,16 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Kiểm tra Admin dựa trên Email hệ thống. */
+    /** 
+     * @description Kiểm tra Admin. 
+     * Ưu tiên kiểm tra Email hệ thống trước để tối ưu hiệu suất và tránh lỗi circularity.
+     */
     function isAdmin() {
       return isSignedIn() && (
-        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
         request.auth.token.email == 'igen-architect@admin.com' ||
-        request.auth.token.email == 'igentech1@gmail.com'
+        request.auth.token.email == 'igentech1@gmail.com' ||
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
       );
-    }
-
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
     }
 
     function isUnchanged(fieldName) {
@@ -37,18 +35,26 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      // Người dùng có thể xem profile của chính mình, Admin có thể xem tất cả
       allow get: if isOwner(userId) || isAdmin();
+      // Chỉ Admin mới có thể liệt kê tất cả người dùng
       allow list: if isAdmin();
+      // Cho phép tạo profile mới nếu UID khớp
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if (isExistingOwner(userId) || isAdmin()) && isUnchanged('id');
+      // Cho phép cập nhật nếu là chủ sở hữu hoặc admin, không được đổi ID
+      allow update: if (isOwner(userId) || isAdmin()) && isUnchanged('id');
+      // Chỉ Admin mới có quyền xóa người dùng
       allow delete: if isAdmin();
 
       match /projects/{projectId} {
+        // Chủ sở hữu dự án hoặc Admin có quyền xem/liệt kê
         allow read: if isOwner(userId) || isAdmin();
-        allow list: if isOwner(userId) || isAdmin();
+        // Chỉ chủ sở hữu mới có thể tạo dự án gắn với ID của mình
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if (isExistingOwner(userId) || isAdmin()) && isUnchanged('userId');
-        allow delete: if isExistingOwner(userId) || isAdmin();
+        // Chủ sở hữu hoặc Admin có quyền cập nhật, không được đổi userId
+        allow update: if (isOwner(userId) || isAdmin()) && isUnchanged('userId');
+        // Chủ sở hữu hoặc Admin có quyền xóa dự án
+        allow delete: if isOwner(userId) || isAdmin();
       }
     }
 
