@@ -40,12 +40,16 @@ export const VoiceAssistantOrb = ({
         
         toast({ title: "iGen Assistant", description: result.responseText });
 
+        // Lấy token nếu có (phụ thuộc vào cách login Google)
         const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
         const res = await getRealtimeCredits(oauthToken);
+        
         if (res.success) {
           const latestCredits = String(res.credits);
-          
-          updateDocumentNonBlocking(doc(db, 'users', user.uid), { credits: latestCredits, updatedAt: new Date().toISOString() });
+          updateDocumentNonBlocking(doc(db, 'users', user.uid), { 
+            credits: latestCredits, 
+            updatedAt: new Date().toISOString() 
+          });
           
           if (ADMIN_EMAILS.includes(user.email || '')) {
             const usersSnap = await getDocs(collection(db, 'users'));
