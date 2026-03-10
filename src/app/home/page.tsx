@@ -88,10 +88,6 @@ export default function HomePage() {
   }, [db, userData?.role, user]);
   const { data: allUsers } = useCollection(usersCollectionRef);
 
-  /**
-   * Ổn định hóa hàm đồng bộ Billing để tránh vòng lặp vô tận.
-   * Chỉ phụ thuộc vào user.uid và db.
-   */
   const performBillingSync = useCallback(async () => {
     if (!user || syncLock.current) return;
     
@@ -105,7 +101,7 @@ export default function HomePage() {
         const latestCredits = String(result.credits);
         const selfRef = doc(db, 'users', user.uid);
         
-        // Chỉ cập nhật Firestore nếu có sự thay đổi hoặc là lần đầu tiên
+        // Cập nhật Firestore với số dư thực tế đã bóc tách từ JSON
         updateDocumentNonBlocking(selfRef, {
           credits: latestCredits,
           updatedAt: new Date().toISOString()
@@ -129,7 +125,6 @@ export default function HomePage() {
     }
   }, [user, db, toast]);
 
-  // Kích hoạt đồng bộ tự động khi vào trang hoặc khi trạng thái tín dụng thay đổi
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
       performBillingSync();
