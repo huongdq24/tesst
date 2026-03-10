@@ -51,8 +51,8 @@ service cloud.firestore {
 
       match /projects/{projectId} {
         // Quyền trên các dự án thuộc User. 
-        // Cho phép read (get + list) nếu là chủ sở hữu hoặc admin.
-        allow read: if isOwner(userId) || isAdmin();
+        // Tách biệt get/list và ưu tiên isOwner để tối ưu hóa truy vấn Firestore.
+        allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update, delete: if isOwner(userId) || isAdmin();
       }
