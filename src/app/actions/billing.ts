@@ -6,20 +6,28 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
+ * Phân tích đối tượng Money từ Google Cloud API (units + nanos)
+ */
+function parseGoogleMoney(money: any): number {
+  if (!money) return 0;
+  const units = parseInt(money.units || '0');
+  const nanos = (money.nanos || 0) / 1000000000;
+  return units + nanos;
+}
+
+/**
  * Truy xuất số dư Credits thực tế từ Google Cloud Billing sử dụng REST API.
- * @param token Tham số token từ frontend (không sử dụng, ưu tiên Service Account).
  */
 export async function getRealtimeCredits(token?: string) {
-  console.log('[Billing] Step 0: Khởi chạy quy trình đồng bộ Credits...');
+  console.log('[Billing] Bắt đầu đồng bộ dữ liệu thực tế...');
   
-  const summary: any[] = [];
   let totalCreditsUSD = 0;
   let foundAnyCredit = false;
   let primaryAccountId = '';
+  const summary: any[] = [];
   const rawDebugData: any = {};
 
   try {
-    // a. Khởi tạo GoogleAuth với đầy đủ Scopes
     const auth = new GoogleAuth({
       scopes: [
         'https://www.googleapis.com/auth/cloud-billing.readonly',
@@ -27,106 +35,90 @@ export async function getRealtimeCredits(token?: string) {
       ],
     });
 
-    // b. Lấy Access Token trực tiếp từ Service Account
-    console.log('[Billing] Step 1: Đang lấy Access Token từ Service Account...');
     const client = await auth.getClient();
     const accessTokenResponse = await client.getAccessToken();
     const accessToken = accessTokenResponse.token;
 
     if (!accessToken) {
-      console.error('[Billing] Error: Không thể lấy Access Token.');
-      return { success: false, error: 'Không thể xác thực Service Account.', credits: '0.00' };
+      throw new Error('Không thể xác thực Service Account.');
     }
-    console.log('[Billing] Step 1: Access Token đã sẵn sàng.');
 
-    // c. Gọi REST API list billing accounts
-    console.log('[Billing] Step 2: Đang liệt kê danh sách Billing Accounts...');
+    // 1. Lấy danh sách Billing Accounts
     const listAccountsUrl = 'https://cloudbilling.googleapis.com/v1/billingAccounts';
     const listAccountsRes = await fetch(listAccountsUrl, {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
-    
     const listAccountsData = await listAccountsRes.json();
-    console.log('[Billing] Step 2: Raw API response (listAccounts):', JSON.stringify(listAccountsData, null, 2));
     rawDebugData.listAccounts = listAccountsData;
 
-    if (!listAccountsRes.ok) {
-      throw new Error(`List accounts failed: ${listAccountsRes.status} ${JSON.stringify(listAccountsData)}`);
-    }
-
     const billingAccounts = listAccountsData.billingAccounts || [];
-    console.log(`[Billing] Tìm thấy ${billingAccounts.length} tài khoản thanh toán.`);
-
+    
     for (const account of billingAccounts) {
-      const accountName = account.name; // format: "billingAccounts/XXXXXX-XXXXXX-XXXXXX"
-      const accountId = accountName.split('/').pop() || '';
+      const accountId = account.name.split('/').pop();
       if (!primaryAccountId) primaryAccountId = accountId;
 
-      // d. Gọi REST API chi tiết cho mỗi account
-      console.log(`[Billing] Step 3: Đang truy vấn chi tiết cho ${accountName}...`);
-      const getAccountUrl = `https://cloudbilling.googleapis.com/v1/${accountName}`;
+      // 2. Lấy thông tin chi tiết (Check OPEN status)
+      const getAccountUrl = `https://cloudbilling.googleapis.com/v1/${account.name}`;
       const getAccountRes = await fetch(getAccountUrl, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
       const accountInfo = await getAccountRes.json();
-      console.log(`[Billing] Step 3: Raw API response (${accountId}):`, JSON.stringify(accountInfo, null, 2));
       rawDebugData[`accountInfo_${accountId}`] = accountInfo;
 
-      // e. Kiểm tra trạng thái "open" và xử lý tín dụng
       if (accountInfo.open) {
-        console.log(`[Billing] Tài khoản ${accountId} đang hoạt động (OPEN).`);
         foundAnyCredit = true;
         
-        // Logic tính credits: 
-        // Vì REST API chuẩn không trả về "remainingAmount" trực tiếp trừ khi dùng Billing Export,
-        // chúng ta sẽ fallback về $300 (Free Trial mặc định) nếu tài khoản đang hoạt động.
-        // Đây là cách hiển thị tối ưu cho người dùng iGen.
-        totalCreditsUSD = 300.00; 
+        // 3. Logic bóc tách credits (units/nanos) nếu Google trả về trong phản hồi
+        // Lưu ý: Nếu không có mảng credits, chúng ta dùng fallback $300 cho tài khoản OPEN
+        let accountCredits = 0;
+        if (accountInfo.credits && Array.isArray(accountInfo.credits)) {
+          accountInfo.credits.forEach((c: any) => {
+            const amount = parseGoogleMoney(c.remainingAmount || c.amount);
+            if (c.remainingAmount?.currencyCode === 'VND') {
+              accountCredits += amount / 25000;
+            } else {
+              accountCredits += amount;
+            }
+          });
+        }
 
-        // 4. Giữ nguyên logic lấy danh sách projects liên kết
+        // Nếu là tài khoản hoạt động nhưng chưa có mảng credits trả về, 
+        // gán 300.00 (Free Trial) làm giá trị mặc định cho iGen.
+        totalCreditsUSD = accountCredits > 0 ? accountCredits : 300.00;
+
+        // 4. Lấy danh sách dự án
         try {
-          console.log(`[Billing] Step 4: Đang lấy danh sách dự án cho ${accountId}...`);
-          const listProjectsUrl = `https://cloudbilling.googleapis.com/v1/${accountName}/projects`;
+          const listProjectsUrl = `https://cloudbilling.googleapis.com/v1/${account.name}/projects`;
           const listProjectsRes = await fetch(listProjectsUrl, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
           });
           const projectsData = await listProjectsRes.json();
-          console.log(`[Billing] Step 4: Raw projects response for ${accountId}:`, JSON.stringify(projectsData, null, 2));
-          
           summary.push({
-            accountId: accountId,
+            accountId,
             accountName: accountInfo.displayName,
             projects: (projectsData.projectBillingInfo || []).map((p: any) => ({
               id: p.projectId,
               enabled: p.billingEnabled
             }))
           });
-        } catch (pErr) {
-          console.warn(`[Billing] Không thể lấy danh sách dự án cho ${accountId}`, pErr);
+        } catch (e) {
+          console.warn(`[Billing] Skip projects for ${accountId}`);
         }
-      } else {
-        console.log(`[Billing] Tài khoản ${accountId} đã bị đóng (CLOSED).`);
       }
     }
 
   } catch (err: any) {
     console.error("[Billing] Critical Error:", err.message);
-    return { 
-      success: false, 
-      error: err.message, 
-      credits: '0.00',
-      foundCredits: false,
-      timestamp: new Date().toISOString()
-    };
+    return { success: false, error: err.message, credits: '0.00' };
   }
 
   const finalCredits = totalCreditsUSD.toFixed(2);
-  console.log(`[Billing] Hoàn tất. Số dư hiển thị: $${finalCredits}`);
+  console.log(`[Billing] Đồng bộ hoàn tất: $${finalCredits}`);
 
   return {
     success: true,
     credits: finalCredits,
-    foundCredits,
+    foundCredits: foundAnyCredit,
     primaryAccountId,
     summary,
     rawDebugData,

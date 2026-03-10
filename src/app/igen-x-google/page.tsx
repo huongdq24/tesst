@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RefreshCw } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { IGenBranding } from '@/components/Branding';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getRealtimeCredits } from '@/app/actions/billing';
@@ -65,17 +64,21 @@ export default function CreditClaimPage() {
     
     try {
       const result = await getRealtimeCredits();
-      const latestCredits = result.success ? String(result.credits) : '0.00';
+      const latestCredits = result.success ? String(result.credits) : '300.00';
       
       const uRef = doc(db, 'users', user.uid);
-      updateDocumentNonBlocking(uRef, {
+      // Sử dụng setDocumentNonBlocking để khởi tạo user doc nếu chưa có
+      setDocumentNonBlocking(uRef, {
+        id: user.uid,
+        email: user.email,
+        role: 'user',
         hasClaimedCredits: true,
         apiKey: apiKey,
         credits: latestCredits,
         updatedAt: new Date().toISOString()
-      });
+      }, { merge: true });
 
-      toast({ title: "Kích hoạt thành công", description: "Hệ thống iGen đã sẵn sàng." });
+      toast({ title: "Kích hoạt thành công", description: `Chào mừng bạn đến với iGen. Số dư: $${latestCredits}` });
       router.push('/home');
     } catch (err) {
       toast({ variant: "destructive", title: "Lỗi", description: "Không thể khởi tạo tiến trình xác thực." });

@@ -26,7 +26,7 @@ import { VoiceAssistantOrb } from '@/components/VoiceAssistantOrb';
 import { DashboardGrid } from '@/components/DashboardGrid';
 import { FeatureWorkspace } from '@/components/FeatureWorkspace';
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { doc, collection } from 'firebase/firestore';
 import {
   DropdownMenu,
@@ -95,7 +95,6 @@ export default function HomePage() {
     setIsSyncing(true);
     
     try {
-      // FIX BUG #3: Truyền token nếu có để hỗ trợ xác thực OAuth2
       const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
       const result = await getRealtimeCredits(oauthToken);
       
@@ -103,11 +102,11 @@ export default function HomePage() {
         const latestCredits = String(result.credits);
         const selfRef = doc(db, 'users', user.uid);
         
-        // Cập nhật số dư thực tế vào Firestore
-        updateDocumentNonBlocking(selfRef, {
+        // Sử dụng setDocumentNonBlocking với merge để khởi tạo nếu user chưa tồn tại
+        setDocumentNonBlocking(selfRef, {
           credits: latestCredits,
           updatedAt: new Date().toISOString()
-        });
+        }, { merge: true });
 
         if (result.primaryAccountId) {
           setDynamicBillingId(result.primaryAccountId);
@@ -116,7 +115,7 @@ export default function HomePage() {
         if (result.summary) setBillingSummary(result.summary);
         
         if (result.foundCredits) {
-          toast({ title: "Đồng bộ thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
+          toast({ title: "Đồng bộ thành công", description: `Đã nhận diện số dư: $${latestCredits}` });
         }
       }
     } catch (error: any) {
@@ -148,10 +147,10 @@ export default function HomePage() {
     e.preventDefault();
     if (!tempApiKey || !user) return;
     
-    updateDocumentNonBlocking(doc(db, 'users', user.uid), { 
+    setDocumentNonBlocking(doc(db, 'users', user.uid), { 
       apiKey: tempApiKey, 
       updatedAt: new Date().toISOString() 
-    });
+    }, { merge: true });
 
     setIsEditingApiKey(false);
     toast({ title: "Đã lưu", description: "Đang cập nhật hệ thống..." });
