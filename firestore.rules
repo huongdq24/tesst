@@ -15,7 +15,7 @@ service cloud.firestore {
     }
 
     /** 
-     * @description Kiểm tra Admin hệ thống qua Email.
+     * @description Kiểm tra Admin hệ thống qua Email hardcoded.
      */
     function isSystemAdmin() {
       return isSignedIn() && (
@@ -26,7 +26,7 @@ service cloud.firestore {
 
     /** 
      * @description Kiểm tra Admin tổng hợp.
-     * Tách biệt logic exists để tránh lỗi quyền truy cập nội bộ khi đánh giá query list.
+     * Tối ưu hóa thứ tự để tránh gọi exists() không cần thiết trong các truy vấn list.
      */
     function isAdmin() {
       return isSystemAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
@@ -51,7 +51,7 @@ service cloud.firestore {
 
       match /projects/{projectId} {
         // Quyền trên các dự án thuộc User. 
-        // Tách biệt get/list và ưu tiên isOwner để tối ưu hóa truy vấn Firestore.
+        // Ưu tiên isOwner để Firestore Rules Engine phê duyệt nhanh các truy vấn list/get của chính chủ.
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update, delete: if isOwner(userId) || isAdmin();

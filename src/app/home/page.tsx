@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -81,13 +80,18 @@ export default function HomePage() {
   const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
   const usersCollectionRef = useMemoFirebase(() => {
-    if (user && (userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || ''))) {
+    const isAdmin = userData?.role === 'admin' || (user && ADMIN_EMAILS.includes(user.email || ''));
+    if (user && isAdmin) {
       return collection(db, 'users');
     }
     return null;
-  }, [db, userData, user]);
+  }, [db, userData?.role, user]);
   const { data: allUsers } = useCollection(usersCollectionRef);
 
+  /**
+   * Ổn định hóa hàm đồng bộ Billing để tránh vòng lặp vô tận.
+   * Chỉ phụ thuộc vào user.uid và db.
+   */
   const performBillingSync = useCallback(async () => {
     if (!user || syncLock.current) return;
     
@@ -101,6 +105,7 @@ export default function HomePage() {
         const latestCredits = String(result.credits);
         const selfRef = doc(db, 'users', user.uid);
         
+        // Chỉ cập nhật Firestore nếu có sự thay đổi hoặc là lần đầu tiên
         updateDocumentNonBlocking(selfRef, {
           credits: latestCredits,
           updatedAt: new Date().toISOString()
@@ -110,16 +115,7 @@ export default function HomePage() {
           setDynamicBillingId(result.primaryAccountId);
         }
         
-        const isAdminUser = userData?.role === 'admin' || ADMIN_EMAILS.includes(user.email || '');
-        if (isAdminUser && allUsers) {
-          allUsers.forEach(u => {
-            updateDocumentNonBlocking(doc(db, 'users', u.id), {
-              credits: latestCredits,
-              updatedAt: new Date().toISOString()
-            });
-          });
-          if (result.summary) setBillingSummary(result.summary);
-        }
+        if (result.summary) setBillingSummary(result.summary);
         
         if (result.foundCredits) {
           toast({ title: "Đồng bộ thành công", description: `Hệ thống iGen đã nhận diện Credits: $${latestCredits}` });
@@ -131,8 +127,9 @@ export default function HomePage() {
       setIsSyncing(false);
       syncLock.current = false;
     }
-  }, [user, userData, db, allUsers, toast]);
+  }, [user, db, toast]);
 
+  // Kích hoạt đồng bộ tự động khi vào trang hoặc khi trạng thái tín dụng thay đổi
   useEffect(() => {
     if (user && userData?.hasClaimedCredits && !isUserDataLoading) {
       performBillingSync();
