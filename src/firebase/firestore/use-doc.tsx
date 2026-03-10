@@ -86,6 +86,11 @@ export function useDoc<T = any>(
           setError(contextualError);
           errorEmitter.emit('permission-error', contextualError);
         } else {
+          // Log lỗi không phải permission-denied ra console.info
+          if (firestoreError.code === 'failed-precondition') {
+             console.info("%c[iGen Firestore] ⚠️ LỖI TRUY VẤN: ", "color: #f59e0b; font-weight: bold;");
+             console.info(firestoreError.message);
+          }
           setError(firestoreError);
         }
         

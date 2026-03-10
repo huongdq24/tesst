@@ -106,9 +106,10 @@ export function useCollection<T = any>(
           errorEmitter.emit('permission-error', contextualError);
         } else {
           // Đối với các lỗi khác (như failed-precondition do thiếu index), 
-          // log lỗi thật ra console để người dùng lấy link tạo Index.
+          // log lỗi ra console dạng INFO để không làm hiện màn hình lỗi đỏ của Next.js
           if (firestoreError.code === 'failed-precondition') {
-            console.error("Firestore Index Error:", firestoreError.message);
+            console.info("%c[iGen Firestore] ⚠️ HÀNH ĐỘNG CẦN THIẾT: Nhấp vào link dưới để tạo Index cho lịch sử dự án:", "color: #f59e0b; font-weight: bold; font-size: 14px;");
+            console.info(firestoreError.message);
           }
           setError(firestoreError);
         }
