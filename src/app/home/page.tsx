@@ -95,13 +95,15 @@ export default function HomePage() {
     setIsSyncing(true);
     
     try {
-      const result = await getRealtimeCredits();
+      // FIX BUG #3: Truyền token nếu có để hỗ trợ xác thực OAuth2
+      const oauthToken = sessionStorage.getItem('google_access_token') || undefined;
+      const result = await getRealtimeCredits(oauthToken);
       
       if (result.success) {
         const latestCredits = String(result.credits);
         const selfRef = doc(db, 'users', user.uid);
         
-        // Cập nhật Firestore với số dư thực tế đã bóc tách từ JSON
+        // Cập nhật số dư thực tế vào Firestore
         updateDocumentNonBlocking(selfRef, {
           credits: latestCredits,
           updatedAt: new Date().toISOString()
